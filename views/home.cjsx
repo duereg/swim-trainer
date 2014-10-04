@@ -8,13 +8,13 @@ home = React.createClass
     <layout data={this.props} >
       <h1> Swimathon Starter </h1>
       <p className="lead">
-        The best thing since eating sliced bread in a speedo
+        <p> {this.props.quote.quote} </p>
+        <p> {this.props.quote.author} </p>
       </p>
       <hr />
       <div className="row">
-        <div className="col-sm-6">
-          <p> {this.props.quote.quote} </p>
-          <p> {this.props.quote.author} </p>
+        <div className="col-sm-12">
+
         </div>
       </div>
     </layout>

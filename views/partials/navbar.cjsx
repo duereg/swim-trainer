@@ -2,7 +2,7 @@
 
 React = require('react')
 
-userMenu = require('./navbar/userMenu.cjsx')
+userMenu = require('./userMenu.cjsx')
 
 navBar = React.createClass
   render: ->

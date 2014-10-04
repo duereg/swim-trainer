@@ -2,7 +2,7 @@
 
 React = require('react')
 layout = require('../layout')
-accountLinker = require('./profile/accountLinker')
+accountLinker = require('./accountLinker')
 
 home = React.createClass
   render: ->
