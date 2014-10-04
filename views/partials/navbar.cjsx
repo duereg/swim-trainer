@@ -16,17 +16,14 @@ navBar = React.createClass
             <span className="icon-bar"></span>
           </button>
           <a href="/" className="navbar-brand">
-            <span className="ion-cube"></span>
-            Project name
+            <span className="ion-ios7-stopwatch-outline"></span>
+            Swim Trainer
           </a>
         </div>
         <div className="collapse navbar-collapse">
           <ul className="nav navbar-nav">
             <li className="active">
               <a href="/">Home</a>
-            </li>
-            <li>
-              <a href="/api">API Examples</a>
             </li>
           </ul>
           <userMenu data={this.props.data} />
