@@ -14,6 +14,6 @@ var quoteNum = getRandomInt(0, quotes.length);
 exports.index = function(req, res) {
   res.render('home', {
     title: 'Home',
-    quote: quotes[quoteNum]
+    quotes: quotes
   });
 };
