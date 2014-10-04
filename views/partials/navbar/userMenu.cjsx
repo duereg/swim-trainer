@@ -19,7 +19,7 @@ userMenu = React.createClass
         picture = <img src={user.gravatar(60)} alt='Gravatar Picture' />
 
       menu =
-        <li className={ this.props.data.title == 'Account Management' ? 'dropdown active' : 'dropdown'}>
+        <li className={ if this.props.data.title == 'Account Management' then 'dropdown active' else 'dropdown'}>
           <a href="#" data-toggle="dropdown" className="dropdown-toggle">
             {picture} | {user.profile?.name || user.email || user.id}
             <i className="caret"></i>
