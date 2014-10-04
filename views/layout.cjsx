@@ -6,6 +6,7 @@ React = require('react');
         # include partials/footer
 
 navbar = require('./partials/navbar.cjsx')
+myFooter = require('./partials/footer.cjsx')
 
 layout = React.createClass
   render: ->
@@ -26,6 +27,7 @@ layout = React.createClass
           {this.props.children}
         </div>
         <span dangerouslySetInnerHTML={{__html: this.props.data.js('application')}} />
+        <myFooter />
       </body>
     </html>
 
