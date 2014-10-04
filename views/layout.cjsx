@@ -8,23 +8,24 @@ React = require('react');
         # include partials/footer
         # != js('application')
 
-Layout = React.createClass
-  render: (data) ->
+layout = React.createClass
+  render: ->
+    console.log this.props
     <html>
       <head>
-        <meta charset='utf-8' />
-        <meta http-equiv='X-UA-Compatible', content='IE=edge' />
-        <meta name='viewport', content='width=device-width, initial-scale=1.0' />
+        <meta charSet='utf-8' />
+        <meta httpEquiv='X-UA-Compatible' content='IE=edge' />
+        <meta name='viewport' content='width=device-width, initial-scale=1' />
         <meta name='description', content='Swim Trainer 3000' />
-        <meta name='csrf-token', content={data._csrf} />
+        <meta name='csrf-token', content={this.props._csrf} />
         <meta name='author', content='Matt Blair' />
-        <title>{data.title} | Hackathon Starter</title>
+        <title>{this.props.title} | Hackathon Starter</title>
       </head>
       <body>
         <div className='container'>
-          <block>
-            {this.props.children}
-          </block>
+          {this.props.children}
         </div>
       </body>
     </html>
+
+module.exports = layout

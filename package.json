@@ -21,7 +21,7 @@
     "errorhandler": "^1.2.0",
     "express": "^4.8.8",
     "express-flash": "^0.0.2",
-    "express-react-views": "^0.5.0",
+    "express-coffee-react-views": "^0.5.3",
     "express-session": "^1.7.5",
     "express-validator": "^2.4.0",
     "fbgraph": "^0.2.11",

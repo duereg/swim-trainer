@@ -1,7 +1,6 @@
 /**
  * Module dependencies.
  */
-
 var express = require('express');
 var cookieParser = require('cookie-parser');
 var compress = require('compression');
@@ -20,6 +19,7 @@ var mongoose = require('mongoose');
 var passport = require('passport');
 var expressValidator = require('express-validator');
 var connectAssets = require('connect-assets');
+var reactViews = require('express-coffee-react-views')
 
 /**
  * Controllers (route handlers).
@@ -68,7 +68,9 @@ var csrfExclude = ['/url1', '/url2'];
 
 app.set('port', process.env.PORT || 3000);
 app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade'); //jsx
+app.set('view engine', 'cjsx'); //jade
+app.engine('cjsx', reactViews.createEngine({beautify: true}));
+
 app.use(compress());
 app.use(connectAssets({
   paths: [path.join(__dirname, 'public/css'), path.join(__dirname, 'public/js')],
