@@ -5,7 +5,7 @@ layout = require('./layout')
 
 home = React.createClass
   render: ->
-    <layout title='Wishlist Page' data={this.props} >
+    <layout data={this.props} >
       <h1> Swimathon Starter </h1>
       <p className="lead">
         The best thing since eating sliced bread in a speedo

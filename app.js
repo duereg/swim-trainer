@@ -71,7 +71,7 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'cjsx'); //jade
 app.engine('cjsx', reactViews.createEngine({beautify: true}));
 
-app.use(compress());
+// app.use(compress()); TODO: uncomment to compress html
 app.use(connectAssets({
   paths: [path.join(__dirname, 'public/css'), path.join(__dirname, 'public/js')],
   helperContext: app.locals
