@@ -21,11 +21,6 @@ home = React.createClass
         <p> {quote.author} </p>
       </p>
       <hr />
-      <div className="row">
-        <div className="col-sm-12">
-
-        </div>
-      </div>
     </layout>
 
 module.exports = home

@@ -25,6 +25,9 @@ navBar = React.createClass
             <li className={ if this.props.data.title == 'Home' then 'active' else ''}>
               <a href="/">Home</a>
             </li>
+            <li className={ if this.props.data.title == 'Workouts' then 'active' else ''}>
+              <a href="/workouts">Workouts</a>
+            </li>
           </ul>
           <userMenu data={this.props.data} />
         </div>

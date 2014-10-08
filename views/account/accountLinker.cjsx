@@ -12,7 +12,7 @@ userMenu = React.createClass
         Link your {accountName} account
       </a>
     else
-      <a href={"/account/unlink/#{accountName.toLowerCase()}"} class="text-danger">
+      <a href={"/account/unlink/#{accountName.toLowerCase()}"} className="text-danger">
         Unlink your {accountName} account
       </a>
 

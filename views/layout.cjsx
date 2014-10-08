@@ -2,8 +2,7 @@
 
 React = require('react');
 
-          # include partials/flash
-        # include partials/footer
+# include partials/flash
 
 navbar = require('./partials/navbar.cjsx')
 myFooter = require('./partials/footer.cjsx')
