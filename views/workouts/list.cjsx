@@ -15,7 +15,7 @@ list = React.createClass
         </div>
         <hr />
         <div className="Workouts--actions">
-          <button>Add Workout</button>
+          <a href="/workouts/add">Add Workout</a>
         </div>
       </div>
     </layout>
