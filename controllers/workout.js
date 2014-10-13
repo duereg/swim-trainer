@@ -9,17 +9,17 @@ var Workout = require('../models/Workout');
 exports.getWorkouts = function(req, res) {
   if (!req.user) return res.redirect('/login');
 
-  Workout.find({'userId': req.user.id}, function(err, workouts) {
-    if (!!err) {
+  Workout.promise.find({'userId': req.user.id})
+    .then(function(workouts){
+      res.render('workouts/list', {
+        title: 'Workouts',
+        workouts: workouts
+      });
+    })
+    .catch(function(err){
       console.log(err);
       res.redirect('/')
-    }
-
-    res.render('workouts/list', {
-      title: 'Workouts',
-      workouts: workouts
     });
-  });
 };
 
 exports.getAdd = function(req, res) {
