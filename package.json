@@ -52,6 +52,10 @@
   "devDependencies": {
     "blessed": "^0.0.37",
     "chai": "^1.9.1",
+    "coffee-reactify": "^1.0.3",
+    "gulp": "^3.8.8",
+    "gulp-browserify": "^0.5.0",
+    "gulp-rename": "^1.2.0",
     "mocha": "^1.21.4",
     "multiline": "^0.3.4",
     "supertest": "^0.13.0"
