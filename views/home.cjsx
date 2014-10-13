@@ -3,6 +3,8 @@
 React = require('react')
 layout = require('./layout')
 
+containerId = "home"
+
 home = React.createClass
 
   getQuote: ->
@@ -14,7 +16,7 @@ home = React.createClass
   render: ->
     quote = @getQuote()
 
-    <layout data={this.props} >
+    <layout data={this.props} containerId={containerId} >
       <h1> Swimathon Starter </h1>
       <p className="lead">
         <p> {quote.quote} </p>
@@ -22,5 +24,7 @@ home = React.createClass
       </p>
       <hr />
     </layout>
+
+home.containerId = containerId
 
 module.exports = home

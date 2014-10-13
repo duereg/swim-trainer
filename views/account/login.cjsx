@@ -3,9 +3,11 @@
 React = require('react')
 layout = require('../layout')
 
+containerId = "login"
+
 home = React.createClass
   render: ->
-    <layout title='Wishlist Page' data={this.props} >
+    <layout title='Wishlist Page' data={this.props} containerId={containerId} >
       <div className='page-header'>
         <h3>Sign in</h3>
       </div>
@@ -22,6 +24,8 @@ home = React.createClass
         </div>
       </form>
     </layout>
+
+home.containerId = containerId
 
 module.exports = home
 

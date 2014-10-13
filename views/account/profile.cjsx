@@ -4,6 +4,8 @@ React = require('react')
 layout = require('../layout')
 accountLinker = require('./accountLinker')
 
+containerId = "profile"
+
 home = React.createClass
   render: ->
     user = this.props.user
@@ -13,7 +15,7 @@ home = React.createClass
     else
       picture = <img src={user.gravatar()} width='100' height='100' alt='Gravatar Picture' className="profile" />
 
-    <layout data={this.props} >
+    <layout data={this.props} containerId={containerId} >
       <div className="page-header">
         <h3>Profile Information
         </h3>
@@ -97,6 +99,8 @@ home = React.createClass
         <accountLinker account={user.facebook} accountName={'Facebook'} />
       </p>
     </layout>
+
+home.containerId = containerId
 
 module.exports = home
 

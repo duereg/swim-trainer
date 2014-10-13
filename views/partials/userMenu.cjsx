@@ -33,7 +33,7 @@ userMenu = React.createClass
             </li>
             <li className="divider"></li>
             <li>
-              <a href="/logout"><span className="ion-log-out"></span> Logout</a>
+              <a href="/logout"><span className="ion-log-out"></span>Logout</a>
             </li>
           </ul>
         </li>

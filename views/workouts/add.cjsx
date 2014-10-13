@@ -6,6 +6,8 @@ React = require('react')
 swimParser = require('swim-parser')
 layout = require('../layout')
 
+containerId = "workout-add"
+
 wishlistsPage = React.createClass
   getInitialState: ->
     workout: {}
@@ -17,7 +19,7 @@ wishlistsPage = React.createClass
     this.setState workout: output
 
   render: ->
-    <layout data={this.props}>
+    <layout data={this.props} containerId={containerId} >
       <div className='Workout container'>
         <div className='row'>
           <div className='col-xs-6'>
@@ -42,5 +44,7 @@ wishlistsPage = React.createClass
         </div>
       </div>
     </layout>
+
+wishlistsPage.containerId = containerId
 
 module.exports = wishlistsPage

@@ -3,9 +3,11 @@
 React = require('react')
 layout = require('../layout')
 
+containerId = "workout-list"
+
 list = React.createClass
   render: ->
-    <layout data={this.props} >
+    <layout data={this.props} containerId={containerId} >
       <h1> Workouts </h1>
       <div className="container">
         <div className="Workouts">
@@ -19,5 +21,7 @@ list = React.createClass
         </div>
       </div>
     </layout>
+
+list.containerId = containerId
 
 module.exports = list

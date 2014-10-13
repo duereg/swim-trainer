@@ -9,6 +9,8 @@ myFooter = require('./partials/footer.cjsx')
 
 layout = React.createClass
   render: ->
+    mainContainer = this.props.containerId if this.props.containerId?
+
     <html>
       <head>
         <meta charSet='utf-8' />
@@ -22,9 +24,12 @@ layout = React.createClass
       <body>
         <span dangerouslySetInnerHTML={{__html: this.props.data.css('styles')}} />
         <navbar data={this.props.data} />
-        <div className='container'>
+        <div id={mainContainer} className='container'>
           {this.props.children}
         </div>
+        <script dangerouslySetInnerHTML={{
+          __html: 'window.data = ' + JSON.stringify(this.props.data)
+        }}></script>
         <span dangerouslySetInnerHTML={{__html: this.props.data.js('application')}} />
         <myFooter />
       </body>
