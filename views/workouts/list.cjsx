@@ -12,7 +12,7 @@ list = React.createClass
       <div className="container">
         <div className="Workouts">
         {this.props.workouts.map (workout) ->
-          <div>{workout.toString()}</div>
+          <div>{workout.raw}</div>
         }
         </div>
         <hr />

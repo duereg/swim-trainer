@@ -2,8 +2,8 @@ var mongoose = require('mongoose');
 var swimParser = require('swim-parser');
 
 var workoutSchema = new mongoose.Schema({
-  userId: mongoose.Schema.Types.ObjectId,
-  date: {type: Date, default: Date.now },
+  userId: {type: mongoose.Schema.Types.ObjectId, required: true},
+  date: {type: Date, default: Date.now},
   raw: String,
   formatted: mongoose.Schema.Types.Mixed
 });
