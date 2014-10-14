@@ -14,7 +14,6 @@ processWorkout = React.createClass
   processWorkout: ->
     value = this.refs.workoutInput.getDOMNode().value
     output = swimParser value
-    console.log output
     this.setState workout: output
 
   render: ->
@@ -32,7 +31,7 @@ processWorkout = React.createClass
           <textarea id='workoutInput' ref='workoutInput' />
         </div>
         <div className='col-xs-6'>
-          <div id='output' ref='output'>{this.state.workout.toString()}</div>
+          {<div id='output' ref='output'>{this.state.workout.toString()}</div> if Object.keys(this.state.workout).length > 0}
         </div>
       </div>
       <div className='row'>

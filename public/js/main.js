@@ -23467,7 +23467,6 @@ processWorkout = React.createClass({
     var output, value;
     value = this.refs.workoutInput.getDOMNode().value;
     output = swimParser(value);
-    console.log(output);
     return this.setState({
       workout: output
     });
@@ -23490,10 +23489,10 @@ processWorkout = React.createClass({
       "ref": 'workoutInput'
     })), React.createElement(React.DOM.div, {
       "className": 'col-xs-6'
-    }, React.createElement(React.DOM.div, {
+    }, (Object.keys(this.state.workout).length > 0 ? React.createElement(React.DOM.div, {
       "id": 'output',
       "ref": 'output'
-    }, this.state.workout.toString()))), React.createElement(React.DOM.div, {
+    }, this.state.workout.toString()) : void 0))), React.createElement(React.DOM.div, {
       "className": 'row'
     }, React.createElement(React.DOM.div, {
       "className": 'col-xs-12'
