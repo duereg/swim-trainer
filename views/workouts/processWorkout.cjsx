@@ -16,8 +16,12 @@ processWorkout = React.createClass
     output = swimParser value
     this.setState workout: output
 
+  getCurrentDateFormatted: ->
+    today = new Date()
+    "#{today.getFullYear()}-#{today.getMonth() + 1}-#{today.getDate()}"
+
   render: ->
-    <div className='container'>
+    <div className='processWorkout container'>
       <div className='row'>
         <div className='col-xs-6'>
           Enter your swim workout
@@ -28,15 +32,17 @@ processWorkout = React.createClass
       </div>
       <div className='row'>
         <div className='col-xs-6'>
-          <textarea id='workoutInput' ref='workoutInput' />
-        </div>
-        <div className='col-xs-6'>
-          {<div id='output' ref='output'>{this.state.workout.toString()}</div> if Object.keys(this.state.workout).length > 0}
+          <textarea className='processWorkout--input' id='workoutInput' ref='workoutInput' />
         </div>
       </div>
       <div className='row'>
-        <div className='col-xs-12'>
-          <button id='process' ref='process' onClick={this.processWorkout}>Process Workout</button>
+        <div className='col-xs-6'>
+          <input className='input-sm processWorkout--date' type='date' ref='workoutDate' defaultValue={@getCurrentDateFormatted()} />
+        </div>
+      </div>
+      <div className='row'>
+        <div className='col-xs-6'>
+          <button id='process' ref='process' className='processWorkout--execute' onClick={this.processWorkout}>Add Workout</button>
         </div>
       </div>
     </div>

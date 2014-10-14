@@ -23471,9 +23471,14 @@ processWorkout = React.createClass({
       workout: output
     });
   },
+  getCurrentDateFormatted: function() {
+    var today;
+    today = new Date();
+    return "" + (today.getFullYear()) + "-" + (today.getMonth() + 1) + "-" + (today.getDate());
+  },
   render: function() {
     return React.createElement(React.DOM.div, {
-      "className": 'container'
+      "className": 'processWorkout container'
     }, React.createElement(React.DOM.div, {
       "className": 'row'
     }, React.createElement(React.DOM.div, {
@@ -23485,22 +23490,28 @@ processWorkout = React.createClass({
     }, React.createElement(React.DOM.div, {
       "className": 'col-xs-6'
     }, React.createElement(React.DOM.textarea, {
+      "className": 'processWorkout--input',
       "id": 'workoutInput',
       "ref": 'workoutInput'
-    })), React.createElement(React.DOM.div, {
-      "className": 'col-xs-6'
-    }, (Object.keys(this.state.workout).length > 0 ? React.createElement(React.DOM.div, {
-      "id": 'output',
-      "ref": 'output'
-    }, this.state.workout.toString()) : void 0))), React.createElement(React.DOM.div, {
+    }))), React.createElement(React.DOM.div, {
       "className": 'row'
     }, React.createElement(React.DOM.div, {
-      "className": 'col-xs-12'
+      "className": 'col-xs-6'
+    }, React.createElement(React.DOM.input, {
+      "className": 'input-sm processWorkout--date',
+      "type": 'date',
+      "ref": 'workoutDate',
+      "defaultValue": this.getCurrentDateFormatted()
+    }))), React.createElement(React.DOM.div, {
+      "className": 'row'
+    }, React.createElement(React.DOM.div, {
+      "className": 'col-xs-6'
     }, React.createElement(React.DOM.button, {
       "id": 'process',
       "ref": 'process',
+      "className": 'processWorkout--execute',
       "onClick": this.processWorkout
-    }, "Process Workout"))));
+    }, "Add Workout"))));
   }
 });
 
