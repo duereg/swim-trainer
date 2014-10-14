@@ -3,6 +3,7 @@ var swimParser = require('swim-parser');
 
 var workoutSchema = new mongoose.Schema({
   userId: mongoose.Schema.Types.ObjectId,
+  date: {type: Date, default: Date.now },
   raw: String,
   formatted: mongoose.Schema.Types.Mixed
 });
@@ -25,6 +26,16 @@ workoutSchema.pre('save', function(next) {
   }
   return next();
 });
+
+workoutSchema.methods.totalTime = function() {
+  var totalTime = 0;
+
+  if (workout.formatted) {
+    totalTime = work.formatted.totalTime();
+  }
+
+  return totalTime;
+};
 
 workoutSchema.methods.totalYards = function() {
   var totalYards = 0;

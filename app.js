@@ -8,12 +8,12 @@ var session = require('express-session');
 var bodyParser = require('body-parser');
 var logger = require('morgan');
 var errorHandler = require('errorhandler');
-var csrf = require('lusca').csrf();
+var lusca = require('lusca');
+var csrf = lusca.csrf();
 var methodOverride = require('method-override');
 
 var _ = require('lodash');
 var MongoStore = require('connect-mongo')({ session: session });
-var flash = require('express-flash');
 var path = require('path');
 var mongoose = require('mongoose');
 var passport = require('passport');
@@ -94,12 +94,12 @@ app.use(session({
 }));
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(flash());
 app.use(function(req, res, next) {
   // CSRF protection.
   if (_.contains(csrfExclude, req.path)) return next();
   csrf(req, res, next);
 });
+app.use(lusca.xssProtection(true));
 app.use(function(req, res, next) {
   // Make user object available in templates.
   res.locals.user = req.user;
@@ -123,6 +123,7 @@ app.use(express.static(path.join(__dirname, 'public'), { maxAge: week }));
 app.get('/', homeController.index);
 app.get('/workouts', workoutController.getWorkouts);
 app.get('/workouts/add', workoutController.getAdd);
+app.post('/workouts/add', workoutController.postAdd);
 app.get('/login', userController.getLogin);
 app.post('/login', userController.postLogin);
 app.get('/logout', userController.logout);

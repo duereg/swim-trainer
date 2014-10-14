@@ -41,16 +41,11 @@ exports.getWorkouts = function(req, res) {
 exports.postAdd = function(req, res) {
   if (!req.user) return res.redirect('/login');
 
-  res.format({
-    'json': function() {
-      Workout.promise.add
-        .then(function(accountId) {
-          return WishlistsModel.edit(accountId, listId, req.body);
-        })
-        .then(res.status(200).send)
-        .catch(apiCatch(res));
-    }
-  });
+  var newWorkout = new Workout({ date: req.body.date, raw: req.body.workout});
+
+  newWorkout.promise.save()
+    .then(function(savedWorkout) {res.status(200).send(savedWorkout);}) //this is weird
+    .catch(apiCatch(res));
 }
 
 exports.getAdd = function(req, res) {

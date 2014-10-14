@@ -4,6 +4,7 @@
 
 React = require('react')
 swimParser = require('swim-parser')
+workoutData = require('../../src/data/workout.coffee')
 
 containerId = "workout-add"
 
@@ -12,9 +13,13 @@ processWorkout = React.createClass
     workout: {}
 
   processWorkout: ->
-    value = this.refs.workoutInput.getDOMNode().value
-    output = swimParser value
-    this.setState workout: output
+    workout = this.refs.workoutInput.getDOMNode().value
+    date = this.refs.workoutDate.getDOMNode().value
+
+    console.log(this.props.data);
+
+    workoutData.create(date, workout, this.props.data._csrf).then (results) ->
+      window.location = '/workouts'
 
   getCurrentDateFormatted: ->
     today = new Date()
@@ -24,10 +29,7 @@ processWorkout = React.createClass
     <div className='processWorkout container'>
       <div className='row'>
         <div className='col-xs-6'>
-          Enter your swim workout
-        </div>
-        <div className='col-xs-6'>
-          Results
+          Enter your workout
         </div>
       </div>
       <div className='row'>

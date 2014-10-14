@@ -6,7 +6,7 @@ gulp.task('coffee', function() {
   gulp.src('./public/entrypoint.cjsx', { read: false })
     .pipe(browserify({
       transform: ['coffee-reactify'],
-      extensions: ['.coffee', '.cjsx']
+      extensions: ['.cjsx', '.coffee']
     }))
     .pipe(rename('main.js'))
     .pipe(gulp.dest('./public/js'))
