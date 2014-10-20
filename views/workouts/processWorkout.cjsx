@@ -16,8 +16,6 @@ processWorkout = React.createClass
     workout = this.refs.workoutInput.getDOMNode().value
     date = this.refs.workoutDate.getDOMNode().value
 
-    console.log(this.props.data);
-
     workoutData.create(date, workout, this.props.data._csrf).then (results) ->
       window.location = '/workouts'
 
