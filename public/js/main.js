@@ -26685,6 +26685,7 @@ processWorkout = React.createClass({
     return "" + (today.getFullYear()) + "-" + (today.getMonth() + 1) + "-" + (today.getDate());
   },
   render: function() {
+    var _ref, _ref1;
     return React.createElement(React.DOM.div, {
       "className": 'processWorkout container'
     }, React.createElement(React.DOM.div, {
@@ -26698,7 +26699,8 @@ processWorkout = React.createClass({
     }, React.createElement(React.DOM.textarea, {
       "className": 'processWorkout--input',
       "id": 'workoutInput',
-      "ref": 'workoutInput'
+      "ref": 'workoutInput',
+      "defaultValue": ((_ref = this.props.workout) != null ? _ref.raw : void 0)
     }))), React.createElement(React.DOM.div, {
       "className": 'row'
     }, React.createElement(React.DOM.div, {
@@ -26707,7 +26709,7 @@ processWorkout = React.createClass({
       "className": 'input-sm processWorkout--date',
       "type": 'date',
       "ref": 'workoutDate',
-      "defaultValue": this.getFormattedDate(new Date())
+      "defaultValue": (((_ref1 = this.props.workout) != null ? _ref1.date : void 0) != null ? this.getFormattedDate(this.props.workout.date) : this.getFormattedDate(new Date()))
     }))), React.createElement(React.DOM.div, {
       "className": 'row'
     }, React.createElement(React.DOM.div, {

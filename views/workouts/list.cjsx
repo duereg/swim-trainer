@@ -23,11 +23,16 @@ list = React.createClass
 
             <section className="Workouts--item" key={workout._id} >
               <div className='row'>
-                <div className='col-xs-4'>{me.getFormattedDate(workout.date)}</div>
-                <div className='col-xs-2'>Total Distance:</div>
-                <div className='col-xs-2'>{parsedWorkout.totalDistance()}</div>
-                <div className='col-xs-2'>Total Time:</div>
-                <div className='col-xs-2'>{timeFormatter parsedWorkout.totalTime()}</div>
+                <div className='col-xs-4 hidden-sm hidden-md hidden-lg'>{me.getFormattedDate(workout.date)}</div>
+                <div className='col-sm-2 hidden-xs'>{me.getFormattedDate(workout.date)}</div>
+                <div className='col-xs-2 hidden-sm hidden-md hidden-lg'>Total Distance:</div>
+                <div className='col-sm-1 hidden-xs'>Total Distance:</div>
+                <div className='col-xs-2 hidden-sm hidden-md hidden-lg'>{parsedWorkout.totalDistance()}</div>
+                <div className='col-sm-1 hidden-xs'>{parsedWorkout.totalDistance()}</div>
+                <div className='col-xs-2 hidden-sm hidden-md hidden-lg'>Total Time:</div>
+                <div className='col-sm-1 hidden-xs'>Total Time:</div>
+                <div className='col-xs-2 hidden-sm hidden-md hidden-lg'>{timeFormatter parsedWorkout.totalTime()}</div>
+                <div className='col-sm-1 hidden-xs'>{timeFormatter parsedWorkout.totalTime()}</div>
               </div>
             </section>
         }

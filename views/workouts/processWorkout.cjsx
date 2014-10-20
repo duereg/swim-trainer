@@ -34,12 +34,12 @@ processWorkout = React.createClass
       </div>
       <div className='row'>
         <div className='col-xs-6'>
-          <textarea className='processWorkout--input' id='workoutInput' ref='workoutInput' />
+          <textarea className='processWorkout--input' id='workoutInput' ref='workoutInput' defaultValue={this.props.workout?.raw} />
         </div>
       </div>
       <div className='row'>
         <div className='col-xs-6'>
-          <input className='input-sm processWorkout--date' type='date' ref='workoutDate' defaultValue={@getFormattedDate(new Date())} />
+          <input className='input-sm processWorkout--date' type='date' ref='workoutDate' defaultValue={if this.props.workout?.date? then @getFormattedDate(this.props.workout.date) else @getFormattedDate(new Date())} />
         </div>
       </div>
       <div className='row'>
