@@ -3,12 +3,14 @@
 'use strict'
 
 React = require('react')
-swimParser = require('swim-parser')
 workoutData = require('../../src/data/workout.coffee')
+dateFormatterMixin = require('../mixins/dateFormatter.coffee')
 
 containerId = "workout-add"
 
 processWorkout = React.createClass
+  mixins: [dateFormatterMixin]
+
   getInitialState: ->
     workout: {}
 
@@ -37,7 +39,7 @@ processWorkout = React.createClass
       </div>
       <div className='row'>
         <div className='col-xs-6'>
-          <input className='input-sm processWorkout--date' type='date' ref='workoutDate' defaultValue={@getCurrentDateFormatted()} />
+          <input className='input-sm processWorkout--date' type='date' ref='workoutDate' defaultValue={@getFormattedDate(new Date())} />
         </div>
       </div>
       <div className='row'>
