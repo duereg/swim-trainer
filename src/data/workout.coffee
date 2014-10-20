@@ -3,8 +3,6 @@ agentPromisePlugin = require('superagent-promises')
 
 methods =
   create: (date, workout, csrf) ->
-    console.log(date, workout, csrf);
-
     Agent.post('/workouts/add')
       .set('Accept', 'application/json')
       .set('Content-Type', 'application/json')
