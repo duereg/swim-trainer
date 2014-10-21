@@ -5,10 +5,10 @@ workoutActions = require('./actions/workout/actions')
 
 fluxxor = {stores: null, actions: null}
 
-fluxxorFactory = (workouts) ->
+fluxxorFactory = ({workouts, csrf}) ->
   if (!fluxxor.stores || !fluxxor.actions)
-    stores = WorkoutStore: new WorkoutStore(account)
-    actions = workoutActions
+    stores = WorkoutStore: new WorkoutStore(workouts)
+    actions = workoutActions(csrf)
 
     fluxxor = new Fluxxor.Flux(stores, actions)
   fluxxor

@@ -5,6 +5,12 @@ _ = require('underscore')
 React = require('react')
 window.React = React
 
+flux = require('../src/flux')
+window.flux = flux
+
+#setup flux
+flux(window.data)
+
 components = require('../views/components.coffee')
 
 components.forEach (component) ->
@@ -14,3 +20,6 @@ components.forEach (component) ->
     React.renderComponent component({data: window.data}), domElement
   else
     console.log("No luck finding #{component.containerId}")
+
+
+
