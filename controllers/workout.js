@@ -48,6 +48,16 @@ exports.postAdd = function(req, res) {
     .catch(apiCatch(res));
 }
 
+exports.postSave = function(req, res) {
+  if (!req.user) return res.redirect('/login');
+
+  var newWorkout = new Workout(req.body);
+
+  newWorkout.promise.save()
+    .then(function(savedWorkout) {res.status(200).send(savedWorkout);}) //this is weird
+    .catch(apiCatch(res));
+}
+
 exports.getAdd = function(req, res) {
   if (!req.user) return res.redirect('/login');
 

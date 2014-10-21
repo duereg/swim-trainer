@@ -124,6 +124,7 @@ app.get('/', homeController.index);
 app.get('/workouts', workoutController.getWorkouts);
 app.get('/workouts/add', workoutController.getAdd);
 app.post('/workouts/add', workoutController.postAdd);
+app.post('/workouts/save/:id', workoutController.postSave);
 app.get('/login', userController.getLogin);
 app.post('/login', userController.postLogin);
 app.get('/logout', userController.logout);
