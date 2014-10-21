@@ -2,7 +2,6 @@ _ = require('underscore')
 Fluxxor = require('fluxxor')
 
 constants = require('./constants')
-navigator = require('../navigator')
 
 workoutStore = Fluxxor.createStore
   initialize: (workouts) ->
@@ -10,10 +9,11 @@ workoutStore = Fluxxor.createStore
     this.messages = []
     this.workouts = if workouts.length then workouts else []
 
-    this.bindActions
+    this.bindActions(
       constants.SAVE, this.onLoad,
       constants.SAVE_SUCCESS, this.onWorkoutSaveSuccess,
       constants.SAVE_FAILURE, this.onError
+    )
 
   sortedWorkouts: () ->
     _(this.workouts).sortBy (workout) -> workout.date
