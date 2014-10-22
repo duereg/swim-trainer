@@ -51,13 +51,12 @@ exports.postAdd = function(req, res) {
 exports.postSave = function(req, res) {
   if (!req.user) return res.redirect('/login');
 
-  var newWorkout = new Workout(req.body);
-
-  // Workout.promise.findOne({_id: req.params.id, userId: req.user.id}).then(function(origWorkout) {
-  //   origWorkout
-  // });
-
-  newWorkout.promise.save()
+  Workout.promise.findOne({_id: req.params.id, userId: req.user.id})
+    .then(function(origWorkout) {
+      origWorkout.raw = req.body.workout.raw;
+      origWorkout.date = req.body.workout.date;
+      return origWorkout.promise.save();
+    })
     .then(function(savedWorkout) {res.status(200).send(savedWorkout);}) //this is weird
     .catch(apiCatch(res));
 }
@@ -79,6 +78,4 @@ exports.getEdit = function(req, res) {
       workout: origWorkout
     });
   });
-
-
 }

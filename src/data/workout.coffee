@@ -6,6 +6,6 @@ methods =
 
   save: (date, workout, csrf) ->
     #shouldn't need date as workout should contain it?
-    promiseAgent(csrf)('post', "workouts/save/#{workout._id}", {workout: workout})
+    promiseAgent(csrf)('post', "/workouts/save/#{workout._id}", {workout: workout})
 
 module.exports = methods

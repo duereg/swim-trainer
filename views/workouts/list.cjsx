@@ -2,6 +2,7 @@
 
 React = require('react')
 swimParser = require('swim-parser')
+_ = require('underscore')
 
 layout = require('../layout')
 listItem = require('./listItem')
@@ -16,8 +17,9 @@ list = React.createClass
       <div className="container">
         <div className="Workouts">
         {
-          this.props.workouts.map (workout) ->
-            <listItem workout={workout} parsedWorkout={swimParser workout.raw} />
+          _(this.props.workouts).chain().sortBy((workout) -> workout.date).map( (workout) ->
+            <listItem key={workout._id} workout={workout} parsedWorkout={swimParser workout.raw} />
+          ).value().reverse()
         }
         </div>
         <hr />

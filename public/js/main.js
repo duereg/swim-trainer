@@ -30258,7 +30258,7 @@ methods = {
     });
   },
   save: function(date, workout, csrf) {
-    return promiseAgent(csrf)('post', "workouts/save/" + workout._id, {
+    return promiseAgent(csrf)('post', "/workouts/save/" + workout._id, {
       workout: workout
     });
   }
@@ -30437,11 +30437,21 @@ processWorkout = React.createClass({
     };
   },
   processWorkout: function() {
-    var date, workout;
+    var date, promise, workout;
     workout = this.refs.workoutInput.getDOMNode().value;
     date = this.refs.workoutDate.getDOMNode().value;
-    return workoutData.create(date, workout, this.props.data._csrf).then(function(results) {
+    promise = null;
+    if (this.props.data.workout != null) {
+      this.props.data.workout.raw = workout;
+      this.props.data.workout.date = date;
+      promise = workoutData.save(date, this.props.data.workout, this.props.data._csrf);
+    } else {
+      promise = workoutData.create(date, workout, this.props.data._csrf);
+    }
+    return promise.then(function(results) {
       return window.location = '/workouts';
+    })["catch"](function(error) {
+      return console.error(error);
     });
   },
   getCurrentDateFormatted: function() {

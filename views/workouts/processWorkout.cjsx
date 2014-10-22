@@ -17,9 +17,21 @@ processWorkout = React.createClass
   processWorkout: ->
     workout = this.refs.workoutInput.getDOMNode().value
     date = this.refs.workoutDate.getDOMNode().value
+    promise = null
 
-    workoutData.create(date, workout, this.props.data._csrf).then (results) ->
-      window.location = '/workouts'
+    if this.props.data.workout?
+      this.props.data.workout.raw = workout
+      this.props.data.workout.date = date
+      # console.log(this.props.data.workout)
+      promise = workoutData.save(date, this.props.data.workout, this.props.data._csrf)
+    else
+      promise = workoutData.create(date, workout, this.props.data._csrf)
+
+    promise
+      .then (results) ->
+        window.location = '/workouts'
+      .catch (error) ->
+        console.error error
 
   getCurrentDateFormatted: ->
     today = new Date()
