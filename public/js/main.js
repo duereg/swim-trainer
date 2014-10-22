@@ -30283,11 +30283,11 @@ fluxxor = {
 };
 
 fluxxorFactory = function(_arg) {
-  var actions, stores, workouts, _csrf;
-  workouts = _arg.workouts, _csrf = _arg._csrf;
+  var actions, stores, workout, workouts, _csrf;
+  workouts = _arg.workouts, workout = _arg.workout, _csrf = _arg._csrf;
   if (!fluxxor.stores || !fluxxor.actions) {
     stores = {
-      WorkoutStore: new WorkoutStore(workouts)
+      WorkoutStore: new WorkoutStore(workouts, workout)
     };
     actions = workoutActions(_csrf);
     fluxxor = new Fluxxor.Flux(stores, actions);
@@ -30396,9 +30396,22 @@ module.exports = [processWorkout];
 
 
 },{"./workouts/processWorkout.cjsx":257}],256:[function(require,module,exports){
+var formatDigit;
+
+formatDigit = function(digit) {
+  digit = digit + '';
+  if (digit.length === 1) {
+    digit = '0' + digit;
+  }
+  return digit;
+};
+
 module.exports = {
   getFormattedDate: function(date) {
-    return "" + (date.getFullYear()) + "-" + (date.getMonth() + 1) + "-" + (date.getDate());
+    var day, month;
+    month = formatDigit(date.getMonth() + 1);
+    day = formatDigit(date.getDate());
+    return "" + (date.getFullYear()) + "-" + month + "-" + day;
   }
 };
 
@@ -30452,7 +30465,7 @@ processWorkout = React.createClass({
       "className": 'processWorkout--input',
       "id": 'workoutInput',
       "ref": 'workoutInput',
-      "defaultValue": ((_ref = this.props.workout) != null ? _ref.raw : void 0)
+      "defaultValue": ((_ref = this.props.data.workout) != null ? _ref.raw : void 0)
     }))), React.createElement(React.DOM.div, {
       "className": 'row'
     }, React.createElement(React.DOM.div, {
@@ -30461,7 +30474,7 @@ processWorkout = React.createClass({
       "className": 'input-sm processWorkout--date',
       "type": 'date',
       "ref": 'workoutDate',
-      "defaultValue": (((_ref1 = this.props.workout) != null ? _ref1.date : void 0) != null ? this.getFormattedDate(this.props.workout.date) : this.getFormattedDate(new Date()))
+      "defaultValue": (((_ref1 = this.props.data.workout) != null ? _ref1.date : void 0) != null ? this.getFormattedDate(new Date(this.props.data.workout.date)) : this.getFormattedDate(new Date()))
     }))), React.createElement(React.DOM.div, {
       "className": 'row'
     }, React.createElement(React.DOM.div, {
@@ -30471,7 +30484,7 @@ processWorkout = React.createClass({
       "ref": 'process',
       "className": 'processWorkout--execute',
       "onClick": this.processWorkout
-    }, "Add Workout"))));
+    }, "Save Workout"))));
   }
 });
 

@@ -123,6 +123,7 @@ app.use(express.static(path.join(__dirname, 'public'), { maxAge: week }));
 app.get('/', homeController.index);
 app.get('/workouts', workoutController.getWorkouts);
 app.get('/workouts/add', workoutController.getAdd);
+app.get('/workouts/edit/:id', workoutController.getEdit);
 app.post('/workouts/add', workoutController.postAdd);
 app.post('/workouts/save/:id', workoutController.postSave);
 app.get('/login', userController.getLogin);

@@ -53,6 +53,10 @@ exports.postSave = function(req, res) {
 
   var newWorkout = new Workout(req.body);
 
+  // Workout.promise.findOne({_id: req.params.id, userId: req.user.id}).then(function(origWorkout) {
+  //   origWorkout
+  // });
+
   newWorkout.promise.save()
     .then(function(savedWorkout) {res.status(200).send(savedWorkout);}) //this is weird
     .catch(apiCatch(res));
@@ -64,4 +68,17 @@ exports.getAdd = function(req, res) {
   res.render('workouts/add', {
     title: 'Workouts'
   });
+}
+
+exports.getEdit = function(req, res) {
+  if (!req.user) return res.redirect('/login');
+
+  Workout.promise.findOne({_id: req.params.id, userId: req.user.id}).then(function(origWorkout) {
+    res.render('workouts/add', {
+      title: 'Workout',
+      workout: origWorkout
+    });
+  });
+
+
 }

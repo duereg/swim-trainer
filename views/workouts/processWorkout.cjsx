@@ -34,19 +34,19 @@ processWorkout = React.createClass
       </div>
       <div className='row'>
         <div className='col-xs-6'>
-          <textarea className='processWorkout--input' id='workoutInput' ref='workoutInput' defaultValue={this.props.workout?.raw} />
+          <textarea className='processWorkout--input' id='workoutInput' ref='workoutInput' defaultValue={this.props.data.workout?.raw} />
         </div>
       </div>
       <div className='row'>
         <div className='col-xs-6'>
           <input className='input-sm processWorkout--date' type='date' ref='workoutDate' defaultValue={
-            if this.props.workout?.date? then @getFormattedDate(this.props.workout.date) else @getFormattedDate(new Date())
+            if this.props.data.workout?.date? then @getFormattedDate(new Date(this.props.data.workout.date)) else @getFormattedDate(new Date())
           } />
         </div>
       </div>
       <div className='row'>
         <div className='col-xs-6'>
-          <button id='process' ref='process' className='processWorkout--execute' onClick={this.processWorkout}>Add Workout</button>
+          <button id='process' ref='process' className='processWorkout--execute' onClick={this.processWorkout}>Save Workout</button>
         </div>
       </div>
     </div>
