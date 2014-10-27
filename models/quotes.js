@@ -4,6 +4,30 @@ module.exports = [
     "author": "Abraham Lincoln"
   },
   {
+    "quote": "Ever tried. Ever failed. No matter. Try Again. Fail again. Fail better.",
+    "author": "Samuel Beckett"
+  },
+  {
+    "quote": "If you're going through hell, keep going.",
+    "author": "Winston Churchill"
+  },
+  {
+    "quote": "The harder the conflict, the more glorious the triumph.",
+    "author": "Thomas Paine"
+  },
+  {
+    "quote": "I've worked too hard and too long to let anything stand in the way of my goals. I will not let my teammates down and I will not let myself down.",
+    "author": "Mia Hamm"
+  },
+  {
+    "quote": "Things do not happen. Things are made to happen.",
+    "author": "John F. Kennedy"
+  },
+  {
+    "quote": "We are taught you must blame your father, your sisters, your brothers, the school, the teachers - but never blame yourself. It's never your fault. But it's always your fault, because if you wanted to change you're the one who has got to change.",
+    "author": "Katharine Hepburn"
+  },
+  {
     "quote": "Our greatest weakness lies in giving up. The most certain way to succeed is always to try just one more time.",
     "author": "Thomas A. Edison"
   },
