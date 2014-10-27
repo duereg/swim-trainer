@@ -22,6 +22,8 @@ layout = React.createClass
         <title>{this.props.data.title} | Hackathon Starter</title>
       </head>
       <body>
+        <span dangerouslySetInnerHTML={{__html: this.props.data.css('styles')}} />
+        <span dangerouslySetInnerHTML={{__html: this.props.data.js('application')}} />
         <navbar data={this.props.data} />
         <div id={mainContainer} className='container'>
           {this.props.children}
@@ -29,8 +31,6 @@ layout = React.createClass
         <script dangerouslySetInnerHTML={{
           __html: 'window.data = ' + JSON.stringify(this.props.data)
         }}></script>
-        <span dangerouslySetInnerHTML={{__html: this.props.data.css('styles')}} />
-        <span dangerouslySetInnerHTML={{__html: this.props.data.js('application')}} />
         <myFooter />
       </body>
     </html>
