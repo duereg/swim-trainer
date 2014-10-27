@@ -1,4 +1,60 @@
 module.exports = [
+  { "quote": "Luck is what happens when preparation meets opportunity."},
+  { "quote": "Things may come to those who wait, but only the things left by those who hustle.",
+    "author": "Abraham Lincoln"
+  },
+  {
+    "quote": "Our greatest weakness lies in giving up. The most certain way to succeed is always to try just one more time.",
+    "author": "Thomas A. Edison"
+  },
+  {
+    "quote": " You have to learn the rules of the game. And then you have to play better than anyone else.",
+    "author": "Albert Einstein"
+  },
+  {
+    "quote": "Believe in yourself! Have faith in your abilities! Without a humble but reasonable confidence in your own powers you cannot be successful or happy.",
+    "author": "Norman Vincent Peale"
+  },
+  {
+    "quote": "Don't watch the clock; do what it does. Keep going.",
+    "author": "Sam Levenson"
+  },
+  {
+    "quote": "Infuse your life with action. Don't wait for it to happen. Make it happen. Make your own future. Make your own hope. Make your own love.",
+    "author": "Bradly Whitford"
+  },
+  {
+    "quote": "In order to succeed, we must first believe that we can.",
+    "author": "Nikos Kazantzakis"
+  },
+  {
+    "quote": "Start where you are. Use what you have. Do what you can.",
+    "author": "Arthur Ashe"
+  },
+  {
+    "quote": "What you get by achieving your goals is not as important as what you become by achieving your goals.",
+    "author": "Henry David Thoreau"
+  },
+  {
+    "quote": "Do you want to know who you are? Don't ask. Act! Action will delineate and define you.",
+    "author": "Thomas Jefferson"
+  },
+  {
+    "quote": "By failing to prepare, you are preparing to fail.",
+    "author": "Benjamin Franklin"
+  },
+  {
+    "quote": "I don't believe you have to be better than everybody else. I believe you have to be better than you ever thought you could be.",
+    "author": "Ken Venturi"
+  },
+  {
+    "quote": "Even if you fall on your face, you're still moving forward.",
+    "author": "Victor Kiam"
+  },
+  {
+    "quote": "Always bear in mind that your own resolution to succeed is more important than any other.",
+    "author": "Abraham Lincoln"
+  },
   {
     "quote": "Never give up, never give in, and when the upper hand is ours, may we have the ability to handle the win with the dignity that we absorbed the loss.",
     "author": "Doug Williams"
