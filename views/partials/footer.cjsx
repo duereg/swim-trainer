@@ -1,6 +1,6 @@
 # @cjsx React.DOM
 
-React = require('react');
+React = require('react')
 
 footer = React.createClass
   render: ->
