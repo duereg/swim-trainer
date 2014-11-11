@@ -11,3 +11,5 @@ gulp.task('coffee', function() {
     .pipe(rename('main.js'))
     .pipe(gulp.dest('./public/js'))
 });
+
+gulp.task('default', ['coffee']);
