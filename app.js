@@ -30,6 +30,7 @@ var userController = require('./controllers/user');
 var apiController = require('./controllers/api');
 var contactController = require('./controllers/contact');
 var workoutController = require('./controllers/workout');
+var workoutApiController = require('./controllers/workout-api');
 
 /**
  * API keys and Passport configuration.
@@ -126,6 +127,8 @@ app.get('/workouts/add', workoutController.getAdd);
 app.get('/workouts/edit/:id', workoutController.getEdit);
 app.post('/workouts/add', workoutController.postAdd);
 app.post('/workouts/save/:id', workoutController.postSave);
+app.get('/v1/workouts', workoutApiController.getWorkouts);
+app.get('/v1/workout/:id', workoutApiController.getWorkout);
 app.get('/login', userController.getLogin);
 app.post('/login', userController.postLogin);
 app.get('/logout', userController.logout);
