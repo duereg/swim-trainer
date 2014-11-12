@@ -2,8 +2,6 @@
 
 React = require('react')
 
-# include partials/flash
-
 navbar = require('./partials/navbar.cjsx')
 myFooter = require('./partials/footer.cjsx')
 
@@ -19,19 +17,20 @@ layout = React.createClass
         <meta name='description', content='Swim Trainer 3000' />
         <meta name='csrf-token', content={this.props.data._csrf} />
         <meta name='author', content='Matt Blair' />
-        <title>{this.props.data.title} | Hackathon Starter</title>
+        <title>{this.props.data.title} | Swim Trainer</title>
       </head>
       <body>
         <span dangerouslySetInnerHTML={{__html: this.props.data.css('styles')}} />
-        <span dangerouslySetInnerHTML={{__html: this.props.data.js('application')}} />
         <navbar data={this.props.data} />
         <div id={mainContainer} className='container'>
           {this.props.children}
         </div>
+        <myFooter />
         <script dangerouslySetInnerHTML={{
           __html: 'window.data = ' + JSON.stringify(this.props.data)
-        }}></script>
-        <myFooter />
+        }}>
+        </script>
+        <span dangerouslySetInnerHTML={{__html: this.props.data.js('application')}} />
       </body>
     </html>
 

@@ -17,7 +17,7 @@ home = React.createClass
     quote = @getQuote()
 
     <layout data={this.props} containerId={containerId} >
-      <h1> Swimathon Starter </h1>
+      <h1> Swim Trainer </h1>
       <p className="lead">
         <p> {quote.quote} </p>
         <p> {quote.author} </p>
