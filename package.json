@@ -1,9 +1,9 @@
 {
-  "name": "hackathon-starter",
-  "version": "2.3.3",
+  "name": "swim-trainer",
+  "version": "1.0.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sahat/hackathon-starter.git"
+    "url": "https://github.com/duereg/swim-trainer.git"
   },
   "scripts": {
     "start": "node app.js",
