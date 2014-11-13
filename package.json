@@ -52,7 +52,7 @@
     "swim-parser": "duereg/swim-parser",
     "twilio": "^1.7.0",
     "uglify-js": "^2.4.15",
-    "validator": "^3.17.1"
+    "validator": "^3.22.1"
   },
   "devDependencies": {
     "blessed": "^0.0.37",
