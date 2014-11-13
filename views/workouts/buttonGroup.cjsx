@@ -4,7 +4,7 @@ React = require('react')
 
 buttonGroup = React.createClass
   render: ->
-    <div className="btn-group" data-toggle="buttons" role="group" aria-label={this.props.groupName}>
+    <div className="btn-group btn-group-xs" data-toggle="buttons" role="group" aria-label={this.props.groupName}>
       {
         props = this.props
         props.items.map (item, index) ->
