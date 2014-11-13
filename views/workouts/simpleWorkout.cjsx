@@ -5,33 +5,18 @@
 React = require('react')
 workoutData = require('../../src/data/workout.coffee')
 dateFormatterMixin = require('../mixins/dateFormatter.coffee')
+buttonGroup = require('./buttonGroup.cjsx')
 smallRow = require('./smallRow.cjsx')
 
-containerId = "workout-add"
+containerId = "workout-simple-add"
+
+intervals = [":15", ":30", ":45", "1:00"]
 
 processWorkout = React.createClass
   mixins: [dateFormatterMixin]
 
   getInitialState: ->
     workout: {}
-
-  processWorkout: ->
-    workout = this.refs.workoutInput.getDOMNode().value
-    date = this.refs.workoutDate.getDOMNode().value
-    promise = null
-
-    if this.props.data.workout?
-      this.props.data.workout.raw = workout
-      this.props.data.workout.date = date
-      promise = workoutData.save(date, this.props.data.workout, this.props.data._csrf)
-    else
-      promise = workoutData.create(date, workout, this.props.data._csrf)
-
-    promise
-      .then (results) ->
-        window.location = '/workouts'
-      .catch (error) ->
-        console.error error
 
   getCurrentDateFormatted: ->
     today = new Date()
@@ -43,15 +28,21 @@ processWorkout = React.createClass
         Enter your workout
       </smallRow>
       <smallRow>
-        <textarea className='processWorkout--input' id='workoutInput' ref='workoutInput' defaultValue={this.props.data.workout?.raw} />
-      </smallRow>
-      <smallRow>
         <input className='input-sm processWorkout--date' type='date' ref='workoutDate' defaultValue={
           if this.props.data.workout?.date? then @getFormattedDate(new Date(this.props.data.workout.date)) else @getFormattedDate(new Date())
         } />
       </smallRow>
       <smallRow>
-        <button id='process' ref='process' className='processWorkout--execute' onClick={this.processWorkout}>Save Workout</button>
+        Practice: <buttonGroup groupName="practice" items={intervals} />
+      </smallRow>
+      <smallRow>
+        Surface w Fins: <buttonGroup groupName="surface-fins" items={intervals} />
+      </smallRow>
+      <smallRow>
+        Surface wo Fins: <buttonGroup groupName="surface-no-fins" items={intervals} />
+      </smallRow>
+      <smallRow>
+        <button id='process' ref='process' className='processWorkout--execute'>Save Workout</button>
       </smallRow>
     </div>
 

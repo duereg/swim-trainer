@@ -3,6 +3,7 @@
 React = require('react')
 layout = require('../layout')
 processWorkout = require('./processWorkout')
+# simpleWorkout = require('./simpleWorkout')
 
 addWorkout = React.createClass
   render: ->

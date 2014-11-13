@@ -30537,13 +30537,15 @@ module.exports = {
 
 },{}],257:[function(require,module,exports){
 'use strict';
-var React, containerId, dateFormatterMixin, processWorkout, workoutData;
+var React, containerId, dateFormatterMixin, processWorkout, smallRow, workoutData;
 
 React = require('react');
 
 workoutData = require('../../src/data/workout.coffee');
 
 dateFormatterMixin = require('../mixins/dateFormatter.coffee');
+
+smallRow = require('./smallRow.cjsx');
 
 containerId = "workout-add";
 
@@ -30581,38 +30583,22 @@ processWorkout = React.createClass({
     var _ref, _ref1;
     return React.createElement("div", {
       "className": 'processWorkout container'
-    }, React.createElement("div", {
-      "className": 'row'
-    }, React.createElement("div", {
-      "className": 'col-xs-6'
-    }, "Enter your workout")), React.createElement("div", {
-      "className": 'row'
-    }, React.createElement("div", {
-      "className": 'col-xs-6'
-    }, React.createElement("textarea", {
+    }, React.createElement(smallRow, null, "Enter your workout"), React.createElement(smallRow, null, React.createElement("textarea", {
       "className": 'processWorkout--input',
       "id": 'workoutInput',
       "ref": 'workoutInput',
       "defaultValue": ((_ref = this.props.data.workout) != null ? _ref.raw : void 0)
-    }))), React.createElement("div", {
-      "className": 'row'
-    }, React.createElement("div", {
-      "className": 'col-xs-6'
-    }, React.createElement("input", {
+    })), React.createElement(smallRow, null, React.createElement("input", {
       "className": 'input-sm processWorkout--date',
       "type": 'date',
       "ref": 'workoutDate',
       "defaultValue": (((_ref1 = this.props.data.workout) != null ? _ref1.date : void 0) != null ? this.getFormattedDate(new Date(this.props.data.workout.date)) : this.getFormattedDate(new Date()))
-    }))), React.createElement("div", {
-      "className": 'row'
-    }, React.createElement("div", {
-      "className": 'col-xs-6'
-    }, React.createElement("button", {
+    })), React.createElement(smallRow, null, React.createElement("button", {
       "id": 'process',
       "ref": 'process',
       "className": 'processWorkout--execute',
       "onClick": this.processWorkout
-    }, "Save Workout"))));
+    }, "Save Workout")));
   }
 });
 
@@ -30622,4 +30608,23 @@ module.exports = processWorkout;
 
 
 
-},{"../../src/data/workout.coffee":250,"../mixins/dateFormatter.coffee":256,"react":208}]},{},[248])
+},{"../../src/data/workout.coffee":250,"../mixins/dateFormatter.coffee":256,"./smallRow.cjsx":258,"react":208}],258:[function(require,module,exports){
+var React, smallRow;
+
+React = require('react');
+
+smallRow = React.createClass({
+  render: function() {
+    return React.createElement("div", {
+      "className": 'row'
+    }, React.createElement("div", {
+      "className": 'col-xs-12'
+    }, this.props.children));
+  }
+});
+
+module.exports = smallRow;
+
+
+
+},{"react":208}]},{},[248])
