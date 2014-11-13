@@ -25,8 +25,8 @@ workoutListItem = React.createClass
         <div className='col-sm-1 hidden-xs'>{parsedWorkout.totalDistance()}</div>
         <div className='col-xs-2 hidden-sm hidden-md hidden-lg'>Total Time:</div>
         <div className='col-sm-1 hidden-xs'>Total Time:</div>
-        <div className='col-xs-2 hidden-sm hidden-md hidden-lg'>{timeFormatter parsedWorkout.totalTime()}</div>
-        <div className='col-sm-1 hidden-xs'>{timeFormatter parsedWorkout.totalTime()}</div>
+        <div className='col-xs-2 hidden-sm hidden-md hidden-lg'>{timeFormatter.toString parsedWorkout.totalTime()}</div>
+        <div className='col-sm-1 hidden-xs'>{timeFormatter.toString parsedWorkout.totalTime()}</div>
       </div>
     </section>
 

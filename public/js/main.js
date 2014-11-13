@@ -1416,5215 +1416,6 @@
 }.call(this));
 
 },{}],2:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-module.exports = function(Promise) {
-var SomePromiseArray = Promise._SomePromiseArray;
-function Promise$_Any(promises) {
-    var ret = new SomePromiseArray(promises);
-    var promise = ret.promise();
-    if (promise.isRejected()) {
-        return promise;
-    }
-    ret.setHowMany(1);
-    ret.setUnwrap();
-    ret.init();
-    return promise;
-}
-
-Promise.any = function Promise$Any(promises) {
-    return Promise$_Any(promises);
-};
-
-Promise.prototype.any = function Promise$any() {
-    return Promise$_Any(this);
-};
-
-};
-
-},{}],3:[function(require,module,exports){
-(function (process){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-var schedule = require("./schedule.js");
-var Queue = require("./queue.js");
-var errorObj = require("./util.js").errorObj;
-var tryCatch1 = require("./util.js").tryCatch1;
-var _process = typeof process !== "undefined" ? process : void 0;
-
-function Async() {
-    this._isTickUsed = false;
-    this._schedule = schedule;
-    this._length = 0;
-    this._lateBuffer = new Queue(16);
-    this._functionBuffer = new Queue(65536);
-    var self = this;
-    this.consumeFunctionBuffer = function Async$consumeFunctionBuffer() {
-        self._consumeFunctionBuffer();
-    };
-}
-
-Async.prototype.haveItemsQueued = function Async$haveItemsQueued() {
-    return this._length > 0;
-};
-
-Async.prototype.invokeLater = function Async$invokeLater(fn, receiver, arg) {
-    if (_process !== void 0 &&
-        _process.domain != null &&
-        !fn.domain) {
-        fn = _process.domain.bind(fn);
-    }
-    this._lateBuffer.push(fn, receiver, arg);
-    this._queueTick();
-};
-
-Async.prototype.invoke = function Async$invoke(fn, receiver, arg) {
-    if (_process !== void 0 &&
-        _process.domain != null &&
-        !fn.domain) {
-        fn = _process.domain.bind(fn);
-    }
-    var functionBuffer = this._functionBuffer;
-    functionBuffer.push(fn, receiver, arg);
-    this._length = functionBuffer.length();
-    this._queueTick();
-};
-
-Async.prototype._consumeFunctionBuffer =
-function Async$_consumeFunctionBuffer() {
-    var functionBuffer = this._functionBuffer;
-    while (functionBuffer.length() > 0) {
-        var fn = functionBuffer.shift();
-        var receiver = functionBuffer.shift();
-        var arg = functionBuffer.shift();
-        fn.call(receiver, arg);
-    }
-    this._reset();
-    this._consumeLateBuffer();
-};
-
-Async.prototype._consumeLateBuffer = function Async$_consumeLateBuffer() {
-    var buffer = this._lateBuffer;
-    while(buffer.length() > 0) {
-        var fn = buffer.shift();
-        var receiver = buffer.shift();
-        var arg = buffer.shift();
-        var res = tryCatch1(fn, receiver, arg);
-        if (res === errorObj) {
-            this._queueTick();
-            if (fn.domain != null) {
-                fn.domain.emit("error", res.e);
-            } else {
-                throw res.e;
-            }
-        }
-    }
-};
-
-Async.prototype._queueTick = function Async$_queue() {
-    if (!this._isTickUsed) {
-        this._schedule(this.consumeFunctionBuffer);
-        this._isTickUsed = true;
-    }
-};
-
-Async.prototype._reset = function Async$_reset() {
-    this._isTickUsed = false;
-    this._length = 0;
-};
-
-module.exports = new Async();
-
-}).call(this,require("1YiZ5S"))
-},{"./queue.js":26,"./schedule.js":29,"./util.js":36,"1YiZ5S":99}],4:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-var Promise = require("./promise.js")();
-module.exports = Promise;
-},{"./promise.js":21}],5:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-var cr = Object.create;
-if (cr) {
-    var callerCache = cr(null);
-    var getterCache = cr(null);
-    callerCache[" size"] = getterCache[" size"] = 0;
-}
-
-module.exports = function(Promise) {
-var util = require("./util.js");
-var canEvaluate = util.canEvaluate;
-var isIdentifier = util.isIdentifier;
-
-function makeMethodCaller (methodName) {
-    return new Function("obj", "                                             \n\
-        'use strict'                                                         \n\
-        var len = this.length;                                               \n\
-        switch(len) {                                                        \n\
-            case 1: return obj.methodName(this[0]);                          \n\
-            case 2: return obj.methodName(this[0], this[1]);                 \n\
-            case 3: return obj.methodName(this[0], this[1], this[2]);        \n\
-            case 0: return obj.methodName();                                 \n\
-            default: return obj.methodName.apply(obj, this);                 \n\
-        }                                                                    \n\
-        ".replace(/methodName/g, methodName));
-}
-
-function makeGetter (propertyName) {
-    return new Function("obj", "                                             \n\
-        'use strict';                                                        \n\
-        return obj.propertyName;                                             \n\
-        ".replace("propertyName", propertyName));
-}
-
-function getCompiled(name, compiler, cache) {
-    var ret = cache[name];
-    if (typeof ret !== "function") {
-        if (!isIdentifier(name)) {
-            return null;
-        }
-        ret = compiler(name);
-        cache[name] = ret;
-        cache[" size"]++;
-        if (cache[" size"] > 512) {
-            var keys = Object.keys(cache);
-            for (var i = 0; i < 256; ++i) delete cache[keys[i]];
-            cache[" size"] = keys.length - 256;
-        }
-    }
-    return ret;
-}
-
-function getMethodCaller(name) {
-    return getCompiled(name, makeMethodCaller, callerCache);
-}
-
-function getGetter(name) {
-    return getCompiled(name, makeGetter, getterCache);
-}
-
-function caller(obj) {
-    return obj[this.pop()].apply(obj, this);
-}
-Promise.prototype.call = function Promise$call(methodName) {
-    var $_len = arguments.length;var args = new Array($_len - 1); for(var $_i = 1; $_i < $_len; ++$_i) {args[$_i - 1] = arguments[$_i];}
-    if (canEvaluate) {
-        var maybeCaller = getMethodCaller(methodName);
-        if (maybeCaller !== null) {
-            return this._then(maybeCaller, void 0, void 0, args, void 0);
-        }
-    }
-    args.push(methodName);
-    return this._then(caller, void 0, void 0, args, void 0);
-};
-
-function namedGetter(obj) {
-    return obj[this];
-}
-function indexedGetter(obj) {
-    return obj[this];
-}
-Promise.prototype.get = function Promise$get(propertyName) {
-    var isIndex = (typeof propertyName === "number");
-    var getter;
-    if (!isIndex) {
-        if (canEvaluate) {
-            var maybeGetter = getGetter(propertyName);
-            getter = maybeGetter !== null ? maybeGetter : namedGetter;
-        } else {
-            getter = namedGetter;
-        }
-    } else {
-        getter = indexedGetter;
-    }
-    return this._then(getter, void 0, void 0, propertyName, void 0);
-};
-};
-
-},{"./util.js":36}],6:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-module.exports = function(Promise, INTERNAL) {
-var errors = require("./errors.js");
-var canAttach = errors.canAttach;
-var async = require("./async.js");
-var CancellationError = errors.CancellationError;
-
-Promise.prototype._cancel = function Promise$_cancel(reason) {
-    if (!this.isCancellable()) return this;
-    var parent;
-    var promiseToReject = this;
-    while ((parent = promiseToReject._cancellationParent) !== void 0 &&
-        parent.isCancellable()) {
-        promiseToReject = parent;
-    }
-    promiseToReject._attachExtraTrace(reason);
-    promiseToReject._rejectUnchecked(reason);
-};
-
-Promise.prototype.cancel = function Promise$cancel(reason) {
-    if (!this.isCancellable()) return this;
-    reason = reason !== void 0
-        ? (canAttach(reason) ? reason : new Error(reason + ""))
-        : new CancellationError();
-    async.invokeLater(this._cancel, this, reason);
-    return this;
-};
-
-Promise.prototype.cancellable = function Promise$cancellable() {
-    if (this._cancellable()) return this;
-    this._setCancellable();
-    this._cancellationParent = void 0;
-    return this;
-};
-
-Promise.prototype.uncancellable = function Promise$uncancellable() {
-    var ret = new Promise(INTERNAL);
-    ret._propagateFrom(this, 2 | 4);
-    ret._follow(this);
-    ret._unsetCancellable();
-    return ret;
-};
-
-Promise.prototype.fork =
-function Promise$fork(didFulfill, didReject, didProgress) {
-    var ret = this._then(didFulfill, didReject, didProgress,
-                         void 0, void 0);
-
-    ret._setCancellable();
-    ret._cancellationParent = void 0;
-    return ret;
-};
-};
-
-},{"./async.js":3,"./errors.js":11}],7:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-module.exports = function() {
-var inherits = require("./util.js").inherits;
-var defineProperty = require("./es5.js").defineProperty;
-
-var rignore = new RegExp(
-    "\\b(?:[a-zA-Z0-9.]+\\$_\\w+|" +
-    "tryCatch(?:1|2|3|4|Apply)|new \\w*PromiseArray|" +
-    "\\w*PromiseArray\\.\\w*PromiseArray|" +
-    "setTimeout|CatchFilter\\$_\\w+|makeNodePromisified|processImmediate|" +
-    "process._tickCallback|nextTick|Async\\$\\w+)\\b"
-);
-
-var rtraceline = null;
-var formatStack = null;
-
-function formatNonError(obj) {
-    var str;
-    if (typeof obj === "function") {
-        str = "[function " +
-            (obj.name || "anonymous") +
-            "]";
-    } else {
-        str = obj.toString();
-        var ruselessToString = /\[object [a-zA-Z0-9$_]+\]/;
-        if (ruselessToString.test(str)) {
-            try {
-                var newStr = JSON.stringify(obj);
-                str = newStr;
-            }
-            catch(e) {
-
-            }
-        }
-        if (str.length === 0) {
-            str = "(empty array)";
-        }
-    }
-    return ("(<" + snip(str) + ">, no stack trace)");
-}
-
-function snip(str) {
-    var maxChars = 41;
-    if (str.length < maxChars) {
-        return str;
-    }
-    return str.substr(0, maxChars - 3) + "...";
-}
-
-function CapturedTrace(ignoreUntil, isTopLevel) {
-    this.captureStackTrace(CapturedTrace, isTopLevel);
-
-}
-inherits(CapturedTrace, Error);
-
-CapturedTrace.prototype.captureStackTrace =
-function CapturedTrace$captureStackTrace(ignoreUntil, isTopLevel) {
-    captureStackTrace(this, ignoreUntil, isTopLevel);
-};
-
-CapturedTrace.possiblyUnhandledRejection =
-function CapturedTrace$PossiblyUnhandledRejection(reason) {
-    if (typeof console === "object") {
-        var message;
-        if (typeof reason === "object" || typeof reason === "function") {
-            var stack = reason.stack;
-            message = "Possibly unhandled " + formatStack(stack, reason);
-        } else {
-            message = "Possibly unhandled " + String(reason);
-        }
-        if (typeof console.error === "function" ||
-            typeof console.error === "object") {
-            console.error(message);
-        } else if (typeof console.log === "function" ||
-            typeof console.log === "object") {
-            console.log(message);
-        }
-    }
-};
-
-CapturedTrace.combine = function CapturedTrace$Combine(current, prev) {
-    var curLast = current.length - 1;
-    for (var i = prev.length - 1; i >= 0; --i) {
-        var line = prev[i];
-        if (current[curLast] === line) {
-            current.pop();
-            curLast--;
-        } else {
-            break;
-        }
-    }
-
-    current.push("From previous event:");
-    var lines = current.concat(prev);
-
-    var ret = [];
-
-    for (var i = 0, len = lines.length; i < len; ++i) {
-
-        if (((rignore.test(lines[i]) && rtraceline.test(lines[i])) ||
-            (i > 0 && !rtraceline.test(lines[i])) &&
-            lines[i] !== "From previous event:")
-       ) {
-            continue;
-        }
-        ret.push(lines[i]);
-    }
-    return ret;
-};
-
-CapturedTrace.protectErrorMessageNewlines = function(stack) {
-    for (var i = 0; i < stack.length; ++i) {
-        if (rtraceline.test(stack[i])) {
-            break;
-        }
-    }
-
-    if (i <= 1) return;
-
-    var errorMessageLines = [];
-    for (var j = 0; j < i; ++j) {
-        errorMessageLines.push(stack.shift());
-    }
-    stack.unshift(errorMessageLines.join("\u0002\u0000\u0001"));
-};
-
-CapturedTrace.isSupported = function CapturedTrace$IsSupported() {
-    return typeof captureStackTrace === "function";
-};
-
-var captureStackTrace = (function stackDetection() {
-    if (typeof Error.stackTraceLimit === "number" &&
-        typeof Error.captureStackTrace === "function") {
-        rtraceline = /^\s*at\s*/;
-        formatStack = function(stack, error) {
-            if (typeof stack === "string") return stack;
-
-            if (error.name !== void 0 &&
-                error.message !== void 0) {
-                return error.name + ". " + error.message;
-            }
-            return formatNonError(error);
-
-
-        };
-        var captureStackTrace = Error.captureStackTrace;
-        return function CapturedTrace$_captureStackTrace(
-            receiver, ignoreUntil) {
-            captureStackTrace(receiver, ignoreUntil);
-        };
-    }
-    var err = new Error();
-
-    if (typeof err.stack === "string" &&
-        typeof "".startsWith === "function" &&
-        (err.stack.startsWith("stackDetection@")) &&
-        stackDetection.name === "stackDetection") {
-
-        defineProperty(Error, "stackTraceLimit", {
-            writable: true,
-            enumerable: false,
-            configurable: false,
-            value: 25
-        });
-        rtraceline = /@/;
-        var rline = /[@\n]/;
-
-        formatStack = function(stack, error) {
-            if (typeof stack === "string") {
-                return (error.name + ". " + error.message + "\n" + stack);
-            }
-
-            if (error.name !== void 0 &&
-                error.message !== void 0) {
-                return error.name + ". " + error.message;
-            }
-            return formatNonError(error);
-        };
-
-        return function captureStackTrace(o) {
-            var stack = new Error().stack;
-            var split = stack.split(rline);
-            var len = split.length;
-            var ret = "";
-            for (var i = 0; i < len; i += 2) {
-                ret += split[i];
-                ret += "@";
-                ret += split[i + 1];
-                ret += "\n";
-            }
-            o.stack = ret;
-        };
-    } else {
-        formatStack = function(stack, error) {
-            if (typeof stack === "string") return stack;
-
-            if ((typeof error === "object" ||
-                typeof error === "function") &&
-                error.name !== void 0 &&
-                error.message !== void 0) {
-                return error.name + ". " + error.message;
-            }
-            return formatNonError(error);
-        };
-
-        return null;
-    }
-})();
-
-return CapturedTrace;
-};
-
-},{"./es5.js":13,"./util.js":36}],8:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-module.exports = function(NEXT_FILTER) {
-var util = require("./util.js");
-var errors = require("./errors.js");
-var tryCatch1 = util.tryCatch1;
-var errorObj = util.errorObj;
-var keys = require("./es5.js").keys;
-var TypeError = errors.TypeError;
-
-function CatchFilter(instances, callback, promise) {
-    this._instances = instances;
-    this._callback = callback;
-    this._promise = promise;
-}
-
-function CatchFilter$_safePredicate(predicate, e) {
-    var safeObject = {};
-    var retfilter = tryCatch1(predicate, safeObject, e);
-
-    if (retfilter === errorObj) return retfilter;
-
-    var safeKeys = keys(safeObject);
-    if (safeKeys.length) {
-        errorObj.e = new TypeError(
-            "Catch filter must inherit from Error "
-          + "or be a simple predicate function");
-        return errorObj;
-    }
-    return retfilter;
-}
-
-CatchFilter.prototype.doFilter = function CatchFilter$_doFilter(e) {
-    var cb = this._callback;
-    var promise = this._promise;
-    var boundTo = promise._boundTo;
-    for (var i = 0, len = this._instances.length; i < len; ++i) {
-        var item = this._instances[i];
-        var itemIsErrorType = item === Error ||
-            (item != null && item.prototype instanceof Error);
-
-        if (itemIsErrorType && e instanceof item) {
-            var ret = tryCatch1(cb, boundTo, e);
-            if (ret === errorObj) {
-                NEXT_FILTER.e = ret.e;
-                return NEXT_FILTER;
-            }
-            return ret;
-        } else if (typeof item === "function" && !itemIsErrorType) {
-            var shouldHandle = CatchFilter$_safePredicate(item, e);
-            if (shouldHandle === errorObj) {
-                var trace = errors.canAttach(errorObj.e)
-                    ? errorObj.e
-                    : new Error(errorObj.e + "");
-                this._promise._attachExtraTrace(trace);
-                e = errorObj.e;
-                break;
-            } else if (shouldHandle) {
-                var ret = tryCatch1(cb, boundTo, e);
-                if (ret === errorObj) {
-                    NEXT_FILTER.e = ret.e;
-                    return NEXT_FILTER;
-                }
-                return ret;
-            }
-        }
-    }
-    NEXT_FILTER.e = e;
-    return NEXT_FILTER;
-};
-
-return CatchFilter;
-};
-
-},{"./errors.js":11,"./es5.js":13,"./util.js":36}],9:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-var util = require("./util.js");
-var isPrimitive = util.isPrimitive;
-var wrapsPrimitiveReceiver = util.wrapsPrimitiveReceiver;
-
-module.exports = function(Promise) {
-var returner = function Promise$_returner() {
-    return this;
-};
-var thrower = function Promise$_thrower() {
-    throw this;
-};
-
-var wrapper = function Promise$_wrapper(value, action) {
-    if (action === 1) {
-        return function Promise$_thrower() {
-            throw value;
-        };
-    } else if (action === 2) {
-        return function Promise$_returner() {
-            return value;
-        };
-    }
-};
-
-
-Promise.prototype["return"] =
-Promise.prototype.thenReturn =
-function Promise$thenReturn(value) {
-    if (wrapsPrimitiveReceiver && isPrimitive(value)) {
-        return this._then(
-            wrapper(value, 2),
-            void 0,
-            void 0,
-            void 0,
-            void 0
-       );
-    }
-    return this._then(returner, void 0, void 0, value, void 0);
-};
-
-Promise.prototype["throw"] =
-Promise.prototype.thenThrow =
-function Promise$thenThrow(reason) {
-    if (wrapsPrimitiveReceiver && isPrimitive(reason)) {
-        return this._then(
-            wrapper(reason, 1),
-            void 0,
-            void 0,
-            void 0,
-            void 0
-       );
-    }
-    return this._then(thrower, void 0, void 0, reason, void 0);
-};
-};
-
-},{"./util.js":36}],10:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-module.exports = function(Promise, INTERNAL) {
-var PromiseReduce = Promise.reduce;
-
-Promise.prototype.each = function Promise$each(fn) {
-    return PromiseReduce(this, fn, null, INTERNAL);
-};
-
-Promise.each = function Promise$Each(promises, fn) {
-    return PromiseReduce(promises, fn, null, INTERNAL);
-};
-};
-
-},{}],11:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-var Objectfreeze = require("./es5.js").freeze;
-var util = require("./util.js");
-var inherits = util.inherits;
-var notEnumerableProp = util.notEnumerableProp;
-
-function markAsOriginatingFromRejection(e) {
-    try {
-        notEnumerableProp(e, "isOperational", true);
-    }
-    catch(ignore) {}
-}
-
-function originatesFromRejection(e) {
-    if (e == null) return false;
-    return ((e instanceof OperationalError) ||
-        e["isOperational"] === true);
-}
-
-function isError(obj) {
-    return obj instanceof Error;
-}
-
-function canAttach(obj) {
-    return isError(obj);
-}
-
-function subError(nameProperty, defaultMessage) {
-    function SubError(message) {
-        if (!(this instanceof SubError)) return new SubError(message);
-        this.message = typeof message === "string" ? message : defaultMessage;
-        this.name = nameProperty;
-        if (Error.captureStackTrace) {
-            Error.captureStackTrace(this, this.constructor);
-        }
-    }
-    inherits(SubError, Error);
-    return SubError;
-}
-
-var _TypeError, _RangeError;
-var CancellationError = subError("CancellationError", "cancellation error");
-var TimeoutError = subError("TimeoutError", "timeout error");
-var AggregateError = subError("AggregateError", "aggregate error");
-try {
-    _TypeError = TypeError;
-    _RangeError = RangeError;
-} catch(e) {
-    _TypeError = subError("TypeError", "type error");
-    _RangeError = subError("RangeError", "range error");
-}
-
-var methods = ("join pop push shift unshift slice filter forEach some " +
-    "every map indexOf lastIndexOf reduce reduceRight sort reverse").split(" ");
-
-for (var i = 0; i < methods.length; ++i) {
-    if (typeof Array.prototype[methods[i]] === "function") {
-        AggregateError.prototype[methods[i]] = Array.prototype[methods[i]];
-    }
-}
-
-AggregateError.prototype.length = 0;
-AggregateError.prototype["isOperational"] = true;
-var level = 0;
-AggregateError.prototype.toString = function() {
-    var indent = Array(level * 4 + 1).join(" ");
-    var ret = "\n" + indent + "AggregateError of:" + "\n";
-    level++;
-    indent = Array(level * 4 + 1).join(" ");
-    for (var i = 0; i < this.length; ++i) {
-        var str = this[i] === this ? "[Circular AggregateError]" : this[i] + "";
-        var lines = str.split("\n");
-        for (var j = 0; j < lines.length; ++j) {
-            lines[j] = indent + lines[j];
-        }
-        str = lines.join("\n");
-        ret += str + "\n";
-    }
-    level--;
-    return ret;
-};
-
-function OperationalError(message) {
-    this.name = "OperationalError";
-    this.message = message;
-    this.cause = message;
-    this["isOperational"] = true;
-
-    if (message instanceof Error) {
-        this.message = message.message;
-        this.stack = message.stack;
-    } else if (Error.captureStackTrace) {
-        Error.captureStackTrace(this, this.constructor);
-    }
-
-}
-inherits(OperationalError, Error);
-
-var key = "__BluebirdErrorTypes__";
-var errorTypes = Error[key];
-if (!errorTypes) {
-    errorTypes = Objectfreeze({
-        CancellationError: CancellationError,
-        TimeoutError: TimeoutError,
-        OperationalError: OperationalError,
-        RejectionError: OperationalError,
-        AggregateError: AggregateError
-    });
-    notEnumerableProp(Error, key, errorTypes);
-}
-
-module.exports = {
-    Error: Error,
-    TypeError: _TypeError,
-    RangeError: _RangeError,
-    CancellationError: errorTypes.CancellationError,
-    OperationalError: errorTypes.OperationalError,
-    TimeoutError: errorTypes.TimeoutError,
-    AggregateError: errorTypes.AggregateError,
-    originatesFromRejection: originatesFromRejection,
-    markAsOriginatingFromRejection: markAsOriginatingFromRejection,
-    canAttach: canAttach
-};
-
-},{"./es5.js":13,"./util.js":36}],12:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-module.exports = function(Promise) {
-var TypeError = require('./errors.js').TypeError;
-
-function apiRejection(msg) {
-    var error = new TypeError(msg);
-    var ret = Promise.rejected(error);
-    var parent = ret._peekContext();
-    if (parent != null) {
-        parent._attachExtraTrace(error);
-    }
-    return ret;
-}
-
-return apiRejection;
-};
-
-},{"./errors.js":11}],13:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-var isES5 = (function(){
-    "use strict";
-    return this === void 0;
-})();
-
-if (isES5) {
-    module.exports = {
-        freeze: Object.freeze,
-        defineProperty: Object.defineProperty,
-        keys: Object.keys,
-        getPrototypeOf: Object.getPrototypeOf,
-        isArray: Array.isArray,
-        isES5: isES5
-    };
-} else {
-    var has = {}.hasOwnProperty;
-    var str = {}.toString;
-    var proto = {}.constructor.prototype;
-
-    var ObjectKeys = function ObjectKeys(o) {
-        var ret = [];
-        for (var key in o) {
-            if (has.call(o, key)) {
-                ret.push(key);
-            }
-        }
-        return ret;
-    }
-
-    var ObjectDefineProperty = function ObjectDefineProperty(o, key, desc) {
-        o[key] = desc.value;
-        return o;
-    }
-
-    var ObjectFreeze = function ObjectFreeze(obj) {
-        return obj;
-    }
-
-    var ObjectGetPrototypeOf = function ObjectGetPrototypeOf(obj) {
-        try {
-            return Object(obj).constructor.prototype;
-        }
-        catch (e) {
-            return proto;
-        }
-    }
-
-    var ArrayIsArray = function ArrayIsArray(obj) {
-        try {
-            return str.call(obj) === "[object Array]";
-        }
-        catch(e) {
-            return false;
-        }
-    }
-
-    module.exports = {
-        isArray: ArrayIsArray,
-        keys: ObjectKeys,
-        defineProperty: ObjectDefineProperty,
-        freeze: ObjectFreeze,
-        getPrototypeOf: ObjectGetPrototypeOf,
-        isES5: isES5
-    };
-}
-
-},{}],14:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-module.exports = function(Promise, INTERNAL) {
-var PromiseMap = Promise.map;
-
-Promise.prototype.filter = function Promise$filter(fn, options) {
-    return PromiseMap(this, fn, options, INTERNAL);
-};
-
-Promise.filter = function Promise$Filter(promises, fn, options) {
-    return PromiseMap(promises, fn, options, INTERNAL);
-};
-};
-
-},{}],15:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-module.exports = function(Promise, NEXT_FILTER, cast) {
-var util = require("./util.js");
-var wrapsPrimitiveReceiver = util.wrapsPrimitiveReceiver;
-var isPrimitive = util.isPrimitive;
-var thrower = util.thrower;
-
-function returnThis() {
-    return this;
-}
-function throwThis() {
-    throw this;
-}
-function return$(r) {
-    return function Promise$_returner() {
-        return r;
-    };
-}
-function throw$(r) {
-    return function Promise$_thrower() {
-        throw r;
-    };
-}
-function promisedFinally(ret, reasonOrValue, isFulfilled) {
-    var then;
-    if (wrapsPrimitiveReceiver && isPrimitive(reasonOrValue)) {
-        then = isFulfilled ? return$(reasonOrValue) : throw$(reasonOrValue);
-    } else {
-        then = isFulfilled ? returnThis : throwThis;
-    }
-    return ret._then(then, thrower, void 0, reasonOrValue, void 0);
-}
-
-function finallyHandler(reasonOrValue) {
-    var promise = this.promise;
-    var handler = this.handler;
-
-    var ret = promise._isBound()
-                    ? handler.call(promise._boundTo)
-                    : handler();
-
-    if (ret !== void 0) {
-        var maybePromise = cast(ret, void 0);
-        if (maybePromise instanceof Promise) {
-            return promisedFinally(maybePromise, reasonOrValue,
-                                    promise.isFulfilled());
-        }
-    }
-
-    if (promise.isRejected()) {
-        NEXT_FILTER.e = reasonOrValue;
-        return NEXT_FILTER;
-    } else {
-        return reasonOrValue;
-    }
-}
-
-function tapHandler(value) {
-    var promise = this.promise;
-    var handler = this.handler;
-
-    var ret = promise._isBound()
-                    ? handler.call(promise._boundTo, value)
-                    : handler(value);
-
-    if (ret !== void 0) {
-        var maybePromise = cast(ret, void 0);
-        if (maybePromise instanceof Promise) {
-            return promisedFinally(maybePromise, value, true);
-        }
-    }
-    return value;
-}
-
-Promise.prototype._passThroughHandler =
-function Promise$_passThroughHandler(handler, isFinally) {
-    if (typeof handler !== "function") return this.then();
-
-    var promiseAndHandler = {
-        promise: this,
-        handler: handler
-    };
-
-    return this._then(
-            isFinally ? finallyHandler : tapHandler,
-            isFinally ? finallyHandler : void 0, void 0,
-            promiseAndHandler, void 0);
-};
-
-Promise.prototype.lastly =
-Promise.prototype["finally"] = function Promise$finally(handler) {
-    return this._passThroughHandler(handler, true);
-};
-
-Promise.prototype.tap = function Promise$tap(handler) {
-    return this._passThroughHandler(handler, false);
-};
-};
-
-},{"./util.js":36}],16:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-module.exports = function(Promise, apiRejection, INTERNAL, cast) {
-var errors = require("./errors.js");
-var TypeError = errors.TypeError;
-var deprecated = require("./util.js").deprecated;
-var util = require("./util.js");
-var errorObj = util.errorObj;
-var tryCatch1 = util.tryCatch1;
-var yieldHandlers = [];
-
-function promiseFromYieldHandler(value, yieldHandlers) {
-    var _errorObj = errorObj;
-    var _Promise = Promise;
-    var len = yieldHandlers.length;
-    for (var i = 0; i < len; ++i) {
-        var result = tryCatch1(yieldHandlers[i], void 0, value);
-        if (result === _errorObj) {
-            return _Promise.reject(_errorObj.e);
-        }
-        var maybePromise = cast(result, promiseFromYieldHandler);
-        if (maybePromise instanceof _Promise) return maybePromise;
-    }
-    return null;
-}
-
-function PromiseSpawn(generatorFunction, receiver, yieldHandler) {
-    var promise = this._promise = new Promise(INTERNAL);
-    promise._setTrace(void 0);
-    this._generatorFunction = generatorFunction;
-    this._receiver = receiver;
-    this._generator = void 0;
-    this._yieldHandlers = typeof yieldHandler === "function"
-        ? [yieldHandler].concat(yieldHandlers)
-        : yieldHandlers;
-}
-
-PromiseSpawn.prototype.promise = function PromiseSpawn$promise() {
-    return this._promise;
-};
-
-PromiseSpawn.prototype._run = function PromiseSpawn$_run() {
-    this._generator = this._generatorFunction.call(this._receiver);
-    this._receiver =
-        this._generatorFunction = void 0;
-    this._next(void 0);
-};
-
-PromiseSpawn.prototype._continue = function PromiseSpawn$_continue(result) {
-    if (result === errorObj) {
-        this._generator = void 0;
-        var trace = errors.canAttach(result.e)
-            ? result.e : new Error(result.e + "");
-        this._promise._attachExtraTrace(trace);
-        this._promise._reject(result.e, trace);
-        return;
-    }
-
-    var value = result.value;
-    if (result.done === true) {
-        this._generator = void 0;
-        if (!this._promise._tryFollow(value)) {
-            this._promise._fulfill(value);
-        }
-    } else {
-        var maybePromise = cast(value, void 0);
-        if (!(maybePromise instanceof Promise)) {
-            maybePromise =
-                promiseFromYieldHandler(maybePromise, this._yieldHandlers);
-            if (maybePromise === null) {
-                this._throw(new TypeError("A value was yielded that could not be treated as a promise"));
-                return;
-            }
-        }
-        maybePromise._then(
-            this._next,
-            this._throw,
-            void 0,
-            this,
-            null
-       );
-    }
-};
-
-PromiseSpawn.prototype._throw = function PromiseSpawn$_throw(reason) {
-    if (errors.canAttach(reason))
-        this._promise._attachExtraTrace(reason);
-    this._continue(
-        tryCatch1(this._generator["throw"], this._generator, reason)
-   );
-};
-
-PromiseSpawn.prototype._next = function PromiseSpawn$_next(value) {
-    this._continue(
-        tryCatch1(this._generator.next, this._generator, value)
-   );
-};
-
-Promise.coroutine =
-function Promise$Coroutine(generatorFunction, options) {
-    if (typeof generatorFunction !== "function") {
-        throw new TypeError("generatorFunction must be a function");
-    }
-    var yieldHandler = Object(options).yieldHandler;
-    var PromiseSpawn$ = PromiseSpawn;
-    return function () {
-        var generator = generatorFunction.apply(this, arguments);
-        var spawn = new PromiseSpawn$(void 0, void 0, yieldHandler);
-        spawn._generator = generator;
-        spawn._next(void 0);
-        return spawn.promise();
-    };
-};
-
-Promise.coroutine.addYieldHandler = function(fn) {
-    if (typeof fn !== "function") throw new TypeError("fn must be a function");
-    yieldHandlers.push(fn);
-};
-
-Promise.spawn = function Promise$Spawn(generatorFunction) {
-    deprecated("Promise.spawn is deprecated. Use Promise.coroutine instead.");
-    if (typeof generatorFunction !== "function") {
-        return apiRejection("generatorFunction must be a function");
-    }
-    var spawn = new PromiseSpawn(generatorFunction, this);
-    var ret = spawn.promise();
-    spawn._run(Promise.spawn);
-    return ret;
-};
-};
-
-},{"./errors.js":11,"./util.js":36}],17:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-module.exports =
-function(Promise, PromiseArray, cast, INTERNAL) {
-var util = require("./util.js");
-var canEvaluate = util.canEvaluate;
-var tryCatch1 = util.tryCatch1;
-var errorObj = util.errorObj;
-
-
-if (canEvaluate) {
-    var thenCallback = function(i) {
-        return new Function("value", "holder", "                             \n\
-            'use strict';                                                    \n\
-            holder.pIndex = value;                                           \n\
-            holder.checkFulfillment(this);                                   \n\
-            ".replace(/Index/g, i));
-    };
-
-    var caller = function(count) {
-        var values = [];
-        for (var i = 1; i <= count; ++i) values.push("holder.p" + i);
-        return new Function("holder", "                                      \n\
-            'use strict';                                                    \n\
-            var callback = holder.fn;                                        \n\
-            return callback(values);                                         \n\
-            ".replace(/values/g, values.join(", ")));
-    };
-    var thenCallbacks = [];
-    var callers = [void 0];
-    for (var i = 1; i <= 5; ++i) {
-        thenCallbacks.push(thenCallback(i));
-        callers.push(caller(i));
-    }
-
-    var Holder = function(total, fn) {
-        this.p1 = this.p2 = this.p3 = this.p4 = this.p5 = null;
-        this.fn = fn;
-        this.total = total;
-        this.now = 0;
-    };
-
-    Holder.prototype.callers = callers;
-    Holder.prototype.checkFulfillment = function(promise) {
-        var now = this.now;
-        now++;
-        var total = this.total;
-        if (now >= total) {
-            var handler = this.callers[total];
-            var ret = tryCatch1(handler, void 0, this);
-            if (ret === errorObj) {
-                promise._rejectUnchecked(ret.e);
-            } else if (!promise._tryFollow(ret)) {
-                promise._fulfillUnchecked(ret);
-            }
-        } else {
-            this.now = now;
-        }
-    };
-}
-
-
-
-
-Promise.join = function Promise$Join() {
-    var last = arguments.length - 1;
-    var fn;
-    if (last > 0 && typeof arguments[last] === "function") {
-        fn = arguments[last];
-        if (last < 6 && canEvaluate) {
-            var ret = new Promise(INTERNAL);
-            ret._setTrace(void 0);
-            var holder = new Holder(last, fn);
-            var reject = ret._reject;
-            var callbacks = thenCallbacks;
-            for (var i = 0; i < last; ++i) {
-                var maybePromise = cast(arguments[i], void 0);
-                if (maybePromise instanceof Promise) {
-                    if (maybePromise.isPending()) {
-                        maybePromise._then(callbacks[i], reject,
-                                           void 0, ret, holder);
-                    } else if (maybePromise.isFulfilled()) {
-                        callbacks[i].call(ret,
-                                          maybePromise._settledValue, holder);
-                    } else {
-                        ret._reject(maybePromise._settledValue);
-                        maybePromise._unsetRejectionIsUnhandled();
-                    }
-                } else {
-                    callbacks[i].call(ret, maybePromise, holder);
-                }
-            }
-            return ret;
-        }
-    }
-    var $_len = arguments.length;var args = new Array($_len); for(var $_i = 0; $_i < $_len; ++$_i) {args[$_i] = arguments[$_i];}
-    var ret = new PromiseArray(args).promise();
-    return fn !== void 0 ? ret.spread(fn) : ret;
-};
-
-};
-
-},{"./util.js":36}],18:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-module.exports = function(Promise, PromiseArray, apiRejection, cast, INTERNAL) {
-var util = require("./util.js");
-var tryCatch3 = util.tryCatch3;
-var errorObj = util.errorObj;
-var PENDING = {};
-var EMPTY_ARRAY = [];
-
-function MappingPromiseArray(promises, fn, limit, _filter) {
-    this.constructor$(promises);
-    this._callback = fn;
-    this._preservedValues = _filter === INTERNAL
-        ? new Array(this.length())
-        : null;
-    this._limit = limit;
-    this._inFlight = 0;
-    this._queue = limit >= 1 ? [] : EMPTY_ARRAY;
-    this._init$(void 0, -2);
-}
-util.inherits(MappingPromiseArray, PromiseArray);
-
-MappingPromiseArray.prototype._init = function MappingPromiseArray$_init() {};
-
-MappingPromiseArray.prototype._promiseFulfilled =
-function MappingPromiseArray$_promiseFulfilled(value, index) {
-    var values = this._values;
-    if (values === null) return;
-
-    var length = this.length();
-    var preservedValues = this._preservedValues;
-    var limit = this._limit;
-    if (values[index] === PENDING) {
-        values[index] = value;
-        if (limit >= 1) {
-            this._inFlight--;
-            this._drainQueue();
-            if (this._isResolved()) return;
-        }
-    } else {
-        if (limit >= 1 && this._inFlight >= limit) {
-            values[index] = value;
-            this._queue.push(index);
-            return;
-        }
-        if (preservedValues !== null) preservedValues[index] = value;
-
-        var callback = this._callback;
-        var receiver = this._promise._boundTo;
-        var ret = tryCatch3(callback, receiver, value, index, length);
-        if (ret === errorObj) return this._reject(ret.e);
-
-        var maybePromise = cast(ret, void 0);
-        if (maybePromise instanceof Promise) {
-            if (maybePromise.isPending()) {
-                if (limit >= 1) this._inFlight++;
-                values[index] = PENDING;
-                return maybePromise._proxyPromiseArray(this, index);
-            } else if (maybePromise.isFulfilled()) {
-                ret = maybePromise.value();
-            } else {
-                maybePromise._unsetRejectionIsUnhandled();
-                return this._reject(maybePromise.reason());
-            }
-        }
-        values[index] = ret;
-    }
-    var totalResolved = ++this._totalResolved;
-    if (totalResolved >= length) {
-        if (preservedValues !== null) {
-            this._filter(values, preservedValues);
-        } else {
-            this._resolve(values);
-        }
-
-    }
-};
-
-MappingPromiseArray.prototype._drainQueue =
-function MappingPromiseArray$_drainQueue() {
-    var queue = this._queue;
-    var limit = this._limit;
-    var values = this._values;
-    while (queue.length > 0 && this._inFlight < limit) {
-        var index = queue.pop();
-        this._promiseFulfilled(values[index], index);
-    }
-};
-
-MappingPromiseArray.prototype._filter =
-function MappingPromiseArray$_filter(booleans, values) {
-    var len = values.length;
-    var ret = new Array(len);
-    var j = 0;
-    for (var i = 0; i < len; ++i) {
-        if (booleans[i]) ret[j++] = values[i];
-    }
-    ret.length = j;
-    this._resolve(ret);
-};
-
-MappingPromiseArray.prototype.preservedValues =
-function MappingPromiseArray$preserveValues() {
-    return this._preservedValues;
-};
-
-function map(promises, fn, options, _filter) {
-    var limit = typeof options === "object" && options !== null
-        ? options.concurrency
-        : 0;
-    limit = typeof limit === "number" &&
-        isFinite(limit) && limit >= 1 ? limit : 0;
-    return new MappingPromiseArray(promises, fn, limit, _filter);
-}
-
-Promise.prototype.map = function Promise$map(fn, options) {
-    if (typeof fn !== "function") return apiRejection("fn must be a function");
-
-    return map(this, fn, options, null).promise();
-};
-
-Promise.map = function Promise$Map(promises, fn, options, _filter) {
-    if (typeof fn !== "function") return apiRejection("fn must be a function");
-    return map(promises, fn, options, _filter).promise();
-};
-
-
-};
-
-},{"./util.js":36}],19:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-module.exports = function(Promise) {
-var util = require("./util.js");
-var async = require("./async.js");
-var tryCatch2 = util.tryCatch2;
-var tryCatch1 = util.tryCatch1;
-var errorObj = util.errorObj;
-
-function thrower(r) {
-    throw r;
-}
-
-function Promise$_spreadAdapter(val, receiver) {
-    if (!util.isArray(val)) return Promise$_successAdapter(val, receiver);
-    var ret = util.tryCatchApply(this, [null].concat(val), receiver);
-    if (ret === errorObj) {
-        async.invokeLater(thrower, void 0, ret.e);
-    }
-}
-
-function Promise$_successAdapter(val, receiver) {
-    var nodeback = this;
-    var ret = val === void 0
-        ? tryCatch1(nodeback, receiver, null)
-        : tryCatch2(nodeback, receiver, null, val);
-    if (ret === errorObj) {
-        async.invokeLater(thrower, void 0, ret.e);
-    }
-}
-function Promise$_errorAdapter(reason, receiver) {
-    var nodeback = this;
-    var ret = tryCatch1(nodeback, receiver, reason);
-    if (ret === errorObj) {
-        async.invokeLater(thrower, void 0, ret.e);
-    }
-}
-
-Promise.prototype.nodeify = function Promise$nodeify(nodeback, options) {
-    if (typeof nodeback == "function") {
-        var adapter = Promise$_successAdapter;
-        if (options !== void 0 && Object(options).spread) {
-            adapter = Promise$_spreadAdapter;
-        }
-        this._then(
-            adapter,
-            Promise$_errorAdapter,
-            void 0,
-            nodeback,
-            this._boundTo
-        );
-    }
-    return this;
-};
-};
-
-},{"./async.js":3,"./util.js":36}],20:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-module.exports = function(Promise, PromiseArray) {
-var util = require("./util.js");
-var async = require("./async.js");
-var errors = require("./errors.js");
-var tryCatch1 = util.tryCatch1;
-var errorObj = util.errorObj;
-
-Promise.prototype.progressed = function Promise$progressed(handler) {
-    return this._then(void 0, void 0, handler, void 0, void 0);
-};
-
-Promise.prototype._progress = function Promise$_progress(progressValue) {
-    if (this._isFollowingOrFulfilledOrRejected()) return;
-    this._progressUnchecked(progressValue);
-
-};
-
-Promise.prototype._clearFirstHandlerData$Base =
-Promise.prototype._clearFirstHandlerData;
-Promise.prototype._clearFirstHandlerData =
-function Promise$_clearFirstHandlerData() {
-    this._clearFirstHandlerData$Base();
-    this._progressHandler0 = void 0;
-};
-
-Promise.prototype._progressHandlerAt =
-function Promise$_progressHandlerAt(index) {
-    return index === 0
-        ? this._progressHandler0
-        : this[(index << 2) + index - 5 + 2];
-};
-
-Promise.prototype._doProgressWith =
-function Promise$_doProgressWith(progression) {
-    var progressValue = progression.value;
-    var handler = progression.handler;
-    var promise = progression.promise;
-    var receiver = progression.receiver;
-
-    var ret = tryCatch1(handler, receiver, progressValue);
-    if (ret === errorObj) {
-        if (ret.e != null &&
-            ret.e.name !== "StopProgressPropagation") {
-            var trace = errors.canAttach(ret.e)
-                ? ret.e : new Error(ret.e + "");
-            promise._attachExtraTrace(trace);
-            promise._progress(ret.e);
-        }
-    } else if (ret instanceof Promise) {
-        ret._then(promise._progress, null, null, promise, void 0);
-    } else {
-        promise._progress(ret);
-    }
-};
-
-
-Promise.prototype._progressUnchecked =
-function Promise$_progressUnchecked(progressValue) {
-    if (!this.isPending()) return;
-    var len = this._length();
-    var progress = this._progress;
-    for (var i = 0; i < len; i++) {
-        var handler = this._progressHandlerAt(i);
-        var promise = this._promiseAt(i);
-        if (!(promise instanceof Promise)) {
-            var receiver = this._receiverAt(i);
-            if (typeof handler === "function") {
-                handler.call(receiver, progressValue, promise);
-            } else if (receiver instanceof Promise && receiver._isProxied()) {
-                receiver._progressUnchecked(progressValue);
-            } else if (receiver instanceof PromiseArray) {
-                receiver._promiseProgressed(progressValue, promise);
-            }
-            continue;
-        }
-
-        if (typeof handler === "function") {
-            async.invoke(this._doProgressWith, this, {
-                handler: handler,
-                promise: promise,
-                receiver: this._receiverAt(i),
-                value: progressValue
-            });
-        } else {
-            async.invoke(progress, promise, progressValue);
-        }
-    }
-};
-};
-
-},{"./async.js":3,"./errors.js":11,"./util.js":36}],21:[function(require,module,exports){
-(function (process){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-var old;
-if (typeof Promise !== "undefined") old = Promise;
-function noConflict(bluebird) {
-    try { if (Promise === bluebird) Promise = old; }
-    catch (e) {}
-    return bluebird;
-}
-module.exports = function() {
-var util = require("./util.js");
-var async = require("./async.js");
-var errors = require("./errors.js");
-
-var INTERNAL = function(){};
-var APPLY = {};
-var NEXT_FILTER = {e: null};
-
-var cast = require("./thenables.js")(Promise, INTERNAL);
-var PromiseArray = require("./promise_array.js")(Promise, INTERNAL, cast);
-var CapturedTrace = require("./captured_trace.js")();
-var CatchFilter = require("./catch_filter.js")(NEXT_FILTER);
-var PromiseResolver = require("./promise_resolver.js");
-
-var isArray = util.isArray;
-
-var errorObj = util.errorObj;
-var tryCatch1 = util.tryCatch1;
-var tryCatch2 = util.tryCatch2;
-var tryCatchApply = util.tryCatchApply;
-var RangeError = errors.RangeError;
-var TypeError = errors.TypeError;
-var CancellationError = errors.CancellationError;
-var TimeoutError = errors.TimeoutError;
-var OperationalError = errors.OperationalError;
-var originatesFromRejection = errors.originatesFromRejection;
-var markAsOriginatingFromRejection = errors.markAsOriginatingFromRejection;
-var canAttach = errors.canAttach;
-var thrower = util.thrower;
-var apiRejection = require("./errors_api_rejection")(Promise);
-
-
-var makeSelfResolutionError = function Promise$_makeSelfResolutionError() {
-    return new TypeError("circular promise resolution chain");
-};
-
-function Promise(resolver) {
-    if (typeof resolver !== "function") {
-        throw new TypeError("the promise constructor requires a resolver function");
-    }
-    if (this.constructor !== Promise) {
-        throw new TypeError("the promise constructor cannot be invoked directly");
-    }
-    this._bitField = 0;
-    this._fulfillmentHandler0 = void 0;
-    this._rejectionHandler0 = void 0;
-    this._promise0 = void 0;
-    this._receiver0 = void 0;
-    this._settledValue = void 0;
-    this._boundTo = void 0;
-    if (resolver !== INTERNAL) this._resolveFromResolver(resolver);
-}
-
-function returnFirstElement(elements) {
-    return elements[0];
-}
-
-Promise.prototype.bind = function Promise$bind(thisArg) {
-    var maybePromise = cast(thisArg, void 0);
-    var ret = new Promise(INTERNAL);
-    if (maybePromise instanceof Promise) {
-        var binder = maybePromise.then(function(thisArg) {
-            ret._setBoundTo(thisArg);
-        });
-        var p = Promise.all([this, binder]).then(returnFirstElement);
-        ret._follow(p);
-    } else {
-        ret._follow(this);
-        ret._setBoundTo(thisArg);
-    }
-    ret._propagateFrom(this, 2 | 1);
-    return ret;
-};
-
-Promise.prototype.toString = function Promise$toString() {
-    return "[object Promise]";
-};
-
-Promise.prototype.caught = Promise.prototype["catch"] =
-function Promise$catch(fn) {
-    var len = arguments.length;
-    if (len > 1) {
-        var catchInstances = new Array(len - 1),
-            j = 0, i;
-        for (i = 0; i < len - 1; ++i) {
-            var item = arguments[i];
-            if (typeof item === "function") {
-                catchInstances[j++] = item;
-            } else {
-                var catchFilterTypeError =
-                    new TypeError(
-                        "A catch filter must be an error constructor "
-                        + "or a filter function");
-
-                this._attachExtraTrace(catchFilterTypeError);
-                return Promise.reject(catchFilterTypeError);
-            }
-        }
-        catchInstances.length = j;
-        fn = arguments[i];
-
-        this._resetTrace();
-        var catchFilter = new CatchFilter(catchInstances, fn, this);
-        return this._then(void 0, catchFilter.doFilter, void 0,
-            catchFilter, void 0);
-    }
-    return this._then(void 0, fn, void 0, void 0, void 0);
-};
-
-Promise.prototype.then =
-function Promise$then(didFulfill, didReject, didProgress) {
-    return this._then(didFulfill, didReject, didProgress,
-        void 0, void 0);
-};
-
-
-Promise.prototype.done =
-function Promise$done(didFulfill, didReject, didProgress) {
-    var promise = this._then(didFulfill, didReject, didProgress,
-        void 0, void 0);
-    promise._setIsFinal();
-};
-
-Promise.prototype.spread = function Promise$spread(didFulfill, didReject) {
-    return this._then(didFulfill, didReject, void 0,
-        APPLY, void 0);
-};
-
-Promise.prototype.isCancellable = function Promise$isCancellable() {
-    return !this.isResolved() &&
-        this._cancellable();
-};
-
-Promise.prototype.toJSON = function Promise$toJSON() {
-    var ret = {
-        isFulfilled: false,
-        isRejected: false,
-        fulfillmentValue: void 0,
-        rejectionReason: void 0
-    };
-    if (this.isFulfilled()) {
-        ret.fulfillmentValue = this._settledValue;
-        ret.isFulfilled = true;
-    } else if (this.isRejected()) {
-        ret.rejectionReason = this._settledValue;
-        ret.isRejected = true;
-    }
-    return ret;
-};
-
-Promise.prototype.all = function Promise$all() {
-    return new PromiseArray(this).promise();
-};
-
-
-Promise.is = function Promise$Is(val) {
-    return val instanceof Promise;
-};
-
-Promise.all = function Promise$All(promises) {
-    return new PromiseArray(promises).promise();
-};
-
-Promise.prototype.error = function Promise$_error(fn) {
-    return this.caught(originatesFromRejection, fn);
-};
-
-Promise.prototype._resolveFromSyncValue =
-function Promise$_resolveFromSyncValue(value) {
-    if (value === errorObj) {
-        this._cleanValues();
-        this._setRejected();
-        this._settledValue = value.e;
-        this._ensurePossibleRejectionHandled();
-    } else {
-        var maybePromise = cast(value, void 0);
-        if (maybePromise instanceof Promise) {
-            this._follow(maybePromise);
-        } else {
-            this._cleanValues();
-            this._setFulfilled();
-            this._settledValue = value;
-        }
-    }
-};
-
-Promise.method = function Promise$_Method(fn) {
-    if (typeof fn !== "function") {
-        throw new TypeError("fn must be a function");
-    }
-    return function Promise$_method() {
-        var value;
-        switch(arguments.length) {
-        case 0: value = tryCatch1(fn, this, void 0); break;
-        case 1: value = tryCatch1(fn, this, arguments[0]); break;
-        case 2: value = tryCatch2(fn, this, arguments[0], arguments[1]); break;
-        default:
-            var $_len = arguments.length;var args = new Array($_len); for(var $_i = 0; $_i < $_len; ++$_i) {args[$_i] = arguments[$_i];}
-            value = tryCatchApply(fn, args, this); break;
-        }
-        var ret = new Promise(INTERNAL);
-        ret._setTrace(void 0);
-        ret._resolveFromSyncValue(value);
-        return ret;
-    };
-};
-
-Promise.attempt = Promise["try"] = function Promise$_Try(fn, args, ctx) {
-    if (typeof fn !== "function") {
-        return apiRejection("fn must be a function");
-    }
-    var value = isArray(args)
-        ? tryCatchApply(fn, args, ctx)
-        : tryCatch1(fn, ctx, args);
-
-    var ret = new Promise(INTERNAL);
-    ret._setTrace(void 0);
-    ret._resolveFromSyncValue(value);
-    return ret;
-};
-
-Promise.defer = Promise.pending = function Promise$Defer() {
-    var promise = new Promise(INTERNAL);
-    promise._setTrace(void 0);
-    return new PromiseResolver(promise);
-};
-
-Promise.bind = function Promise$Bind(thisArg) {
-    var maybePromise = cast(thisArg, void 0);
-    var ret = new Promise(INTERNAL);
-    ret._setTrace(void 0);
-
-    if (maybePromise instanceof Promise) {
-        var p = maybePromise.then(function(thisArg) {
-            ret._setBoundTo(thisArg);
-        });
-        ret._follow(p);
-    } else {
-        ret._setBoundTo(thisArg);
-        ret._setFulfilled();
-    }
-    return ret;
-};
-
-Promise.cast = function Promise$_Cast(obj) {
-    var ret = cast(obj, void 0);
-    if (!(ret instanceof Promise)) {
-        var val = ret;
-        ret = new Promise(INTERNAL);
-        ret._setTrace(void 0);
-        ret._setFulfilled();
-        ret._cleanValues();
-        ret._settledValue = val;
-    }
-    return ret;
-};
-
-Promise.resolve = Promise.fulfilled = Promise.cast;
-
-Promise.reject = Promise.rejected = function Promise$Reject(reason) {
-    var ret = new Promise(INTERNAL);
-    ret._setTrace(void 0);
-    markAsOriginatingFromRejection(reason);
-    ret._cleanValues();
-    ret._setRejected();
-    ret._settledValue = reason;
-    if (!canAttach(reason)) {
-        var trace = new Error(reason + "");
-        ret._setCarriedStackTrace(trace);
-    }
-    ret._ensurePossibleRejectionHandled();
-    return ret;
-};
-
-Promise.onPossiblyUnhandledRejection =
-function Promise$OnPossiblyUnhandledRejection(fn) {
-        CapturedTrace.possiblyUnhandledRejection = typeof fn === "function"
-                                                    ? fn : void 0;
-};
-
-var unhandledRejectionHandled;
-Promise.onUnhandledRejectionHandled =
-function Promise$onUnhandledRejectionHandled(fn) {
-    unhandledRejectionHandled = typeof fn === "function" ? fn : void 0;
-};
-
-var debugging = false || !!(
-    typeof process !== "undefined" &&
-    typeof process.execPath === "string" &&
-    typeof process.env === "object" &&
-    (process.env["BLUEBIRD_DEBUG"] ||
-        process.env["NODE_ENV"] === "development")
-);
-
-
-Promise.longStackTraces = function Promise$LongStackTraces() {
-    if (async.haveItemsQueued() &&
-        debugging === false
-   ) {
-        throw new Error("cannot enable long stack traces after promises have been created");
-    }
-    debugging = CapturedTrace.isSupported();
-};
-
-Promise.hasLongStackTraces = function Promise$HasLongStackTraces() {
-    return debugging && CapturedTrace.isSupported();
-};
-
-Promise.prototype._then =
-function Promise$_then(
-    didFulfill,
-    didReject,
-    didProgress,
-    receiver,
-    internalData
-) {
-    var haveInternalData = internalData !== void 0;
-    var ret = haveInternalData ? internalData : new Promise(INTERNAL);
-
-    if (!haveInternalData) {
-        if (debugging) {
-            var haveSameContext = this._peekContext() === this._traceParent;
-            ret._traceParent = haveSameContext ? this._traceParent : this;
-        }
-        ret._propagateFrom(this, 7);
-    }
-
-    var callbackIndex =
-        this._addCallbacks(didFulfill, didReject, didProgress, ret, receiver);
-
-    if (this.isResolved()) {
-        async.invoke(this._queueSettleAt, this, callbackIndex);
-    }
-
-    return ret;
-};
-
-Promise.prototype._length = function Promise$_length() {
-    return this._bitField & 262143;
-};
-
-Promise.prototype._isFollowingOrFulfilledOrRejected =
-function Promise$_isFollowingOrFulfilledOrRejected() {
-    return (this._bitField & 939524096) > 0;
-};
-
-Promise.prototype._isFollowing = function Promise$_isFollowing() {
-    return (this._bitField & 536870912) === 536870912;
-};
-
-Promise.prototype._setLength = function Promise$_setLength(len) {
-    this._bitField = (this._bitField & -262144) |
-        (len & 262143);
-};
-
-Promise.prototype._setFulfilled = function Promise$_setFulfilled() {
-    this._bitField = this._bitField | 268435456;
-};
-
-Promise.prototype._setRejected = function Promise$_setRejected() {
-    this._bitField = this._bitField | 134217728;
-};
-
-Promise.prototype._setFollowing = function Promise$_setFollowing() {
-    this._bitField = this._bitField | 536870912;
-};
-
-Promise.prototype._setIsFinal = function Promise$_setIsFinal() {
-    this._bitField = this._bitField | 33554432;
-};
-
-Promise.prototype._isFinal = function Promise$_isFinal() {
-    return (this._bitField & 33554432) > 0;
-};
-
-Promise.prototype._cancellable = function Promise$_cancellable() {
-    return (this._bitField & 67108864) > 0;
-};
-
-Promise.prototype._setCancellable = function Promise$_setCancellable() {
-    this._bitField = this._bitField | 67108864;
-};
-
-Promise.prototype._unsetCancellable = function Promise$_unsetCancellable() {
-    this._bitField = this._bitField & (~67108864);
-};
-
-Promise.prototype._setRejectionIsUnhandled =
-function Promise$_setRejectionIsUnhandled() {
-    this._bitField = this._bitField | 2097152;
-};
-
-Promise.prototype._unsetRejectionIsUnhandled =
-function Promise$_unsetRejectionIsUnhandled() {
-    this._bitField = this._bitField & (~2097152);
-    if (this._isUnhandledRejectionNotified()) {
-        this._unsetUnhandledRejectionIsNotified();
-        this._notifyUnhandledRejectionIsHandled();
-    }
-};
-
-Promise.prototype._isRejectionUnhandled =
-function Promise$_isRejectionUnhandled() {
-    return (this._bitField & 2097152) > 0;
-};
-
-Promise.prototype._setUnhandledRejectionIsNotified =
-function Promise$_setUnhandledRejectionIsNotified() {
-    this._bitField = this._bitField | 524288;
-};
-
-Promise.prototype._unsetUnhandledRejectionIsNotified =
-function Promise$_unsetUnhandledRejectionIsNotified() {
-    this._bitField = this._bitField & (~524288);
-};
-
-Promise.prototype._isUnhandledRejectionNotified =
-function Promise$_isUnhandledRejectionNotified() {
-    return (this._bitField & 524288) > 0;
-};
-
-Promise.prototype._setCarriedStackTrace =
-function Promise$_setCarriedStackTrace(capturedTrace) {
-    this._bitField = this._bitField | 1048576;
-    this._fulfillmentHandler0 = capturedTrace;
-};
-
-Promise.prototype._unsetCarriedStackTrace =
-function Promise$_unsetCarriedStackTrace() {
-    this._bitField = this._bitField & (~1048576);
-    this._fulfillmentHandler0 = void 0;
-};
-
-Promise.prototype._isCarryingStackTrace =
-function Promise$_isCarryingStackTrace() {
-    return (this._bitField & 1048576) > 0;
-};
-
-Promise.prototype._getCarriedStackTrace =
-function Promise$_getCarriedStackTrace() {
-    return this._isCarryingStackTrace()
-        ? this._fulfillmentHandler0
-        : void 0;
-};
-
-Promise.prototype._receiverAt = function Promise$_receiverAt(index) {
-    var ret = index === 0
-        ? this._receiver0
-        : this[(index << 2) + index - 5 + 4];
-    if (this._isBound() && ret === void 0) {
-        return this._boundTo;
-    }
-    return ret;
-};
-
-Promise.prototype._promiseAt = function Promise$_promiseAt(index) {
-    return index === 0
-        ? this._promise0
-        : this[(index << 2) + index - 5 + 3];
-};
-
-Promise.prototype._fulfillmentHandlerAt =
-function Promise$_fulfillmentHandlerAt(index) {
-    return index === 0
-        ? this._fulfillmentHandler0
-        : this[(index << 2) + index - 5 + 0];
-};
-
-Promise.prototype._rejectionHandlerAt =
-function Promise$_rejectionHandlerAt(index) {
-    return index === 0
-        ? this._rejectionHandler0
-        : this[(index << 2) + index - 5 + 1];
-};
-
-Promise.prototype._addCallbacks = function Promise$_addCallbacks(
-    fulfill,
-    reject,
-    progress,
-    promise,
-    receiver
-) {
-    var index = this._length();
-
-    if (index >= 262143 - 5) {
-        index = 0;
-        this._setLength(0);
-    }
-
-    if (index === 0) {
-        this._promise0 = promise;
-        if (receiver !== void 0) this._receiver0 = receiver;
-        if (typeof fulfill === "function" && !this._isCarryingStackTrace())
-            this._fulfillmentHandler0 = fulfill;
-        if (typeof reject === "function") this._rejectionHandler0 = reject;
-        if (typeof progress === "function") this._progressHandler0 = progress;
-    } else {
-        var base = (index << 2) + index - 5;
-        this[base + 3] = promise;
-        this[base + 4] = receiver;
-        this[base + 0] = typeof fulfill === "function"
-                                            ? fulfill : void 0;
-        this[base + 1] = typeof reject === "function"
-                                            ? reject : void 0;
-        this[base + 2] = typeof progress === "function"
-                                            ? progress : void 0;
-    }
-    this._setLength(index + 1);
-    return index;
-};
-
-Promise.prototype._setProxyHandlers =
-function Promise$_setProxyHandlers(receiver, promiseSlotValue) {
-    var index = this._length();
-
-    if (index >= 262143 - 5) {
-        index = 0;
-        this._setLength(0);
-    }
-    if (index === 0) {
-        this._promise0 = promiseSlotValue;
-        this._receiver0 = receiver;
-    } else {
-        var base = (index << 2) + index - 5;
-        this[base + 3] = promiseSlotValue;
-        this[base + 4] = receiver;
-        this[base + 0] =
-        this[base + 1] =
-        this[base + 2] = void 0;
-    }
-    this._setLength(index + 1);
-};
-
-Promise.prototype._proxyPromiseArray =
-function Promise$_proxyPromiseArray(promiseArray, index) {
-    this._setProxyHandlers(promiseArray, index);
-};
-
-Promise.prototype._proxyPromise = function Promise$_proxyPromise(promise) {
-    promise._setProxied();
-    this._setProxyHandlers(promise, -15);
-};
-
-Promise.prototype._setBoundTo = function Promise$_setBoundTo(obj) {
-    if (obj !== void 0) {
-        this._bitField = this._bitField | 8388608;
-        this._boundTo = obj;
-    } else {
-        this._bitField = this._bitField & (~8388608);
-    }
-};
-
-Promise.prototype._isBound = function Promise$_isBound() {
-    return (this._bitField & 8388608) === 8388608;
-};
-
-Promise.prototype._resolveFromResolver =
-function Promise$_resolveFromResolver(resolver) {
-    var promise = this;
-    this._setTrace(void 0);
-    this._pushContext();
-
-    function Promise$_resolver(val) {
-        if (promise._tryFollow(val)) {
-            return;
-        }
-        promise._fulfill(val);
-    }
-    function Promise$_rejecter(val) {
-        var trace = canAttach(val) ? val : new Error(val + "");
-        promise._attachExtraTrace(trace);
-        markAsOriginatingFromRejection(val);
-        promise._reject(val, trace === val ? void 0 : trace);
-    }
-    var r = tryCatch2(resolver, void 0, Promise$_resolver, Promise$_rejecter);
-    this._popContext();
-
-    if (r !== void 0 && r === errorObj) {
-        var e = r.e;
-        var trace = canAttach(e) ? e : new Error(e + "");
-        promise._reject(e, trace);
-    }
-};
-
-Promise.prototype._spreadSlowCase =
-function Promise$_spreadSlowCase(targetFn, promise, values, boundTo) {
-    var promiseForAll = new PromiseArray(values).promise();
-    var promise2 = promiseForAll._then(function() {
-        return targetFn.apply(boundTo, arguments);
-    }, void 0, void 0, APPLY, void 0);
-    promise._follow(promise2);
-};
-
-Promise.prototype._callSpread =
-function Promise$_callSpread(handler, promise, value) {
-    var boundTo = this._boundTo;
-    if (isArray(value)) {
-        for (var i = 0, len = value.length; i < len; ++i) {
-            if (cast(value[i], void 0) instanceof Promise) {
-                this._spreadSlowCase(handler, promise, value, boundTo);
-                return;
-            }
-        }
-    }
-    promise._pushContext();
-    return tryCatchApply(handler, value, boundTo);
-};
-
-Promise.prototype._callHandler =
-function Promise$_callHandler(
-    handler, receiver, promise, value) {
-    var x;
-    if (receiver === APPLY && !this.isRejected()) {
-        x = this._callSpread(handler, promise, value);
-    } else {
-        promise._pushContext();
-        x = tryCatch1(handler, receiver, value);
-    }
-    promise._popContext();
-    return x;
-};
-
-Promise.prototype._settlePromiseFromHandler =
-function Promise$_settlePromiseFromHandler(
-    handler, receiver, value, promise
-) {
-    if (!(promise instanceof Promise)) {
-        handler.call(receiver, value, promise);
-        return;
-    }
-    var x = this._callHandler(handler, receiver, promise, value);
-    if (promise._isFollowing()) return;
-
-    if (x === errorObj || x === promise || x === NEXT_FILTER) {
-        var err = x === promise
-                    ? makeSelfResolutionError()
-                    : x.e;
-        var trace = canAttach(err) ? err : new Error(err + "");
-        if (x !== NEXT_FILTER) promise._attachExtraTrace(trace);
-        promise._rejectUnchecked(err, trace);
-    } else {
-        var castValue = cast(x, promise);
-        if (castValue instanceof Promise) {
-            if (castValue.isRejected() &&
-                !castValue._isCarryingStackTrace() &&
-                !canAttach(castValue._settledValue)) {
-                var trace = new Error(castValue._settledValue + "");
-                promise._attachExtraTrace(trace);
-                castValue._setCarriedStackTrace(trace);
-            }
-            promise._follow(castValue);
-            promise._propagateFrom(castValue, 1);
-        } else {
-            promise._fulfillUnchecked(x);
-        }
-    }
-};
-
-Promise.prototype._follow =
-function Promise$_follow(promise) {
-    this._setFollowing();
-
-    if (promise.isPending()) {
-        this._propagateFrom(promise, 1);
-        promise._proxyPromise(this);
-    } else if (promise.isFulfilled()) {
-        this._fulfillUnchecked(promise._settledValue);
-    } else {
-        this._rejectUnchecked(promise._settledValue,
-            promise._getCarriedStackTrace());
-    }
-
-    if (promise._isRejectionUnhandled()) promise._unsetRejectionIsUnhandled();
-
-    if (debugging &&
-        promise._traceParent == null) {
-        promise._traceParent = this;
-    }
-};
-
-Promise.prototype._tryFollow =
-function Promise$_tryFollow(value) {
-    if (this._isFollowingOrFulfilledOrRejected() ||
-        value === this) {
-        return false;
-    }
-    var maybePromise = cast(value, void 0);
-    if (!(maybePromise instanceof Promise)) {
-        return false;
-    }
-    this._follow(maybePromise);
-    return true;
-};
-
-Promise.prototype._resetTrace = function Promise$_resetTrace() {
-    if (debugging) {
-        this._trace = new CapturedTrace(this._peekContext() === void 0);
-    }
-};
-
-Promise.prototype._setTrace = function Promise$_setTrace(parent) {
-    if (debugging) {
-        var context = this._peekContext();
-        this._traceParent = context;
-        var isTopLevel = context === void 0;
-        if (parent !== void 0 &&
-            parent._traceParent === context) {
-            this._trace = parent._trace;
-        } else {
-            this._trace = new CapturedTrace(isTopLevel);
-        }
-    }
-    return this;
-};
-
-Promise.prototype._attachExtraTrace =
-function Promise$_attachExtraTrace(error) {
-    if (debugging) {
-        var promise = this;
-        var stack = error.stack;
-        stack = typeof stack === "string" ? stack.split("\n") : [];
-        CapturedTrace.protectErrorMessageNewlines(stack);
-        var headerLineCount = 1;
-        var combinedTraces = 1;
-        while(promise != null &&
-            promise._trace != null) {
-            stack = CapturedTrace.combine(
-                stack,
-                promise._trace.stack.split("\n")
-            );
-            promise = promise._traceParent;
-            combinedTraces++;
-        }
-
-        var stackTraceLimit = Error.stackTraceLimit || 10;
-        var max = (stackTraceLimit + headerLineCount) * combinedTraces;
-        var len = stack.length;
-        if (len > max) {
-            stack.length = max;
-        }
-
-        if (len > 0)
-            stack[0] = stack[0].split("\u0002\u0000\u0001").join("\n");
-
-        if (stack.length <= headerLineCount) {
-            error.stack = "(No stack trace)";
-        } else {
-            error.stack = stack.join("\n");
-        }
-    }
-};
-
-Promise.prototype._cleanValues = function Promise$_cleanValues() {
-    if (this._cancellable()) {
-        this._cancellationParent = void 0;
-    }
-};
-
-Promise.prototype._propagateFrom =
-function Promise$_propagateFrom(parent, flags) {
-    if ((flags & 1) > 0 && parent._cancellable()) {
-        this._setCancellable();
-        this._cancellationParent = parent;
-    }
-    if ((flags & 4) > 0) {
-        this._setBoundTo(parent._boundTo);
-    }
-    if ((flags & 2) > 0) {
-        this._setTrace(parent);
-    }
-};
-
-Promise.prototype._fulfill = function Promise$_fulfill(value) {
-    if (this._isFollowingOrFulfilledOrRejected()) return;
-    this._fulfillUnchecked(value);
-};
-
-Promise.prototype._reject =
-function Promise$_reject(reason, carriedStackTrace) {
-    if (this._isFollowingOrFulfilledOrRejected()) return;
-    this._rejectUnchecked(reason, carriedStackTrace);
-};
-
-Promise.prototype._settlePromiseAt = function Promise$_settlePromiseAt(index) {
-    var handler = this.isFulfilled()
-        ? this._fulfillmentHandlerAt(index)
-        : this._rejectionHandlerAt(index);
-
-    var value = this._settledValue;
-    var receiver = this._receiverAt(index);
-    var promise = this._promiseAt(index);
-
-    if (typeof handler === "function") {
-        this._settlePromiseFromHandler(handler, receiver, value, promise);
-    } else {
-        var done = false;
-        var isFulfilled = this.isFulfilled();
-        if (receiver !== void 0) {
-            if (receiver instanceof Promise &&
-                receiver._isProxied()) {
-                receiver._unsetProxied();
-
-                if (isFulfilled) receiver._fulfillUnchecked(value);
-                else receiver._rejectUnchecked(value,
-                    this._getCarriedStackTrace());
-                done = true;
-            } else if (receiver instanceof PromiseArray) {
-                if (isFulfilled) receiver._promiseFulfilled(value, promise);
-                else receiver._promiseRejected(value, promise);
-                done = true;
-            }
-        }
-
-        if (!done) {
-            if (isFulfilled) promise._fulfill(value);
-            else promise._reject(value, this._getCarriedStackTrace());
-        }
-    }
-
-    if (index >= 4) {
-        this._queueGC();
-    }
-};
-
-Promise.prototype._isProxied = function Promise$_isProxied() {
-    return (this._bitField & 4194304) === 4194304;
-};
-
-Promise.prototype._setProxied = function Promise$_setProxied() {
-    this._bitField = this._bitField | 4194304;
-};
-
-Promise.prototype._unsetProxied = function Promise$_unsetProxied() {
-    this._bitField = this._bitField & (~4194304);
-};
-
-Promise.prototype._isGcQueued = function Promise$_isGcQueued() {
-    return (this._bitField & -1073741824) === -1073741824;
-};
-
-Promise.prototype._setGcQueued = function Promise$_setGcQueued() {
-    this._bitField = this._bitField | -1073741824;
-};
-
-Promise.prototype._unsetGcQueued = function Promise$_unsetGcQueued() {
-    this._bitField = this._bitField & (~-1073741824);
-};
-
-Promise.prototype._queueGC = function Promise$_queueGC() {
-    if (this._isGcQueued()) return;
-    this._setGcQueued();
-    async.invokeLater(this._gc, this, void 0);
-};
-
-Promise.prototype._gc = function Promise$gc() {
-    var len = this._length() * 5 - 5;
-    for (var i = 0; i < len; i++) {
-        delete this[i];
-    }
-    this._clearFirstHandlerData();
-    this._setLength(0);
-    this._unsetGcQueued();
-};
-
-Promise.prototype._clearFirstHandlerData =
-function Promise$_clearFirstHandlerData() {
-    this._fulfillmentHandler0 = void 0;
-    this._rejectionHandler0 = void 0;
-    this._promise0 = void 0;
-    this._receiver0 = void 0;
-};
-
-Promise.prototype._queueSettleAt = function Promise$_queueSettleAt(index) {
-    if (this._isRejectionUnhandled()) this._unsetRejectionIsUnhandled();
-    async.invoke(this._settlePromiseAt, this, index);
-};
-
-Promise.prototype._fulfillUnchecked =
-function Promise$_fulfillUnchecked(value) {
-    if (!this.isPending()) return;
-    if (value === this) {
-        var err = makeSelfResolutionError();
-        this._attachExtraTrace(err);
-        return this._rejectUnchecked(err, void 0);
-    }
-    this._cleanValues();
-    this._setFulfilled();
-    this._settledValue = value;
-    var len = this._length();
-
-    if (len > 0) {
-        async.invoke(this._settlePromises, this, len);
-    }
-};
-
-Promise.prototype._rejectUncheckedCheckError =
-function Promise$_rejectUncheckedCheckError(reason) {
-    var trace = canAttach(reason) ? reason : new Error(reason + "");
-    this._rejectUnchecked(reason, trace === reason ? void 0 : trace);
-};
-
-Promise.prototype._rejectUnchecked =
-function Promise$_rejectUnchecked(reason, trace) {
-    if (!this.isPending()) return;
-    if (reason === this) {
-        var err = makeSelfResolutionError();
-        this._attachExtraTrace(err);
-        return this._rejectUnchecked(err);
-    }
-    this._cleanValues();
-    this._setRejected();
-    this._settledValue = reason;
-
-    if (this._isFinal()) {
-        async.invokeLater(thrower, void 0, trace === void 0 ? reason : trace);
-        return;
-    }
-    var len = this._length();
-
-    if (trace !== void 0) this._setCarriedStackTrace(trace);
-
-    if (len > 0) {
-        async.invoke(this._rejectPromises, this, null);
-    } else {
-        this._ensurePossibleRejectionHandled();
-    }
-};
-
-Promise.prototype._rejectPromises = function Promise$_rejectPromises() {
-    this._settlePromises();
-    this._unsetCarriedStackTrace();
-};
-
-Promise.prototype._settlePromises = function Promise$_settlePromises() {
-    var len = this._length();
-    for (var i = 0; i < len; i++) {
-        this._settlePromiseAt(i);
-    }
-};
-
-Promise.prototype._ensurePossibleRejectionHandled =
-function Promise$_ensurePossibleRejectionHandled() {
-    this._setRejectionIsUnhandled();
-    if (CapturedTrace.possiblyUnhandledRejection !== void 0) {
-        async.invokeLater(this._notifyUnhandledRejection, this, void 0);
-    }
-};
-
-Promise.prototype._notifyUnhandledRejectionIsHandled =
-function Promise$_notifyUnhandledRejectionIsHandled() {
-    if (typeof unhandledRejectionHandled === "function") {
-        async.invokeLater(unhandledRejectionHandled, void 0, this);
-    }
-};
-
-Promise.prototype._notifyUnhandledRejection =
-function Promise$_notifyUnhandledRejection() {
-    if (this._isRejectionUnhandled()) {
-        var reason = this._settledValue;
-        var trace = this._getCarriedStackTrace();
-
-        this._setUnhandledRejectionIsNotified();
-
-        if (trace !== void 0) {
-            this._unsetCarriedStackTrace();
-            reason = trace;
-        }
-        if (typeof CapturedTrace.possiblyUnhandledRejection === "function") {
-            CapturedTrace.possiblyUnhandledRejection(reason, this);
-        }
-    }
-};
-
-var contextStack = [];
-Promise.prototype._peekContext = function Promise$_peekContext() {
-    var lastIndex = contextStack.length - 1;
-    if (lastIndex >= 0) {
-        return contextStack[lastIndex];
-    }
-    return void 0;
-
-};
-
-Promise.prototype._pushContext = function Promise$_pushContext() {
-    if (!debugging) return;
-    contextStack.push(this);
-};
-
-Promise.prototype._popContext = function Promise$_popContext() {
-    if (!debugging) return;
-    contextStack.pop();
-};
-
-Promise.noConflict = function Promise$NoConflict() {
-    return noConflict(Promise);
-};
-
-Promise.setScheduler = function(fn) {
-    if (typeof fn !== "function") throw new TypeError("fn must be a function");
-    async._schedule = fn;
-};
-
-if (!CapturedTrace.isSupported()) {
-    Promise.longStackTraces = function(){};
-    debugging = false;
-}
-
-Promise._makeSelfResolutionError = makeSelfResolutionError;
-require("./finally.js")(Promise, NEXT_FILTER, cast);
-require("./direct_resolve.js")(Promise);
-require("./synchronous_inspection.js")(Promise);
-require("./join.js")(Promise, PromiseArray, cast, INTERNAL);
-Promise.RangeError = RangeError;
-Promise.CancellationError = CancellationError;
-Promise.TimeoutError = TimeoutError;
-Promise.TypeError = TypeError;
-Promise.OperationalError = OperationalError;
-Promise.RejectionError = OperationalError;
-Promise.AggregateError = errors.AggregateError;
-
-util.toFastProperties(Promise);
-util.toFastProperties(Promise.prototype);
-Promise.Promise = Promise;
-require('./timers.js')(Promise,INTERNAL,cast);
-require('./race.js')(Promise,INTERNAL,cast);
-require('./call_get.js')(Promise);
-require('./generators.js')(Promise,apiRejection,INTERNAL,cast);
-require('./map.js')(Promise,PromiseArray,apiRejection,cast,INTERNAL);
-require('./nodeify.js')(Promise);
-require('./promisify.js')(Promise,INTERNAL);
-require('./props.js')(Promise,PromiseArray,cast);
-require('./reduce.js')(Promise,PromiseArray,apiRejection,cast,INTERNAL);
-require('./settle.js')(Promise,PromiseArray);
-require('./some.js')(Promise,PromiseArray,apiRejection);
-require('./progress.js')(Promise,PromiseArray);
-require('./cancel.js')(Promise,INTERNAL);
-require('./filter.js')(Promise,INTERNAL);
-require('./any.js')(Promise,PromiseArray);
-require('./each.js')(Promise,INTERNAL);
-require('./using.js')(Promise,apiRejection,cast);
-
-Promise.prototype = Promise.prototype;
-return Promise;
-
-};
-
-}).call(this,require("1YiZ5S"))
-},{"./any.js":2,"./async.js":3,"./call_get.js":5,"./cancel.js":6,"./captured_trace.js":7,"./catch_filter.js":8,"./direct_resolve.js":9,"./each.js":10,"./errors.js":11,"./errors_api_rejection":12,"./filter.js":14,"./finally.js":15,"./generators.js":16,"./join.js":17,"./map.js":18,"./nodeify.js":19,"./progress.js":20,"./promise_array.js":22,"./promise_resolver.js":23,"./promisify.js":24,"./props.js":25,"./race.js":27,"./reduce.js":28,"./settle.js":30,"./some.js":31,"./synchronous_inspection.js":32,"./thenables.js":33,"./timers.js":34,"./using.js":35,"./util.js":36,"1YiZ5S":99}],22:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-module.exports = function(Promise, INTERNAL, cast) {
-var canAttach = require("./errors.js").canAttach;
-var util = require("./util.js");
-var isArray = util.isArray;
-
-function toResolutionValue(val) {
-    switch(val) {
-    case -1: return void 0;
-    case -2: return [];
-    case -3: return {};
-    }
-}
-
-function PromiseArray(values) {
-    var promise = this._promise = new Promise(INTERNAL);
-    var parent = void 0;
-    if (values instanceof Promise) {
-        parent = values;
-        promise._propagateFrom(parent, 1 | 4);
-    }
-    promise._setTrace(parent);
-    this._values = values;
-    this._length = 0;
-    this._totalResolved = 0;
-    this._init(void 0, -2);
-}
-PromiseArray.prototype.length = function PromiseArray$length() {
-    return this._length;
-};
-
-PromiseArray.prototype.promise = function PromiseArray$promise() {
-    return this._promise;
-};
-
-PromiseArray.prototype._init =
-function PromiseArray$_init(_, resolveValueIfEmpty) {
-    var values = cast(this._values, void 0);
-    if (values instanceof Promise) {
-        this._values = values;
-        values._setBoundTo(this._promise._boundTo);
-        if (values.isFulfilled()) {
-            values = values._settledValue;
-            if (!isArray(values)) {
-                var err = new Promise.TypeError("expecting an array, a promise or a thenable");
-                this.__hardReject__(err);
-                return;
-            }
-        } else if (values.isPending()) {
-            values._then(
-                PromiseArray$_init,
-                this._reject,
-                void 0,
-                this,
-                resolveValueIfEmpty
-           );
-            return;
-        } else {
-            values._unsetRejectionIsUnhandled();
-            this._reject(values._settledValue);
-            return;
-        }
-    } else if (!isArray(values)) {
-        var err = new Promise.TypeError("expecting an array, a promise or a thenable");
-        this.__hardReject__(err);
-        return;
-    }
-
-    if (values.length === 0) {
-        if (resolveValueIfEmpty === -5) {
-            this._resolveEmptyArray();
-        }
-        else {
-            this._resolve(toResolutionValue(resolveValueIfEmpty));
-        }
-        return;
-    }
-    var len = this.getActualLength(values.length);
-    var newLen = len;
-    var newValues = this.shouldCopyValues() ? new Array(len) : this._values;
-    var isDirectScanNeeded = false;
-    for (var i = 0; i < len; ++i) {
-        var maybePromise = cast(values[i], void 0);
-        if (maybePromise instanceof Promise) {
-            if (maybePromise.isPending()) {
-                maybePromise._proxyPromiseArray(this, i);
-            } else {
-                maybePromise._unsetRejectionIsUnhandled();
-                isDirectScanNeeded = true;
-            }
-        } else {
-            isDirectScanNeeded = true;
-        }
-        newValues[i] = maybePromise;
-    }
-    this._values = newValues;
-    this._length = newLen;
-    if (isDirectScanNeeded) {
-        this._scanDirectValues(len);
-    }
-};
-
-PromiseArray.prototype._settlePromiseAt =
-function PromiseArray$_settlePromiseAt(index) {
-    var value = this._values[index];
-    if (!(value instanceof Promise)) {
-        this._promiseFulfilled(value, index);
-    } else if (value.isFulfilled()) {
-        this._promiseFulfilled(value._settledValue, index);
-    } else if (value.isRejected()) {
-        this._promiseRejected(value._settledValue, index);
-    }
-};
-
-PromiseArray.prototype._scanDirectValues =
-function PromiseArray$_scanDirectValues(len) {
-    for (var i = 0; i < len; ++i) {
-        if (this._isResolved()) {
-            break;
-        }
-        this._settlePromiseAt(i);
-    }
-};
-
-PromiseArray.prototype._isResolved = function PromiseArray$_isResolved() {
-    return this._values === null;
-};
-
-PromiseArray.prototype._resolve = function PromiseArray$_resolve(value) {
-    this._values = null;
-    this._promise._fulfill(value);
-};
-
-PromiseArray.prototype.__hardReject__ =
-PromiseArray.prototype._reject = function PromiseArray$_reject(reason) {
-    this._values = null;
-    var trace = canAttach(reason) ? reason : new Error(reason + "");
-    this._promise._attachExtraTrace(trace);
-    this._promise._reject(reason, trace);
-};
-
-PromiseArray.prototype._promiseProgressed =
-function PromiseArray$_promiseProgressed(progressValue, index) {
-    if (this._isResolved()) return;
-    this._promise._progress({
-        index: index,
-        value: progressValue
-    });
-};
-
-
-PromiseArray.prototype._promiseFulfilled =
-function PromiseArray$_promiseFulfilled(value, index) {
-    if (this._isResolved()) return;
-    this._values[index] = value;
-    var totalResolved = ++this._totalResolved;
-    if (totalResolved >= this._length) {
-        this._resolve(this._values);
-    }
-};
-
-PromiseArray.prototype._promiseRejected =
-function PromiseArray$_promiseRejected(reason, index) {
-    if (this._isResolved()) return;
-    this._totalResolved++;
-    this._reject(reason);
-};
-
-PromiseArray.prototype.shouldCopyValues =
-function PromiseArray$_shouldCopyValues() {
-    return true;
-};
-
-PromiseArray.prototype.getActualLength =
-function PromiseArray$getActualLength(len) {
-    return len;
-};
-
-return PromiseArray;
-};
-
-},{"./errors.js":11,"./util.js":36}],23:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-var util = require("./util.js");
-var maybeWrapAsError = util.maybeWrapAsError;
-var errors = require("./errors.js");
-var TimeoutError = errors.TimeoutError;
-var OperationalError = errors.OperationalError;
-var async = require("./async.js");
-var haveGetters = util.haveGetters;
-var es5 = require("./es5.js");
-
-function isUntypedError(obj) {
-    return obj instanceof Error &&
-        es5.getPrototypeOf(obj) === Error.prototype;
-}
-
-function wrapAsOperationalError(obj) {
-    var ret;
-    if (isUntypedError(obj)) {
-        ret = new OperationalError(obj);
-    } else {
-        ret = obj;
-    }
-    errors.markAsOriginatingFromRejection(ret);
-    return ret;
-}
-
-function nodebackForPromise(promise) {
-    function PromiseResolver$_callback(err, value) {
-        if (promise === null) return;
-
-        if (err) {
-            var wrapped = wrapAsOperationalError(maybeWrapAsError(err));
-            promise._attachExtraTrace(wrapped);
-            promise._reject(wrapped);
-        } else if (arguments.length > 2) {
-            var $_len = arguments.length;var args = new Array($_len - 1); for(var $_i = 1; $_i < $_len; ++$_i) {args[$_i - 1] = arguments[$_i];}
-            promise._fulfill(args);
-        } else {
-            promise._fulfill(value);
-        }
-
-        promise = null;
-    }
-    return PromiseResolver$_callback;
-}
-
-
-var PromiseResolver;
-if (!haveGetters) {
-    PromiseResolver = function PromiseResolver(promise) {
-        this.promise = promise;
-        this.asCallback = nodebackForPromise(promise);
-        this.callback = this.asCallback;
-    };
-}
-else {
-    PromiseResolver = function PromiseResolver(promise) {
-        this.promise = promise;
-    };
-}
-if (haveGetters) {
-    var prop = {
-        get: function() {
-            return nodebackForPromise(this.promise);
-        }
-    };
-    es5.defineProperty(PromiseResolver.prototype, "asCallback", prop);
-    es5.defineProperty(PromiseResolver.prototype, "callback", prop);
-}
-
-PromiseResolver._nodebackForPromise = nodebackForPromise;
-
-PromiseResolver.prototype.toString = function PromiseResolver$toString() {
-    return "[object PromiseResolver]";
-};
-
-PromiseResolver.prototype.resolve =
-PromiseResolver.prototype.fulfill = function PromiseResolver$resolve(value) {
-    if (!(this instanceof PromiseResolver)) {
-        throw new TypeError("Illegal invocation, resolver resolve/reject must be called within a resolver context. Consider using the promise constructor instead.");
-    }
-
-    var promise = this.promise;
-    if (promise._tryFollow(value)) {
-        return;
-    }
-    async.invoke(promise._fulfill, promise, value);
-};
-
-PromiseResolver.prototype.reject = function PromiseResolver$reject(reason) {
-    if (!(this instanceof PromiseResolver)) {
-        throw new TypeError("Illegal invocation, resolver resolve/reject must be called within a resolver context. Consider using the promise constructor instead.");
-    }
-
-    var promise = this.promise;
-    errors.markAsOriginatingFromRejection(reason);
-    var trace = errors.canAttach(reason) ? reason : new Error(reason + "");
-    promise._attachExtraTrace(trace);
-    async.invoke(promise._reject, promise, reason);
-    if (trace !== reason) {
-        async.invoke(this._setCarriedStackTrace, this, trace);
-    }
-};
-
-PromiseResolver.prototype.progress =
-function PromiseResolver$progress(value) {
-    if (!(this instanceof PromiseResolver)) {
-        throw new TypeError("Illegal invocation, resolver resolve/reject must be called within a resolver context. Consider using the promise constructor instead.");
-    }
-    async.invoke(this.promise._progress, this.promise, value);
-};
-
-PromiseResolver.prototype.cancel = function PromiseResolver$cancel() {
-    async.invoke(this.promise.cancel, this.promise, void 0);
-};
-
-PromiseResolver.prototype.timeout = function PromiseResolver$timeout() {
-    this.reject(new TimeoutError("timeout"));
-};
-
-PromiseResolver.prototype.isResolved = function PromiseResolver$isResolved() {
-    return this.promise.isResolved();
-};
-
-PromiseResolver.prototype.toJSON = function PromiseResolver$toJSON() {
-    return this.promise.toJSON();
-};
-
-PromiseResolver.prototype._setCarriedStackTrace =
-function PromiseResolver$_setCarriedStackTrace(trace) {
-    if (this.promise.isRejected()) {
-        this.promise._setCarriedStackTrace(trace);
-    }
-};
-
-module.exports = PromiseResolver;
-
-},{"./async.js":3,"./errors.js":11,"./es5.js":13,"./util.js":36}],24:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-module.exports = function(Promise, INTERNAL) {
-var THIS = {};
-var util = require("./util.js");
-var nodebackForPromise = require("./promise_resolver.js")
-    ._nodebackForPromise;
-var withAppended = util.withAppended;
-var maybeWrapAsError = util.maybeWrapAsError;
-var canEvaluate = util.canEvaluate;
-var TypeError = require("./errors").TypeError;
-var defaultSuffix = "Async";
-var defaultFilter = function(name, func) {
-    return util.isIdentifier(name) &&
-        name.charAt(0) !== "_" &&
-        !util.isClass(func);
-};
-var defaultPromisified = {__isPromisified__: true};
-
-
-function escapeIdentRegex(str) {
-    return str.replace(/([$])/, "\\$");
-}
-
-function isPromisified(fn) {
-    try {
-        return fn.__isPromisified__ === true;
-    }
-    catch (e) {
-        return false;
-    }
-}
-
-function hasPromisified(obj, key, suffix) {
-    var val = util.getDataPropertyOrDefault(obj, key + suffix,
-                                            defaultPromisified);
-    return val ? isPromisified(val) : false;
-}
-function checkValid(ret, suffix, suffixRegexp) {
-    for (var i = 0; i < ret.length; i += 2) {
-        var key = ret[i];
-        if (suffixRegexp.test(key)) {
-            var keyWithoutAsyncSuffix = key.replace(suffixRegexp, "");
-            for (var j = 0; j < ret.length; j += 2) {
-                if (ret[j] === keyWithoutAsyncSuffix) {
-                    throw new TypeError("Cannot promisify an API " +
-                        "that has normal methods with '"+suffix+"'-suffix");
-                }
-            }
-        }
-    }
-}
-
-function promisifiableMethods(obj, suffix, suffixRegexp, filter) {
-    var keys = util.inheritedDataKeys(obj);
-    var ret = [];
-    for (var i = 0; i < keys.length; ++i) {
-        var key = keys[i];
-        var value = obj[key];
-        if (typeof value === "function" &&
-            !isPromisified(value) &&
-            !hasPromisified(obj, key, suffix) &&
-            filter(key, value, obj)) {
-            ret.push(key, value);
-        }
-    }
-    checkValid(ret, suffix, suffixRegexp);
-    return ret;
-}
-
-function switchCaseArgumentOrder(likelyArgumentCount) {
-    var ret = [likelyArgumentCount];
-    var min = Math.max(0, likelyArgumentCount - 1 - 5);
-    for(var i = likelyArgumentCount - 1; i >= min; --i) {
-        if (i === likelyArgumentCount) continue;
-        ret.push(i);
-    }
-    for(var i = likelyArgumentCount + 1; i <= 5; ++i) {
-        ret.push(i);
-    }
-    return ret;
-}
-
-function argumentSequence(argumentCount) {
-    return util.filledRange(argumentCount, "arguments[", "]");
-}
-
-function parameterDeclaration(parameterCount) {
-    return util.filledRange(parameterCount, "_arg", "");
-}
-
-function parameterCount(fn) {
-    if (typeof fn.length === "number") {
-        return Math.max(Math.min(fn.length, 1023 + 1), 0);
-    }
-    return 0;
-}
-
-function generatePropertyAccess(key) {
-    if (util.isIdentifier(key)) {
-        return "." + key;
-    }
-    else return "['" + key.replace(/(['\\])/g, "\\$1") + "']";
-}
-
-function makeNodePromisifiedEval(callback, receiver, originalName, fn, suffix) {
-    var newParameterCount = Math.max(0, parameterCount(fn) - 1);
-    var argumentOrder = switchCaseArgumentOrder(newParameterCount);
-    var callbackName =
-        (typeof originalName === "string" && util.isIdentifier(originalName)
-            ? originalName + suffix
-            : "promisified");
-
-    function generateCallForArgumentCount(count) {
-        var args = argumentSequence(count).join(", ");
-        var comma = count > 0 ? ", " : "";
-        var ret;
-        if (typeof callback === "string") {
-            ret = "                                                          \n\
-                this.method({{args}}, fn);                                   \n\
-                break;                                                       \n\
-            ".replace(".method", generatePropertyAccess(callback));
-        } else if (receiver === THIS) {
-            ret =  "                                                         \n\
-                callback.call(this, {{args}}, fn);                           \n\
-                break;                                                       \n\
-            ";
-        } else if (receiver !== void 0) {
-            ret =  "                                                         \n\
-                callback.call(receiver, {{args}}, fn);                       \n\
-                break;                                                       \n\
-            ";
-        } else {
-            ret =  "                                                         \n\
-                callback({{args}}, fn);                                      \n\
-                break;                                                       \n\
-            ";
-        }
-        return ret.replace("{{args}}", args).replace(", ", comma);
-    }
-
-    function generateArgumentSwitchCase() {
-        var ret = "";
-        for(var i = 0; i < argumentOrder.length; ++i) {
-            ret += "case " + argumentOrder[i] +":" +
-                generateCallForArgumentCount(argumentOrder[i]);
-        }
-        var codeForCall;
-        if (typeof callback === "string") {
-            codeForCall = "                                                  \n\
-                this.property.apply(this, args);                             \n\
-            "
-                .replace(".property", generatePropertyAccess(callback));
-        } else if (receiver === THIS) {
-            codeForCall = "                                                  \n\
-                callback.apply(this, args);                                  \n\
-            ";
-        } else {
-            codeForCall = "                                                  \n\
-                callback.apply(receiver, args);                              \n\
-            ";
-        }
-
-        ret += "                                                             \n\
-        default:                                                             \n\
-            var args = new Array(len + 1);                                   \n\
-            var i = 0;                                                       \n\
-            for (var i = 0; i < len; ++i) {                                  \n\
-               args[i] = arguments[i];                                       \n\
-            }                                                                \n\
-            args[i] = fn;                                                    \n\
-            [CodeForCall]                                                    \n\
-            break;                                                           \n\
-        ".replace("[CodeForCall]", codeForCall);
-        return ret;
-    }
-
-    return new Function("Promise",
-                        "callback",
-                        "receiver",
-                        "withAppended",
-                        "maybeWrapAsError",
-                        "nodebackForPromise",
-                        "INTERNAL","                                         \n\
-        var ret = function FunctionName(Parameters) {                        \n\
-            'use strict';                                                    \n\
-            var len = arguments.length;                                      \n\
-            var promise = new Promise(INTERNAL);                             \n\
-            promise._setTrace(void 0);                                       \n\
-            var fn = nodebackForPromise(promise);                            \n\
-            try {                                                            \n\
-                switch(len) {                                                \n\
-                    [CodeForSwitchCase]                                      \n\
-                }                                                            \n\
-            } catch (e) {                                                    \n\
-                var wrapped = maybeWrapAsError(e);                           \n\
-                promise._attachExtraTrace(wrapped);                          \n\
-                promise._reject(wrapped);                                    \n\
-            }                                                                \n\
-            return promise;                                                  \n\
-        };                                                                   \n\
-        ret.__isPromisified__ = true;                                        \n\
-        return ret;                                                          \n\
-        "
-        .replace("FunctionName", callbackName)
-        .replace("Parameters", parameterDeclaration(newParameterCount))
-        .replace("[CodeForSwitchCase]", generateArgumentSwitchCase()))(
-            Promise,
-            callback,
-            receiver,
-            withAppended,
-            maybeWrapAsError,
-            nodebackForPromise,
-            INTERNAL
-        );
-}
-
-function makeNodePromisifiedClosure(callback, receiver) {
-    function promisified() {
-        var _receiver = receiver;
-        if (receiver === THIS) _receiver = this;
-        if (typeof callback === "string") {
-            callback = _receiver[callback];
-        }
-        var promise = new Promise(INTERNAL);
-        promise._setTrace(void 0);
-        var fn = nodebackForPromise(promise);
-        try {
-            callback.apply(_receiver, withAppended(arguments, fn));
-        } catch(e) {
-            var wrapped = maybeWrapAsError(e);
-            promise._attachExtraTrace(wrapped);
-            promise._reject(wrapped);
-        }
-        return promise;
-    }
-    promisified.__isPromisified__ = true;
-    return promisified;
-}
-
-var makeNodePromisified = canEvaluate
-    ? makeNodePromisifiedEval
-    : makeNodePromisifiedClosure;
-
-function promisifyAll(obj, suffix, filter, promisifier) {
-    var suffixRegexp = new RegExp(escapeIdentRegex(suffix) + "$");
-    var methods =
-        promisifiableMethods(obj, suffix, suffixRegexp, filter);
-
-    for (var i = 0, len = methods.length; i < len; i+= 2) {
-        var key = methods[i];
-        var fn = methods[i+1];
-        var promisifiedKey = key + suffix;
-        obj[promisifiedKey] = promisifier === makeNodePromisified
-                ? makeNodePromisified(key, THIS, key, fn, suffix)
-                : promisifier(fn);
-    }
-    util.toFastProperties(obj);
-    return obj;
-}
-
-function promisify(callback, receiver) {
-    return makeNodePromisified(callback, receiver, void 0, callback);
-}
-
-Promise.promisify = function Promise$Promisify(fn, receiver) {
-    if (typeof fn !== "function") {
-        throw new TypeError("fn must be a function");
-    }
-    if (isPromisified(fn)) {
-        return fn;
-    }
-    return promisify(fn, arguments.length < 2 ? THIS : receiver);
-};
-
-Promise.promisifyAll = function Promise$PromisifyAll(target, options) {
-    if (typeof target !== "function" && typeof target !== "object") {
-        throw new TypeError("the target of promisifyAll must be an object or a function");
-    }
-    options = Object(options);
-    var suffix = options.suffix;
-    if (typeof suffix !== "string") suffix = defaultSuffix;
-    var filter = options.filter;
-    if (typeof filter !== "function") filter = defaultFilter;
-    var promisifier = options.promisifier;
-    if (typeof promisifier !== "function") promisifier = makeNodePromisified;
-
-    if (!util.isIdentifier(suffix)) {
-        throw new RangeError("suffix must be a valid identifier");
-    }
-
-    var keys = util.inheritedDataKeys(target, {includeHidden: true});
-    for (var i = 0; i < keys.length; ++i) {
-        var value = target[keys[i]];
-        if (keys[i] !== "constructor" &&
-            util.isClass(value)) {
-            promisifyAll(value.prototype, suffix, filter, promisifier);
-            promisifyAll(value, suffix, filter, promisifier);
-        }
-    }
-
-    return promisifyAll(target, suffix, filter, promisifier);
-};
-};
-
-
-},{"./errors":11,"./promise_resolver.js":23,"./util.js":36}],25:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-module.exports = function(Promise, PromiseArray, cast) {
-var util = require("./util.js");
-var apiRejection = require("./errors_api_rejection")(Promise);
-var isObject = util.isObject;
-var es5 = require("./es5.js");
-
-function PropertiesPromiseArray(obj) {
-    var keys = es5.keys(obj);
-    var len = keys.length;
-    var values = new Array(len * 2);
-    for (var i = 0; i < len; ++i) {
-        var key = keys[i];
-        values[i] = obj[key];
-        values[i + len] = key;
-    }
-    this.constructor$(values);
-}
-util.inherits(PropertiesPromiseArray, PromiseArray);
-
-PropertiesPromiseArray.prototype._init =
-function PropertiesPromiseArray$_init() {
-    this._init$(void 0, -3) ;
-};
-
-PropertiesPromiseArray.prototype._promiseFulfilled =
-function PropertiesPromiseArray$_promiseFulfilled(value, index) {
-    if (this._isResolved()) return;
-    this._values[index] = value;
-    var totalResolved = ++this._totalResolved;
-    if (totalResolved >= this._length) {
-        var val = {};
-        var keyOffset = this.length();
-        for (var i = 0, len = this.length(); i < len; ++i) {
-            val[this._values[i + keyOffset]] = this._values[i];
-        }
-        this._resolve(val);
-    }
-};
-
-PropertiesPromiseArray.prototype._promiseProgressed =
-function PropertiesPromiseArray$_promiseProgressed(value, index) {
-    if (this._isResolved()) return;
-
-    this._promise._progress({
-        key: this._values[index + this.length()],
-        value: value
-    });
-};
-
-PropertiesPromiseArray.prototype.shouldCopyValues =
-function PropertiesPromiseArray$_shouldCopyValues() {
-    return false;
-};
-
-PropertiesPromiseArray.prototype.getActualLength =
-function PropertiesPromiseArray$getActualLength(len) {
-    return len >> 1;
-};
-
-function Promise$_Props(promises) {
-    var ret;
-    var castValue = cast(promises, void 0);
-
-    if (!isObject(castValue)) {
-        return apiRejection("cannot await properties of a non-object");
-    } else if (castValue instanceof Promise) {
-        ret = castValue._then(Promise.props, void 0, void 0, void 0, void 0);
-    } else {
-        ret = new PropertiesPromiseArray(castValue).promise();
-    }
-
-    if (castValue instanceof Promise) {
-        ret._propagateFrom(castValue, 4);
-    }
-    return ret;
-}
-
-Promise.prototype.props = function Promise$props() {
-    return Promise$_Props(this);
-};
-
-Promise.props = function Promise$Props(promises) {
-    return Promise$_Props(promises);
-};
-};
-
-},{"./errors_api_rejection":12,"./es5.js":13,"./util.js":36}],26:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-function arrayCopy(src, srcIndex, dst, dstIndex, len) {
-    for (var j = 0; j < len; ++j) {
-        dst[j + dstIndex] = src[j + srcIndex];
-    }
-}
-
-function Queue(capacity) {
-    this._capacity = capacity;
-    this._length = 0;
-    this._front = 0;
-    this._makeCapacity();
-}
-
-Queue.prototype._willBeOverCapacity =
-function Queue$_willBeOverCapacity(size) {
-    return this._capacity < size;
-};
-
-Queue.prototype._pushOne = function Queue$_pushOne(arg) {
-    var length = this.length();
-    this._checkCapacity(length + 1);
-    var i = (this._front + length) & (this._capacity - 1);
-    this[i] = arg;
-    this._length = length + 1;
-};
-
-Queue.prototype.push = function Queue$push(fn, receiver, arg) {
-    var length = this.length() + 3;
-    if (this._willBeOverCapacity(length)) {
-        this._pushOne(fn);
-        this._pushOne(receiver);
-        this._pushOne(arg);
-        return;
-    }
-    var j = this._front + length - 3;
-    this._checkCapacity(length);
-    var wrapMask = this._capacity - 1;
-    this[(j + 0) & wrapMask] = fn;
-    this[(j + 1) & wrapMask] = receiver;
-    this[(j + 2) & wrapMask] = arg;
-    this._length = length;
-};
-
-Queue.prototype.shift = function Queue$shift() {
-    var front = this._front,
-        ret = this[front];
-
-    this[front] = void 0;
-    this._front = (front + 1) & (this._capacity - 1);
-    this._length--;
-    return ret;
-};
-
-Queue.prototype.length = function Queue$length() {
-    return this._length;
-};
-
-Queue.prototype._makeCapacity = function Queue$_makeCapacity() {
-    var len = this._capacity;
-    for (var i = 0; i < len; ++i) {
-        this[i] = void 0;
-    }
-};
-
-Queue.prototype._checkCapacity = function Queue$_checkCapacity(size) {
-    if (this._capacity < size) {
-        this._resizeTo(this._capacity << 3);
-    }
-};
-
-Queue.prototype._resizeTo = function Queue$_resizeTo(capacity) {
-    var oldFront = this._front;
-    var oldCapacity = this._capacity;
-    var oldQueue = new Array(oldCapacity);
-    var length = this.length();
-
-    arrayCopy(this, 0, oldQueue, 0, oldCapacity);
-    this._capacity = capacity;
-    this._makeCapacity();
-    this._front = 0;
-    if (oldFront + length <= oldCapacity) {
-        arrayCopy(oldQueue, oldFront, this, 0, length);
-    } else {        var lengthBeforeWrapping =
-            length - ((oldFront + length) & (oldCapacity - 1));
-
-        arrayCopy(oldQueue, oldFront, this, 0, lengthBeforeWrapping);
-        arrayCopy(oldQueue, 0, this, lengthBeforeWrapping,
-                    length - lengthBeforeWrapping);
-    }
-};
-
-module.exports = Queue;
-
-},{}],27:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-module.exports = function(Promise, INTERNAL, cast) {
-var apiRejection = require("./errors_api_rejection.js")(Promise);
-var isArray = require("./util.js").isArray;
-
-var raceLater = function Promise$_raceLater(promise) {
-    return promise.then(function(array) {
-        return Promise$_Race(array, promise);
-    });
-};
-
-var hasOwn = {}.hasOwnProperty;
-function Promise$_Race(promises, parent) {
-    var maybePromise = cast(promises, void 0);
-
-    if (maybePromise instanceof Promise) {
-        return raceLater(maybePromise);
-    } else if (!isArray(promises)) {
-        return apiRejection("expecting an array, a promise or a thenable");
-    }
-
-    var ret = new Promise(INTERNAL);
-    if (parent !== void 0) {
-        ret._propagateFrom(parent, 7);
-    } else {
-        ret._setTrace(void 0);
-    }
-    var fulfill = ret._fulfill;
-    var reject = ret._reject;
-    for (var i = 0, len = promises.length; i < len; ++i) {
-        var val = promises[i];
-
-        if (val === void 0 && !(hasOwn.call(promises, i))) {
-            continue;
-        }
-
-        Promise.cast(val)._then(fulfill, reject, void 0, ret, null);
-    }
-    return ret;
-}
-
-Promise.race = function Promise$Race(promises) {
-    return Promise$_Race(promises, void 0);
-};
-
-Promise.prototype.race = function Promise$race() {
-    return Promise$_Race(this, void 0);
-};
-
-};
-
-},{"./errors_api_rejection.js":12,"./util.js":36}],28:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-module.exports = function(Promise, PromiseArray, apiRejection, cast, INTERNAL) {
-var util = require("./util.js");
-var tryCatch4 = util.tryCatch4;
-var tryCatch3 = util.tryCatch3;
-var errorObj = util.errorObj;
-function ReductionPromiseArray(promises, fn, accum, _each) {
-    this.constructor$(promises);
-    this._preservedValues = _each === INTERNAL ? [] : null;
-    this._zerothIsAccum = (accum === void 0);
-    this._gotAccum = false;
-    this._reducingIndex = (this._zerothIsAccum ? 1 : 0);
-    this._valuesPhase = undefined;
-
-    var maybePromise = cast(accum, void 0);
-    var rejected = false;
-    var isPromise = maybePromise instanceof Promise;
-    if (isPromise) {
-        if (maybePromise.isPending()) {
-            maybePromise._proxyPromiseArray(this, -1);
-        } else if (maybePromise.isFulfilled()) {
-            accum = maybePromise.value();
-            this._gotAccum = true;
-        } else {
-            maybePromise._unsetRejectionIsUnhandled();
-            this._reject(maybePromise.reason());
-            rejected = true;
-        }
-    }
-    if (!(isPromise || this._zerothIsAccum)) this._gotAccum = true;
-    this._callback = fn;
-    this._accum = accum;
-    if (!rejected) this._init$(void 0, -5);
-}
-util.inherits(ReductionPromiseArray, PromiseArray);
-
-ReductionPromiseArray.prototype._init =
-function ReductionPromiseArray$_init() {};
-
-ReductionPromiseArray.prototype._resolveEmptyArray =
-function ReductionPromiseArray$_resolveEmptyArray() {
-    if (this._gotAccum || this._zerothIsAccum) {
-        this._resolve(this._preservedValues !== null
-                        ? [] : this._accum);
-    }
-};
-
-ReductionPromiseArray.prototype._promiseFulfilled =
-function ReductionPromiseArray$_promiseFulfilled(value, index) {
-    var values = this._values;
-    if (values === null) return;
-    var length = this.length();
-    var preservedValues = this._preservedValues;
-    var isEach = preservedValues !== null;
-    var gotAccum = this._gotAccum;
-    var valuesPhase = this._valuesPhase;
-    var valuesPhaseIndex;
-    if (!valuesPhase) {
-        valuesPhase = this._valuesPhase = Array(length);
-        for (valuesPhaseIndex=0; valuesPhaseIndex<length; ++valuesPhaseIndex) {
-            valuesPhase[valuesPhaseIndex] = 0;
-        }
-    }
-    valuesPhaseIndex = valuesPhase[index];
-
-    if (index === 0 && this._zerothIsAccum) {
-        if (!gotAccum) {
-            this._accum = value;
-            this._gotAccum = gotAccum = true;
-        }
-        valuesPhase[index] = ((valuesPhaseIndex === 0)
-            ? 1 : 2);
-    } else if (index === -1) {
-        if (!gotAccum) {
-            this._accum = value;
-            this._gotAccum = gotAccum = true;
-        }
-    } else {
-        if (valuesPhaseIndex === 0) {
-            valuesPhase[index] = 1;
-        }
-        else {
-            valuesPhase[index] = 2;
-            if (gotAccum) {
-                this._accum = value;
-            }
-        }
-    }
-    if (!gotAccum) return;
-
-    var callback = this._callback;
-    var receiver = this._promise._boundTo;
-    var ret;
-
-    for (var i = this._reducingIndex; i < length; ++i) {
-        valuesPhaseIndex = valuesPhase[i];
-        if (valuesPhaseIndex === 2) {
-            this._reducingIndex = i + 1;
-            continue;
-        }
-        if (valuesPhaseIndex !== 1) return;
-
-        value = values[i];
-        if (value instanceof Promise) {
-            if (value.isFulfilled()) {
-                value = value._settledValue;
-            } else if (value.isPending()) {
-                return;
-            } else {
-                value._unsetRejectionIsUnhandled();
-                return this._reject(value.reason());
-            }
-        }
-
-        if (isEach) {
-            preservedValues.push(value);
-            ret = tryCatch3(callback, receiver, value, i, length);
-        }
-        else {
-            ret = tryCatch4(callback, receiver, this._accum, value, i, length);
-        }
-
-        if (ret === errorObj) return this._reject(ret.e);
-
-        var maybePromise = cast(ret, void 0);
-        if (maybePromise instanceof Promise) {
-            if (maybePromise.isPending()) {
-                valuesPhase[i] = 4;
-                return maybePromise._proxyPromiseArray(this, i);
-            } else if (maybePromise.isFulfilled()) {
-                ret = maybePromise.value();
-            } else {
-                maybePromise._unsetRejectionIsUnhandled();
-                return this._reject(maybePromise.reason());
-            }
-        }
-
-        this._reducingIndex = i + 1;
-        this._accum = ret;
-    }
-
-    if (this._reducingIndex < length) return;
-    this._resolve(isEach ? preservedValues : this._accum);
-};
-
-function reduce(promises, fn, initialValue, _each) {
-    if (typeof fn !== "function") return apiRejection("fn must be a function");
-    var array = new ReductionPromiseArray(promises, fn, initialValue, _each);
-    return array.promise();
-}
-
-Promise.prototype.reduce = function Promise$reduce(fn, initialValue) {
-    return reduce(this, fn, initialValue, null);
-};
-
-Promise.reduce = function Promise$Reduce(promises, fn, initialValue, _each) {
-    return reduce(promises, fn, initialValue, _each);
-};
-};
-
-},{"./util.js":36}],29:[function(require,module,exports){
-(function (process){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-var schedule;
-var _MutationObserver;
-if (typeof process === "object" && typeof process.version === "string") {
-    schedule = function Promise$_Scheduler(fn) {
-        process.nextTick(fn);
-    };
-}
-else if ((typeof MutationObserver !== "undefined" &&
-         (_MutationObserver = MutationObserver)) ||
-         (typeof WebKitMutationObserver !== "undefined" &&
-         (_MutationObserver = WebKitMutationObserver))) {
-    schedule = (function() {
-        var div = document.createElement("div");
-        var queuedFn = void 0;
-        var observer = new _MutationObserver(
-            function Promise$_Scheduler() {
-                var fn = queuedFn;
-                queuedFn = void 0;
-                fn();
-            }
-       );
-        observer.observe(div, {
-            attributes: true
-        });
-        return function Promise$_Scheduler(fn) {
-            queuedFn = fn;
-            div.classList.toggle("foo");
-        };
-
-    })();
-}
-else if (typeof setTimeout !== "undefined") {
-    schedule = function Promise$_Scheduler(fn) {
-        setTimeout(fn, 0);
-    };
-}
-else throw new Error("no async scheduler available");
-module.exports = schedule;
-
-}).call(this,require("1YiZ5S"))
-},{"1YiZ5S":99}],30:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-module.exports =
-    function(Promise, PromiseArray) {
-var PromiseInspection = Promise.PromiseInspection;
-var util = require("./util.js");
-
-function SettledPromiseArray(values) {
-    this.constructor$(values);
-}
-util.inherits(SettledPromiseArray, PromiseArray);
-
-SettledPromiseArray.prototype._promiseResolved =
-function SettledPromiseArray$_promiseResolved(index, inspection) {
-    this._values[index] = inspection;
-    var totalResolved = ++this._totalResolved;
-    if (totalResolved >= this._length) {
-        this._resolve(this._values);
-    }
-};
-
-SettledPromiseArray.prototype._promiseFulfilled =
-function SettledPromiseArray$_promiseFulfilled(value, index) {
-    if (this._isResolved()) return;
-    var ret = new PromiseInspection();
-    ret._bitField = 268435456;
-    ret._settledValue = value;
-    this._promiseResolved(index, ret);
-};
-SettledPromiseArray.prototype._promiseRejected =
-function SettledPromiseArray$_promiseRejected(reason, index) {
-    if (this._isResolved()) return;
-    var ret = new PromiseInspection();
-    ret._bitField = 134217728;
-    ret._settledValue = reason;
-    this._promiseResolved(index, ret);
-};
-
-Promise.settle = function Promise$Settle(promises) {
-    return new SettledPromiseArray(promises).promise();
-};
-
-Promise.prototype.settle = function Promise$settle() {
-    return new SettledPromiseArray(this).promise();
-};
-};
-
-},{"./util.js":36}],31:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-module.exports =
-function(Promise, PromiseArray, apiRejection) {
-var util = require("./util.js");
-var RangeError = require("./errors.js").RangeError;
-var AggregateError = require("./errors.js").AggregateError;
-var isArray = util.isArray;
-
-
-function SomePromiseArray(values) {
-    this.constructor$(values);
-    this._howMany = 0;
-    this._unwrap = false;
-    this._initialized = false;
-}
-util.inherits(SomePromiseArray, PromiseArray);
-
-SomePromiseArray.prototype._init = function SomePromiseArray$_init() {
-    if (!this._initialized) {
-        return;
-    }
-    if (this._howMany === 0) {
-        this._resolve([]);
-        return;
-    }
-    this._init$(void 0, -5);
-    var isArrayResolved = isArray(this._values);
-    if (!this._isResolved() &&
-        isArrayResolved &&
-        this._howMany > this._canPossiblyFulfill()) {
-        this._reject(this._getRangeError(this.length()));
-    }
-};
-
-SomePromiseArray.prototype.init = function SomePromiseArray$init() {
-    this._initialized = true;
-    this._init();
-};
-
-SomePromiseArray.prototype.setUnwrap = function SomePromiseArray$setUnwrap() {
-    this._unwrap = true;
-};
-
-SomePromiseArray.prototype.howMany = function SomePromiseArray$howMany() {
-    return this._howMany;
-};
-
-SomePromiseArray.prototype.setHowMany =
-function SomePromiseArray$setHowMany(count) {
-    if (this._isResolved()) return;
-    this._howMany = count;
-};
-
-SomePromiseArray.prototype._promiseFulfilled =
-function SomePromiseArray$_promiseFulfilled(value) {
-    if (this._isResolved()) return;
-    this._addFulfilled(value);
-    if (this._fulfilled() === this.howMany()) {
-        this._values.length = this.howMany();
-        if (this.howMany() === 1 && this._unwrap) {
-            this._resolve(this._values[0]);
-        } else {
-            this._resolve(this._values);
-        }
-    }
-
-};
-SomePromiseArray.prototype._promiseRejected =
-function SomePromiseArray$_promiseRejected(reason) {
-    if (this._isResolved()) return;
-    this._addRejected(reason);
-    if (this.howMany() > this._canPossiblyFulfill()) {
-        var e = new AggregateError();
-        for (var i = this.length(); i < this._values.length; ++i) {
-            e.push(this._values[i]);
-        }
-        this._reject(e);
-    }
-};
-
-SomePromiseArray.prototype._fulfilled = function SomePromiseArray$_fulfilled() {
-    return this._totalResolved;
-};
-
-SomePromiseArray.prototype._rejected = function SomePromiseArray$_rejected() {
-    return this._values.length - this.length();
-};
-
-SomePromiseArray.prototype._addRejected =
-function SomePromiseArray$_addRejected(reason) {
-    this._values.push(reason);
-};
-
-SomePromiseArray.prototype._addFulfilled =
-function SomePromiseArray$_addFulfilled(value) {
-    this._values[this._totalResolved++] = value;
-};
-
-SomePromiseArray.prototype._canPossiblyFulfill =
-function SomePromiseArray$_canPossiblyFulfill() {
-    return this.length() - this._rejected();
-};
-
-SomePromiseArray.prototype._getRangeError =
-function SomePromiseArray$_getRangeError(count) {
-    var message = "Input array must contain at least " +
-            this._howMany + " items but contains only " + count + " items";
-    return new RangeError(message);
-};
-
-SomePromiseArray.prototype._resolveEmptyArray =
-function SomePromiseArray$_resolveEmptyArray() {
-    this._reject(this._getRangeError(0));
-};
-
-function Promise$_Some(promises, howMany) {
-    if ((howMany | 0) !== howMany || howMany < 0) {
-        return apiRejection("expecting a positive integer");
-    }
-    var ret = new SomePromiseArray(promises);
-    var promise = ret.promise();
-    if (promise.isRejected()) {
-        return promise;
-    }
-    ret.setHowMany(howMany);
-    ret.init();
-    return promise;
-}
-
-Promise.some = function Promise$Some(promises, howMany) {
-    return Promise$_Some(promises, howMany);
-};
-
-Promise.prototype.some = function Promise$some(howMany) {
-    return Promise$_Some(this, howMany);
-};
-
-Promise._SomePromiseArray = SomePromiseArray;
-};
-
-},{"./errors.js":11,"./util.js":36}],32:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-module.exports = function(Promise) {
-function PromiseInspection(promise) {
-    if (promise !== void 0) {
-        this._bitField = promise._bitField;
-        this._settledValue = promise.isResolved()
-            ? promise._settledValue
-            : void 0;
-    }
-    else {
-        this._bitField = 0;
-        this._settledValue = void 0;
-    }
-}
-
-PromiseInspection.prototype.isFulfilled =
-Promise.prototype.isFulfilled = function Promise$isFulfilled() {
-    return (this._bitField & 268435456) > 0;
-};
-
-PromiseInspection.prototype.isRejected =
-Promise.prototype.isRejected = function Promise$isRejected() {
-    return (this._bitField & 134217728) > 0;
-};
-
-PromiseInspection.prototype.isPending =
-Promise.prototype.isPending = function Promise$isPending() {
-    return (this._bitField & 402653184) === 0;
-};
-
-PromiseInspection.prototype.value =
-Promise.prototype.value = function Promise$value() {
-    if (!this.isFulfilled()) {
-        throw new TypeError("cannot get fulfillment value of a non-fulfilled promise");
-    }
-    return this._settledValue;
-};
-
-PromiseInspection.prototype.error =
-PromiseInspection.prototype.reason =
-Promise.prototype.reason = function Promise$reason() {
-    if (!this.isRejected()) {
-        throw new TypeError("cannot get rejection reason of a non-rejected promise");
-    }
-    return this._settledValue;
-};
-
-PromiseInspection.prototype.isResolved =
-Promise.prototype.isResolved = function Promise$isResolved() {
-    return (this._bitField & 402653184) > 0;
-};
-
-Promise.PromiseInspection = PromiseInspection;
-};
-
-},{}],33:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-module.exports = function(Promise, INTERNAL) {
-var util = require("./util.js");
-var canAttach = require("./errors.js").canAttach;
-var errorObj = util.errorObj;
-var isObject = util.isObject;
-
-function getThen(obj) {
-    try {
-        return obj.then;
-    }
-    catch(e) {
-        errorObj.e = e;
-        return errorObj;
-    }
-}
-
-function Promise$_Cast(obj, originalPromise) {
-    if (isObject(obj)) {
-        if (obj instanceof Promise) {
-            return obj;
-        }
-        else if (isAnyBluebirdPromise(obj)) {
-            var ret = new Promise(INTERNAL);
-            ret._setTrace(void 0);
-            obj._then(
-                ret._fulfillUnchecked,
-                ret._rejectUncheckedCheckError,
-                ret._progressUnchecked,
-                ret,
-                null
-            );
-            ret._setFollowing();
-            return ret;
-        }
-        var then = getThen(obj);
-        if (then === errorObj) {
-            if (originalPromise !== void 0 && canAttach(then.e)) {
-                originalPromise._attachExtraTrace(then.e);
-            }
-            return Promise.reject(then.e);
-        } else if (typeof then === "function") {
-            return Promise$_doThenable(obj, then, originalPromise);
-        }
-    }
-    return obj;
-}
-
-var hasProp = {}.hasOwnProperty;
-function isAnyBluebirdPromise(obj) {
-    return hasProp.call(obj, "_promise0");
-}
-
-function Promise$_doThenable(x, then, originalPromise) {
-    var resolver = Promise.defer();
-    var called = false;
-    try {
-        then.call(
-            x,
-            Promise$_resolveFromThenable,
-            Promise$_rejectFromThenable,
-            Promise$_progressFromThenable
-        );
-    } catch(e) {
-        if (!called) {
-            called = true;
-            var trace = canAttach(e) ? e : new Error(e + "");
-            if (originalPromise !== void 0) {
-                originalPromise._attachExtraTrace(trace);
-            }
-            resolver.promise._reject(e, trace);
-        }
-    }
-    return resolver.promise;
-
-    function Promise$_resolveFromThenable(y) {
-        if (called) return;
-        called = true;
-
-        if (x === y) {
-            var e = Promise._makeSelfResolutionError();
-            if (originalPromise !== void 0) {
-                originalPromise._attachExtraTrace(e);
-            }
-            resolver.promise._reject(e, void 0);
-            return;
-        }
-        resolver.resolve(y);
-    }
-
-    function Promise$_rejectFromThenable(r) {
-        if (called) return;
-        called = true;
-        var trace = canAttach(r) ? r : new Error(r + "");
-        if (originalPromise !== void 0) {
-            originalPromise._attachExtraTrace(trace);
-        }
-        resolver.promise._reject(r, trace);
-    }
-
-    function Promise$_progressFromThenable(v) {
-        if (called) return;
-        var promise = resolver.promise;
-        if (typeof promise._progress === "function") {
-            promise._progress(v);
-        }
-    }
-}
-
-return Promise$_Cast;
-};
-
-},{"./errors.js":11,"./util.js":36}],34:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-var _setTimeout = function(fn, ms) {
-    var len = arguments.length;
-    var arg0 = arguments[2];
-    var arg1 = arguments[3];
-    var arg2 = len >= 5 ? arguments[4] : void 0;
-    setTimeout(function() {
-        fn(arg0, arg1, arg2);
-    }, ms|0);
-};
-
-module.exports = function(Promise, INTERNAL, cast) {
-var util = require("./util.js");
-var errors = require("./errors.js");
-var apiRejection = require("./errors_api_rejection")(Promise);
-var TimeoutError = Promise.TimeoutError;
-
-var afterTimeout = function Promise$_afterTimeout(promise, message, ms) {
-    if (!promise.isPending()) return;
-    if (typeof message !== "string") {
-        message = "operation timed out after" + " " + ms + " ms"
-    }
-    var err = new TimeoutError(message);
-    errors.markAsOriginatingFromRejection(err);
-    promise._attachExtraTrace(err);
-    promise._cancel(err);
-};
-
-var afterDelay = function Promise$_afterDelay(value, promise) {
-    promise._fulfill(value);
-};
-
-var delay = Promise.delay = function Promise$Delay(value, ms) {
-    if (ms === void 0) {
-        ms = value;
-        value = void 0;
-    }
-    ms = +ms;
-    var maybePromise = cast(value, void 0);
-    var promise = new Promise(INTERNAL);
-
-    if (maybePromise instanceof Promise) {
-        promise._propagateFrom(maybePromise, 7);
-        promise._follow(maybePromise);
-        return promise.then(function(value) {
-            return Promise.delay(value, ms);
-        });
-    } else {
-        promise._setTrace(void 0);
-        _setTimeout(afterDelay, ms, value, promise);
-    }
-    return promise;
-};
-
-Promise.prototype.delay = function Promise$delay(ms) {
-    return delay(this, ms);
-};
-
-Promise.prototype.timeout = function Promise$timeout(ms, message) {
-    ms = +ms;
-
-    var ret = new Promise(INTERNAL);
-    ret._propagateFrom(this, 7);
-    ret._follow(this);
-    _setTimeout(afterTimeout, ms, ret, message, ms);
-    return ret.cancellable();
-};
-
-};
-
-},{"./errors.js":11,"./errors_api_rejection":12,"./util.js":36}],35:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-module.exports = function (Promise, apiRejection, cast) {
-    var TypeError = require("./errors.js").TypeError;
-    var inherits = require("./util.js").inherits;
-    var PromiseInspection = Promise.PromiseInspection;
-
-    function inspectionMapper(inspections) {
-        var len = inspections.length;
-        for (var i = 0; i < len; ++i) {
-            var inspection = inspections[i];
-            if (inspection.isRejected()) {
-                return Promise.reject(inspection.error());
-            }
-            inspections[i] = inspection.value();
-        }
-        return inspections;
-    }
-
-    function thrower(e) {
-        setTimeout(function(){throw e;}, 0);
-    }
-
-    function castPreservingDisposable(thenable) {
-        var maybePromise = cast(thenable, void 0);
-        if (maybePromise !== thenable &&
-            typeof thenable._isDisposable === "function" &&
-            typeof thenable._getDisposer === "function" &&
-            thenable._isDisposable()) {
-            maybePromise._setDisposable(thenable._getDisposer());
-        }
-        return maybePromise;
-    }
-    function dispose(resources, inspection) {
-        var i = 0;
-        var len = resources.length;
-        var ret = Promise.defer();
-        function iterator() {
-            if (i >= len) return ret.resolve();
-            var maybePromise = castPreservingDisposable(resources[i++]);
-            if (maybePromise instanceof Promise &&
-                maybePromise._isDisposable()) {
-                try {
-                    maybePromise = cast(maybePromise._getDisposer()
-                                        .tryDispose(inspection), void 0);
-                } catch (e) {
-                    return thrower(e);
-                }
-                if (maybePromise instanceof Promise) {
-                    return maybePromise._then(iterator, thrower,
-                                              null, null, null);
-                }
-            }
-            iterator();
-        }
-        iterator();
-        return ret.promise;
-    }
-
-    function disposerSuccess(value) {
-        var inspection = new PromiseInspection();
-        inspection._settledValue = value;
-        inspection._bitField = 268435456;
-        return dispose(this, inspection).thenReturn(value);
-    }
-
-    function disposerFail(reason) {
-        var inspection = new PromiseInspection();
-        inspection._settledValue = reason;
-        inspection._bitField = 134217728;
-        return dispose(this, inspection).thenThrow(reason);
-    }
-
-    function Disposer(data, promise) {
-        this._data = data;
-        this._promise = promise;
-    }
-
-    Disposer.prototype.data = function Disposer$data() {
-        return this._data;
-    };
-
-    Disposer.prototype.promise = function Disposer$promise() {
-        return this._promise;
-    };
-
-    Disposer.prototype.resource = function Disposer$resource() {
-        if (this.promise().isFulfilled()) {
-            return this.promise().value();
-        }
-        return null;
-    };
-
-    Disposer.prototype.tryDispose = function(inspection) {
-        var resource = this.resource();
-        var ret = resource !== null
-            ? this.doDispose(resource, inspection) : null;
-        this._promise._unsetDisposable();
-        this._data = this._promise = null;
-        return ret;
-    };
-
-    Disposer.isDisposer = function Disposer$isDisposer(d) {
-        return (d != null &&
-                typeof d.resource === "function" &&
-                typeof d.tryDispose === "function");
-    };
-
-    function FunctionDisposer(fn, promise) {
-        this.constructor$(fn, promise);
-    }
-    inherits(FunctionDisposer, Disposer);
-
-    FunctionDisposer.prototype.doDispose = function (resource, inspection) {
-        var fn = this.data();
-        return fn.call(resource, resource, inspection);
-    };
-
-    Promise.using = function Promise$using() {
-        var len = arguments.length;
-        if (len < 2) return apiRejection(
-                        "you must pass at least 2 arguments to Promise.using");
-        var fn = arguments[len - 1];
-        if (typeof fn !== "function") return apiRejection("fn must be a function");
-        len--;
-        var resources = new Array(len);
-        for (var i = 0; i < len; ++i) {
-            var resource = arguments[i];
-            if (Disposer.isDisposer(resource)) {
-                var disposer = resource;
-                resource = resource.promise();
-                resource._setDisposable(disposer);
-            }
-            resources[i] = resource;
-        }
-
-        return Promise.settle(resources)
-            .then(inspectionMapper)
-            .spread(fn)
-            ._then(disposerSuccess, disposerFail, void 0, resources, void 0);
-    };
-
-    Promise.prototype._setDisposable =
-    function Promise$_setDisposable(disposer) {
-        this._bitField = this._bitField | 262144;
-        this._disposer = disposer;
-    };
-
-    Promise.prototype._isDisposable = function Promise$_isDisposable() {
-        return (this._bitField & 262144) > 0;
-    };
-
-    Promise.prototype._getDisposer = function Promise$_getDisposer() {
-        return this._disposer;
-    };
-
-    Promise.prototype._unsetDisposable = function Promise$_unsetDisposable() {
-        this._bitField = this._bitField & (~262144);
-        this._disposer = void 0;
-    };
-
-    Promise.prototype.disposer = function Promise$disposer(fn) {
-        if (typeof fn === "function") {
-            return new FunctionDisposer(fn, this);
-        }
-        throw new TypeError();
-    };
-
-};
-
-},{"./errors.js":11,"./util.js":36}],36:[function(require,module,exports){
-/**
- * Copyright (c) 2014 Petka Antonov
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:</p>
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- * 
- */
-"use strict";
-var es5 = require("./es5.js");
-var haveGetters = (function(){
-    try {
-        var o = {};
-        es5.defineProperty(o, "f", {
-            get: function () {
-                return 3;
-            }
-        });
-        return o.f === 3;
-    }
-    catch (e) {
-        return false;
-    }
-
-})();
-var canEvaluate = typeof navigator == "undefined";
-var errorObj = {e: {}};
-function tryCatch1(fn, receiver, arg) {
-    try { return fn.call(receiver, arg); }
-    catch (e) {
-        errorObj.e = e;
-        return errorObj;
-    }
-}
-
-function tryCatch2(fn, receiver, arg, arg2) {
-    try { return fn.call(receiver, arg, arg2); }
-    catch (e) {
-        errorObj.e = e;
-        return errorObj;
-    }
-}
-
-function tryCatch3(fn, receiver, arg, arg2, arg3) {
-    try { return fn.call(receiver, arg, arg2, arg3); }
-    catch (e) {
-        errorObj.e = e;
-        return errorObj;
-    }
-}
-
-function tryCatch4(fn, receiver, arg, arg2, arg3, arg4) {
-    try { return fn.call(receiver, arg, arg2, arg3, arg4); }
-    catch (e) {
-        errorObj.e = e;
-        return errorObj;
-    }
-}
-
-function tryCatchApply(fn, args, receiver) {
-    try { return fn.apply(receiver, args); }
-    catch (e) {
-        errorObj.e = e;
-        return errorObj;
-    }
-}
-
-var inherits = function(Child, Parent) {
-    var hasProp = {}.hasOwnProperty;
-
-    function T() {
-        this.constructor = Child;
-        this.constructor$ = Parent;
-        for (var propertyName in Parent.prototype) {
-            if (hasProp.call(Parent.prototype, propertyName) &&
-                propertyName.charAt(propertyName.length-1) !== "$"
-           ) {
-                this[propertyName + "$"] = Parent.prototype[propertyName];
-            }
-        }
-    }
-    T.prototype = Parent.prototype;
-    Child.prototype = new T();
-    return Child.prototype;
-};
-
-function asString(val) {
-    return typeof val === "string" ? val : ("" + val);
-}
-
-function isPrimitive(val) {
-    return val == null || val === true || val === false ||
-        typeof val === "string" || typeof val === "number";
-
-}
-
-function isObject(value) {
-    return !isPrimitive(value);
-}
-
-function maybeWrapAsError(maybeError) {
-    if (!isPrimitive(maybeError)) return maybeError;
-
-    return new Error(asString(maybeError));
-}
-
-function withAppended(target, appendee) {
-    var len = target.length;
-    var ret = new Array(len + 1);
-    var i;
-    for (i = 0; i < len; ++i) {
-        ret[i] = target[i];
-    }
-    ret[i] = appendee;
-    return ret;
-}
-
-function getDataPropertyOrDefault(obj, key, defaultValue) {
-    if (es5.isES5) {
-        var desc = Object.getOwnPropertyDescriptor(obj, key);
-        if (desc != null) {
-            return desc.get == null && desc.set == null
-                    ? desc.value
-                    : defaultValue;
-        }
-    } else {
-        return {}.hasOwnProperty.call(obj, key) ? obj[key] : void 0;
-    }
-}
-
-function notEnumerableProp(obj, name, value) {
-    if (isPrimitive(obj)) return obj;
-    var descriptor = {
-        value: value,
-        configurable: true,
-        enumerable: false,
-        writable: true
-    };
-    es5.defineProperty(obj, name, descriptor);
-    return obj;
-}
-
-
-var wrapsPrimitiveReceiver = (function() {
-    return this !== "string";
-}).call("string");
-
-function thrower(r) {
-    throw r;
-}
-
-var inheritedDataKeys = (function() {
-    if (es5.isES5) {
-        return function(obj, opts) {
-            var ret = [];
-            var visitedKeys = Object.create(null);
-            var getKeys = Object(opts).includeHidden
-                ? Object.getOwnPropertyNames
-                : Object.keys;
-            while (obj != null) {
-                var keys;
-                try {
-                    keys = getKeys(obj);
-                } catch (e) {
-                    return ret;
-                }
-                for (var i = 0; i < keys.length; ++i) {
-                    var key = keys[i];
-                    if (visitedKeys[key]) continue;
-                    visitedKeys[key] = true;
-                    var desc = Object.getOwnPropertyDescriptor(obj, key);
-                    if (desc != null && desc.get == null && desc.set == null) {
-                        ret.push(key);
-                    }
-                }
-                obj = es5.getPrototypeOf(obj);
-            }
-            return ret;
-        };
-    } else {
-        return function(obj) {
-            var ret = [];
-            /*jshint forin:false */
-            for (var key in obj) {
-                ret.push(key);
-            }
-            return ret;
-        };
-    }
-
-})();
-
-function isClass(fn) {
-    try {
-        if (typeof fn === "function") {
-            var keys = es5.keys(fn.prototype);
-            return keys.length > 0 &&
-                   !(keys.length === 1 && keys[0] === "constructor");
-        }
-        return false;
-    } catch (e) {
-        return false;
-    }
-}
-
-function toFastProperties(obj) {
-    /*jshint -W027*/
-    function f() {}
-    f.prototype = obj;
-    return f;
-    eval(obj);
-}
-
-var rident = /^[a-z$_][a-z$_0-9]*$/i;
-function isIdentifier(str) {
-    return rident.test(str);
-}
-
-function filledRange(count, prefix, suffix) {
-    var ret = new Array(count);
-    for(var i = 0; i < count; ++i) {
-        ret[i] = prefix + i + suffix;
-    }
-    return ret;
-}
-
-var ret = {
-    isClass: isClass,
-    isIdentifier: isIdentifier,
-    inheritedDataKeys: inheritedDataKeys,
-    getDataPropertyOrDefault: getDataPropertyOrDefault,
-    thrower: thrower,
-    isArray: es5.isArray,
-    haveGetters: haveGetters,
-    notEnumerableProp: notEnumerableProp,
-    isPrimitive: isPrimitive,
-    isObject: isObject,
-    canEvaluate: canEvaluate,
-    errorObj: errorObj,
-    tryCatch1: tryCatch1,
-    tryCatch2: tryCatch2,
-    tryCatch3: tryCatch3,
-    tryCatch4: tryCatch4,
-    tryCatchApply: tryCatchApply,
-    inherits: inherits,
-    withAppended: withAppended,
-    asString: asString,
-    maybeWrapAsError: maybeWrapAsError,
-    wrapsPrimitiveReceiver: wrapsPrimitiveReceiver,
-    toFastProperties: toFastProperties,
-    filledRange: filledRange
-};
-
-module.exports = ret;
-
-},{"./es5.js":13}],37:[function(require,module,exports){
 var Dispatcher = require("./lib/dispatcher"),
     Flux = require("./lib/flux"),
     FluxMixin = require("./lib/flux_mixin"),
@@ -6644,7 +1435,7 @@ var Fluxxor = {
 
 module.exports = Fluxxor;
 
-},{"./lib/create_store":38,"./lib/dispatcher":39,"./lib/flux":40,"./lib/flux_child_mixin":41,"./lib/flux_mixin":42,"./lib/store_watch_mixin":44,"./version":98}],38:[function(require,module,exports){
+},{"./lib/create_store":3,"./lib/dispatcher":4,"./lib/flux":5,"./lib/flux_child_mixin":6,"./lib/flux_mixin":7,"./lib/store_watch_mixin":9,"./version":63}],3:[function(require,module,exports){
 var _each = require("lodash-node/modern/collections/forEach"),
     _isFunction = require("lodash-node/modern/objects/isFunction"),
     Store = require("./store"),
@@ -6686,7 +1477,7 @@ var createStore = function(spec) {
 
 module.exports = createStore;
 
-},{"./store":43,"inherits":46,"lodash-node/modern/collections/forEach":49,"lodash-node/modern/objects/isFunction":88}],39:[function(require,module,exports){
+},{"./store":8,"inherits":11,"lodash-node/modern/collections/forEach":14,"lodash-node/modern/objects/isFunction":53}],4:[function(require,module,exports){
 var _clone = require("lodash-node/modern/objects/clone"),
     _mapValues = require("lodash-node/modern/objects/mapValues"),
     _forOwn = require("lodash-node/modern/objects/forOwn"),
@@ -6832,7 +1623,7 @@ Dispatcher.prototype.waitForStores = function(store, stores, fn) {
 
 module.exports = Dispatcher;
 
-},{"lodash-node/modern/arrays/intersection":47,"lodash-node/modern/arrays/uniq":48,"lodash-node/modern/collections/forEach":49,"lodash-node/modern/collections/map":50,"lodash-node/modern/collections/size":52,"lodash-node/modern/objects/clone":82,"lodash-node/modern/objects/findKey":83,"lodash-node/modern/objects/forOwn":85,"lodash-node/modern/objects/keys":91,"lodash-node/modern/objects/mapValues":92}],40:[function(require,module,exports){
+},{"lodash-node/modern/arrays/intersection":12,"lodash-node/modern/arrays/uniq":13,"lodash-node/modern/collections/forEach":14,"lodash-node/modern/collections/map":15,"lodash-node/modern/collections/size":17,"lodash-node/modern/objects/clone":47,"lodash-node/modern/objects/findKey":48,"lodash-node/modern/objects/forOwn":50,"lodash-node/modern/objects/keys":56,"lodash-node/modern/objects/mapValues":57}],5:[function(require,module,exports){
 var EventEmitter = require("eventemitter3"),
     inherits = require("inherits"),
     objectPath = require("object-path"),
@@ -6953,7 +1744,7 @@ Flux.prototype.addStores = function(stores) {
 
 module.exports = Flux;
 
-},{"./dispatcher":39,"eventemitter3":45,"inherits":46,"lodash-node/modern/collections/forEach":49,"lodash-node/modern/collections/reduce":51,"lodash-node/modern/objects/isFunction":88,"lodash-node/modern/objects/isString":90,"object-path":97}],41:[function(require,module,exports){
+},{"./dispatcher":4,"eventemitter3":10,"inherits":11,"lodash-node/modern/collections/forEach":14,"lodash-node/modern/collections/reduce":16,"lodash-node/modern/objects/isFunction":53,"lodash-node/modern/objects/isString":55,"object-path":62}],6:[function(require,module,exports){
 var FluxChildMixin = function(React) {
   return {
     componentWillMount: function() {
@@ -6982,7 +1773,7 @@ FluxChildMixin.componentWillMount = function() {
 
 module.exports = FluxChildMixin;
 
-},{}],42:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 var FluxMixin = function(React) {
   return {
     componentWillMount: function() {
@@ -7019,7 +1810,7 @@ FluxMixin.componentWillMount = function() {
 
 module.exports = FluxMixin;
 
-},{}],43:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 var EventEmitter = require("eventemitter3"),
     inherits = require("inherits"),
     _isFunction = require("lodash-node/modern/objects/isFunction"),
@@ -7091,7 +1882,7 @@ Store.prototype.waitFor = function(stores, fn) {
 
 module.exports = Store;
 
-},{"eventemitter3":45,"inherits":46,"lodash-node/modern/objects/isFunction":88,"lodash-node/modern/objects/isObject":89}],44:[function(require,module,exports){
+},{"eventemitter3":10,"inherits":11,"lodash-node/modern/objects/isFunction":53,"lodash-node/modern/objects/isObject":54}],9:[function(require,module,exports){
 var _each = require("lodash-node/modern/collections/forEach");
 
 var StoreWatchMixin = function() {
@@ -7131,7 +1922,7 @@ StoreWatchMixin.componentWillMount = function() {
 
 module.exports = StoreWatchMixin;
 
-},{"lodash-node/modern/collections/forEach":49}],45:[function(require,module,exports){
+},{"lodash-node/modern/collections/forEach":14}],10:[function(require,module,exports){
 'use strict';
 
 /**
@@ -7337,7 +2128,7 @@ if ('object' === typeof module && module.exports) {
   module.exports = EventEmitter;
 }
 
-},{}],46:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -7362,7 +2153,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],47:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -7447,7 +2238,7 @@ function intersection() {
 
 module.exports = intersection;
 
-},{"../internals/baseIndexOf":61,"../internals/cacheIndexOf":64,"../internals/createCache":66,"../internals/getArray":68,"../internals/largeArraySize":72,"../internals/releaseArray":76,"../internals/releaseObject":77,"../objects/isArguments":86,"../objects/isArray":87}],48:[function(require,module,exports){
+},{"../internals/baseIndexOf":26,"../internals/cacheIndexOf":29,"../internals/createCache":31,"../internals/getArray":33,"../internals/largeArraySize":37,"../internals/releaseArray":41,"../internals/releaseObject":42,"../objects/isArguments":51,"../objects/isArray":52}],13:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -7518,7 +2309,7 @@ function uniq(array, isSorted, callback, thisArg) {
 
 module.exports = uniq;
 
-},{"../functions/createCallback":54,"../internals/baseUniq":63}],49:[function(require,module,exports){
+},{"../functions/createCallback":19,"../internals/baseUniq":28}],14:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -7575,7 +2366,7 @@ function forEach(collection, callback, thisArg) {
 
 module.exports = forEach;
 
-},{"../internals/baseCreateCallback":59,"../objects/forOwn":85}],50:[function(require,module,exports){
+},{"../internals/baseCreateCallback":24,"../objects/forOwn":50}],15:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -7647,7 +2438,7 @@ function map(collection, callback, thisArg) {
 
 module.exports = map;
 
-},{"../functions/createCallback":54,"../objects/forOwn":85}],51:[function(require,module,exports){
+},{"../functions/createCallback":19,"../objects/forOwn":50}],16:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -7716,7 +2507,7 @@ function reduce(collection, callback, accumulator, thisArg) {
 
 module.exports = reduce;
 
-},{"../functions/createCallback":54,"../objects/forOwn":85}],52:[function(require,module,exports){
+},{"../functions/createCallback":19,"../objects/forOwn":50}],17:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -7754,7 +2545,7 @@ function size(collection) {
 
 module.exports = size;
 
-},{"../objects/keys":91}],53:[function(require,module,exports){
+},{"../objects/keys":56}],18:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -7796,7 +2587,7 @@ function bind(func, thisArg) {
 
 module.exports = bind;
 
-},{"../internals/createWrapper":67,"../internals/slice":80}],54:[function(require,module,exports){
+},{"../internals/createWrapper":32,"../internals/slice":45}],19:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -7879,7 +2670,7 @@ function createCallback(func, thisArg, argCount) {
 
 module.exports = createCallback;
 
-},{"../internals/baseCreateCallback":59,"../internals/baseIsEqual":62,"../objects/isObject":89,"../objects/keys":91,"../utilities/property":96}],55:[function(require,module,exports){
+},{"../internals/baseCreateCallback":24,"../internals/baseIsEqual":27,"../objects/isObject":54,"../objects/keys":56,"../utilities/property":61}],20:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -7894,7 +2685,7 @@ var arrayPool = [];
 
 module.exports = arrayPool;
 
-},{}],56:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -7958,7 +2749,7 @@ function baseBind(bindData) {
 
 module.exports = baseBind;
 
-},{"../objects/isObject":89,"./baseCreate":58,"./setBindData":78,"./slice":80}],57:[function(require,module,exports){
+},{"../objects/isObject":54,"./baseCreate":23,"./setBindData":43,"./slice":45}],22:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -8112,7 +2903,7 @@ function baseClone(value, isDeep, callback, stackA, stackB) {
 
 module.exports = baseClone;
 
-},{"../collections/forEach":49,"../objects/assign":81,"../objects/forOwn":85,"../objects/isArray":87,"../objects/isObject":89,"./getArray":68,"./releaseArray":76,"./slice":80}],58:[function(require,module,exports){
+},{"../collections/forEach":14,"../objects/assign":46,"../objects/forOwn":50,"../objects/isArray":52,"../objects/isObject":54,"./getArray":33,"./releaseArray":41,"./slice":45}],23:[function(require,module,exports){
 (function (global){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
@@ -8158,7 +2949,7 @@ if (!nativeCreate) {
 module.exports = baseCreate;
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../objects/isObject":89,"../utilities/noop":95,"./isNative":70}],59:[function(require,module,exports){
+},{"../objects/isObject":54,"../utilities/noop":60,"./isNative":35}],24:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -8240,7 +3031,7 @@ function baseCreateCallback(func, thisArg, argCount) {
 
 module.exports = baseCreateCallback;
 
-},{"../functions/bind":53,"../support":93,"../utilities/identity":94,"./setBindData":78}],60:[function(require,module,exports){
+},{"../functions/bind":18,"../support":58,"../utilities/identity":59,"./setBindData":43}],25:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -8320,7 +3111,7 @@ function baseCreateWrapper(bindData) {
 
 module.exports = baseCreateWrapper;
 
-},{"../objects/isObject":89,"./baseCreate":58,"./setBindData":78,"./slice":80}],61:[function(require,module,exports){
+},{"../objects/isObject":54,"./baseCreate":23,"./setBindData":43,"./slice":45}],26:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -8354,7 +3145,7 @@ function baseIndexOf(array, value, fromIndex) {
 
 module.exports = baseIndexOf;
 
-},{}],62:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -8565,7 +3356,7 @@ function baseIsEqual(a, b, callback, isWhere, stackA, stackB) {
 
 module.exports = baseIsEqual;
 
-},{"../objects/forIn":84,"../objects/isFunction":88,"./getArray":68,"./objectTypes":75,"./releaseArray":76}],63:[function(require,module,exports){
+},{"../objects/forIn":49,"../objects/isFunction":53,"./getArray":33,"./objectTypes":40,"./releaseArray":41}],28:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -8631,7 +3422,7 @@ function baseUniq(array, isSorted, callback) {
 
 module.exports = baseUniq;
 
-},{"./baseIndexOf":61,"./cacheIndexOf":64,"./createCache":66,"./getArray":68,"./largeArraySize":72,"./releaseArray":76,"./releaseObject":77}],64:[function(require,module,exports){
+},{"./baseIndexOf":26,"./cacheIndexOf":29,"./createCache":31,"./getArray":33,"./largeArraySize":37,"./releaseArray":41,"./releaseObject":42}],29:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -8672,7 +3463,7 @@ function cacheIndexOf(cache, value) {
 
 module.exports = cacheIndexOf;
 
-},{"./baseIndexOf":61,"./keyPrefix":71}],65:[function(require,module,exports){
+},{"./baseIndexOf":26,"./keyPrefix":36}],30:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -8712,7 +3503,7 @@ function cachePush(value) {
 
 module.exports = cachePush;
 
-},{"./keyPrefix":71}],66:[function(require,module,exports){
+},{"./keyPrefix":36}],31:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -8759,7 +3550,7 @@ function createCache(array) {
 
 module.exports = createCache;
 
-},{"./cachePush":65,"./getObject":69,"./releaseObject":77}],67:[function(require,module,exports){
+},{"./cachePush":30,"./getObject":34,"./releaseObject":42}],32:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -8867,7 +3658,7 @@ function createWrapper(func, bitmask, partialArgs, partialRightArgs, thisArg, ar
 
 module.exports = createWrapper;
 
-},{"../objects/isFunction":88,"./baseBind":56,"./baseCreateWrapper":60,"./slice":80}],68:[function(require,module,exports){
+},{"../objects/isFunction":53,"./baseBind":21,"./baseCreateWrapper":25,"./slice":45}],33:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -8890,7 +3681,7 @@ function getArray() {
 
 module.exports = getArray;
 
-},{"./arrayPool":55}],69:[function(require,module,exports){
+},{"./arrayPool":20}],34:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -8927,7 +3718,7 @@ function getObject() {
 
 module.exports = getObject;
 
-},{"./objectPool":74}],70:[function(require,module,exports){
+},{"./objectPool":39}],35:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -8963,7 +3754,7 @@ function isNative(value) {
 
 module.exports = isNative;
 
-},{}],71:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -8978,7 +3769,7 @@ var keyPrefix = +new Date + '';
 
 module.exports = keyPrefix;
 
-},{}],72:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -8993,7 +3784,7 @@ var largeArraySize = 75;
 
 module.exports = largeArraySize;
 
-},{}],73:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -9008,7 +3799,7 @@ var maxPoolSize = 40;
 
 module.exports = maxPoolSize;
 
-},{}],74:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -9023,7 +3814,7 @@ var objectPool = [];
 
 module.exports = objectPool;
 
-},{}],75:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -9045,7 +3836,7 @@ var objectTypes = {
 
 module.exports = objectTypes;
 
-},{}],76:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -9072,7 +3863,7 @@ function releaseArray(array) {
 
 module.exports = releaseArray;
 
-},{"./arrayPool":55,"./maxPoolSize":73}],77:[function(require,module,exports){
+},{"./arrayPool":20,"./maxPoolSize":38}],42:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -9103,7 +3894,7 @@ function releaseObject(object) {
 
 module.exports = releaseObject;
 
-},{"./maxPoolSize":73,"./objectPool":74}],78:[function(require,module,exports){
+},{"./maxPoolSize":38,"./objectPool":39}],43:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -9148,7 +3939,7 @@ var setBindData = !defineProperty ? noop : function(func, value) {
 
 module.exports = setBindData;
 
-},{"../utilities/noop":95,"./isNative":70}],79:[function(require,module,exports){
+},{"../utilities/noop":60,"./isNative":35}],44:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -9188,7 +3979,7 @@ var shimKeys = function(object) {
 
 module.exports = shimKeys;
 
-},{"./objectTypes":75}],80:[function(require,module,exports){
+},{"./objectTypes":40}],45:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -9228,7 +4019,7 @@ function slice(array, start, end) {
 
 module.exports = slice;
 
-},{}],81:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -9300,7 +4091,7 @@ var assign = function(object, source, guard) {
 
 module.exports = assign;
 
-},{"../internals/baseCreateCallback":59,"../internals/objectTypes":75,"./keys":91}],82:[function(require,module,exports){
+},{"../internals/baseCreateCallback":24,"../internals/objectTypes":40,"./keys":56}],47:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -9365,7 +4156,7 @@ function clone(value, isDeep, callback, thisArg) {
 
 module.exports = clone;
 
-},{"../internals/baseClone":57,"../internals/baseCreateCallback":59}],83:[function(require,module,exports){
+},{"../internals/baseClone":22,"../internals/baseCreateCallback":24}],48:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -9432,7 +4223,7 @@ function findKey(object, callback, thisArg) {
 
 module.exports = findKey;
 
-},{"../functions/createCallback":54,"./forOwn":85}],84:[function(require,module,exports){
+},{"../functions/createCallback":19,"./forOwn":50}],49:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -9488,7 +4279,7 @@ var forIn = function(collection, callback, thisArg) {
 
 module.exports = forIn;
 
-},{"../internals/baseCreateCallback":59,"../internals/objectTypes":75}],85:[function(require,module,exports){
+},{"../internals/baseCreateCallback":24,"../internals/objectTypes":40}],50:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -9540,7 +4331,7 @@ var forOwn = function(collection, callback, thisArg) {
 
 module.exports = forOwn;
 
-},{"../internals/baseCreateCallback":59,"../internals/objectTypes":75,"./keys":91}],86:[function(require,module,exports){
+},{"../internals/baseCreateCallback":24,"../internals/objectTypes":40,"./keys":56}],51:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -9582,7 +4373,7 @@ function isArguments(value) {
 
 module.exports = isArguments;
 
-},{}],87:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -9629,7 +4420,7 @@ var isArray = nativeIsArray || function(value) {
 
 module.exports = isArray;
 
-},{"../internals/isNative":70}],88:[function(require,module,exports){
+},{"../internals/isNative":35}],53:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -9658,7 +4449,7 @@ function isFunction(value) {
 
 module.exports = isFunction;
 
-},{}],89:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -9699,7 +4490,7 @@ function isObject(value) {
 
 module.exports = isObject;
 
-},{"../internals/objectTypes":75}],90:[function(require,module,exports){
+},{"../internals/objectTypes":40}],55:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -9738,7 +4529,7 @@ function isString(value) {
 
 module.exports = isString;
 
-},{}],91:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -9776,7 +4567,7 @@ var keys = !nativeKeys ? shimKeys : function(object) {
 
 module.exports = keys;
 
-},{"../internals/isNative":70,"../internals/shimKeys":79,"./isObject":89}],92:[function(require,module,exports){
+},{"../internals/isNative":35,"../internals/shimKeys":44,"./isObject":54}],57:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -9836,7 +4627,7 @@ function mapValues(object, callback, thisArg) {
 
 module.exports = mapValues;
 
-},{"../functions/createCallback":54,"./forOwn":85}],93:[function(require,module,exports){
+},{"../functions/createCallback":19,"./forOwn":50}],58:[function(require,module,exports){
 (function (global){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
@@ -9880,7 +4671,7 @@ support.funcNames = typeof Function.name == 'string';
 module.exports = support;
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./internals/isNative":70}],94:[function(require,module,exports){
+},{"./internals/isNative":35}],59:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -9910,7 +4701,7 @@ function identity(value) {
 
 module.exports = identity;
 
-},{}],95:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -9938,7 +4729,7 @@ function noop() {
 
 module.exports = noop;
 
-},{}],96:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 /**
  * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
  * Build: `lodash modularize modern exports="node" -o ./modern/`
@@ -9980,7 +4771,7 @@ function property(key) {
 
 module.exports = property;
 
-},{}],97:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 (function (root, factory){
   'use strict';
 
@@ -10222,9 +5013,9 @@ module.exports = property;
 
   return objectPath;
 });
-},{}],98:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 module.exports = "1.5.0"
-},{}],99:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -10289,7 +5080,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],100:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -10323,7 +5114,7 @@ var AutoFocusMixin = {
 
 module.exports = AutoFocusMixin;
 
-},{"./focusNode":205}],101:[function(require,module,exports){
+},{"./focusNode":170}],66:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -10547,7 +5338,7 @@ var BeforeInputEventPlugin = {
 
 module.exports = BeforeInputEventPlugin;
 
-},{"./EventConstants":114,"./EventPropagators":119,"./ExecutionEnvironment":120,"./SyntheticInputEvent":185,"./keyOf":226}],102:[function(require,module,exports){
+},{"./EventConstants":79,"./EventPropagators":84,"./ExecutionEnvironment":85,"./SyntheticInputEvent":150,"./keyOf":191}],67:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -10670,7 +5461,7 @@ var CSSProperty = {
 
 module.exports = CSSProperty;
 
-},{}],103:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -10769,7 +5560,7 @@ var CSSPropertyOperations = {
 
 module.exports = CSSPropertyOperations;
 
-},{"./CSSProperty":102,"./dangerousStyleValue":200,"./hyphenateStyleName":217,"./memoizeStringOnly":228}],104:[function(require,module,exports){
+},{"./CSSProperty":67,"./dangerousStyleValue":165,"./hyphenateStyleName":182,"./memoizeStringOnly":193}],69:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -10876,7 +5667,7 @@ PooledClass.addPoolingTo(CallbackQueue);
 module.exports = CallbackQueue;
 
 }).call(this,require("1YiZ5S"))
-},{"./PooledClass":125,"./invariant":219,"./mixInto":232,"1YiZ5S":99}],105:[function(require,module,exports){
+},{"./PooledClass":90,"./invariant":184,"./mixInto":197,"1YiZ5S":64}],70:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -11265,7 +6056,7 @@ var ChangeEventPlugin = {
 
 module.exports = ChangeEventPlugin;
 
-},{"./EventConstants":114,"./EventPluginHub":116,"./EventPropagators":119,"./ExecutionEnvironment":120,"./ReactUpdates":175,"./SyntheticEvent":183,"./isEventSupported":220,"./isTextInputElement":222,"./keyOf":226}],106:[function(require,module,exports){
+},{"./EventConstants":79,"./EventPluginHub":81,"./EventPropagators":84,"./ExecutionEnvironment":85,"./ReactUpdates":140,"./SyntheticEvent":148,"./isEventSupported":185,"./isTextInputElement":187,"./keyOf":191}],71:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -11297,7 +6088,7 @@ var ClientReactRootIndex = {
 
 module.exports = ClientReactRootIndex;
 
-},{}],107:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -11563,7 +6354,7 @@ var CompositionEventPlugin = {
 
 module.exports = CompositionEventPlugin;
 
-},{"./EventConstants":114,"./EventPropagators":119,"./ExecutionEnvironment":120,"./ReactInputSelection":157,"./SyntheticCompositionEvent":181,"./getTextContentAccessor":214,"./keyOf":226}],108:[function(require,module,exports){
+},{"./EventConstants":79,"./EventPropagators":84,"./ExecutionEnvironment":85,"./ReactInputSelection":122,"./SyntheticCompositionEvent":146,"./getTextContentAccessor":179,"./keyOf":191}],73:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -11745,7 +6536,7 @@ var DOMChildrenOperations = {
 module.exports = DOMChildrenOperations;
 
 }).call(this,require("1YiZ5S"))
-},{"./Danger":111,"./ReactMultiChildUpdateTypes":162,"./getTextContentAccessor":214,"./invariant":219,"1YiZ5S":99}],109:[function(require,module,exports){
+},{"./Danger":76,"./ReactMultiChildUpdateTypes":127,"./getTextContentAccessor":179,"./invariant":184,"1YiZ5S":64}],74:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -12047,7 +6838,7 @@ var DOMProperty = {
 module.exports = DOMProperty;
 
 }).call(this,require("1YiZ5S"))
-},{"./invariant":219,"1YiZ5S":99}],110:[function(require,module,exports){
+},{"./invariant":184,"1YiZ5S":64}],75:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -12244,7 +7035,7 @@ var DOMPropertyOperations = {
 module.exports = DOMPropertyOperations;
 
 }).call(this,require("1YiZ5S"))
-},{"./DOMProperty":109,"./escapeTextForBrowser":203,"./memoizeStringOnly":228,"./warning":242,"1YiZ5S":99}],111:[function(require,module,exports){
+},{"./DOMProperty":74,"./escapeTextForBrowser":168,"./memoizeStringOnly":193,"./warning":207,"1YiZ5S":64}],76:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -12435,7 +7226,7 @@ var Danger = {
 module.exports = Danger;
 
 }).call(this,require("1YiZ5S"))
-},{"./ExecutionEnvironment":120,"./createNodesFromMarkup":199,"./emptyFunction":201,"./getMarkupWrap":211,"./invariant":219,"1YiZ5S":99}],112:[function(require,module,exports){
+},{"./ExecutionEnvironment":85,"./createNodesFromMarkup":164,"./emptyFunction":166,"./getMarkupWrap":176,"./invariant":184,"1YiZ5S":64}],77:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -12482,7 +7273,7 @@ var DefaultEventPluginOrder = [
 
 module.exports = DefaultEventPluginOrder;
 
-},{"./keyOf":226}],113:[function(require,module,exports){
+},{"./keyOf":191}],78:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -12629,7 +7420,7 @@ var EnterLeaveEventPlugin = {
 
 module.exports = EnterLeaveEventPlugin;
 
-},{"./EventConstants":114,"./EventPropagators":119,"./ReactMount":160,"./SyntheticMouseEvent":187,"./keyOf":226}],114:[function(require,module,exports){
+},{"./EventConstants":79,"./EventPropagators":84,"./ReactMount":125,"./SyntheticMouseEvent":152,"./keyOf":191}],79:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -12708,7 +7499,7 @@ var EventConstants = {
 
 module.exports = EventConstants;
 
-},{"./keyMirror":225}],115:[function(require,module,exports){
+},{"./keyMirror":190}],80:[function(require,module,exports){
 (function (process){
 /**
  * @providesModule EventListener
@@ -12784,7 +7575,7 @@ var EventListener = {
 module.exports = EventListener;
 
 }).call(this,require("1YiZ5S"))
-},{"./emptyFunction":201,"1YiZ5S":99}],116:[function(require,module,exports){
+},{"./emptyFunction":166,"1YiZ5S":64}],81:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -13078,7 +7869,7 @@ var EventPluginHub = {
 module.exports = EventPluginHub;
 
 }).call(this,require("1YiZ5S"))
-},{"./EventPluginRegistry":117,"./EventPluginUtils":118,"./accumulate":193,"./forEachAccumulated":206,"./invariant":219,"./isEventSupported":220,"./monitorCodeUse":233,"1YiZ5S":99}],117:[function(require,module,exports){
+},{"./EventPluginRegistry":82,"./EventPluginUtils":83,"./accumulate":158,"./forEachAccumulated":171,"./invariant":184,"./isEventSupported":185,"./monitorCodeUse":198,"1YiZ5S":64}],82:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -13365,7 +8156,7 @@ var EventPluginRegistry = {
 module.exports = EventPluginRegistry;
 
 }).call(this,require("1YiZ5S"))
-},{"./invariant":219,"1YiZ5S":99}],118:[function(require,module,exports){
+},{"./invariant":184,"1YiZ5S":64}],83:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -13593,7 +8384,7 @@ var EventPluginUtils = {
 module.exports = EventPluginUtils;
 
 }).call(this,require("1YiZ5S"))
-},{"./EventConstants":114,"./invariant":219,"1YiZ5S":99}],119:[function(require,module,exports){
+},{"./EventConstants":79,"./invariant":184,"1YiZ5S":64}],84:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -13740,7 +8531,7 @@ var EventPropagators = {
 module.exports = EventPropagators;
 
 }).call(this,require("1YiZ5S"))
-},{"./EventConstants":114,"./EventPluginHub":116,"./accumulate":193,"./forEachAccumulated":206,"1YiZ5S":99}],120:[function(require,module,exports){
+},{"./EventConstants":79,"./EventPluginHub":81,"./accumulate":158,"./forEachAccumulated":171,"1YiZ5S":64}],85:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -13792,7 +8583,7 @@ var ExecutionEnvironment = {
 
 module.exports = ExecutionEnvironment;
 
-},{}],121:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -13983,7 +8774,7 @@ var HTMLDOMPropertyConfig = {
 
 module.exports = HTMLDOMPropertyConfig;
 
-},{"./DOMProperty":109,"./ExecutionEnvironment":120}],122:[function(require,module,exports){
+},{"./DOMProperty":74,"./ExecutionEnvironment":85}],87:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -14146,7 +8937,7 @@ var LinkedValueUtils = {
 module.exports = LinkedValueUtils;
 
 }).call(this,require("1YiZ5S"))
-},{"./ReactPropTypes":168,"./invariant":219,"1YiZ5S":99}],123:[function(require,module,exports){
+},{"./ReactPropTypes":133,"./invariant":184,"1YiZ5S":64}],88:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014 Facebook, Inc.
@@ -14202,7 +8993,7 @@ var LocalEventTrapMixin = {
 module.exports = LocalEventTrapMixin;
 
 }).call(this,require("1YiZ5S"))
-},{"./ReactBrowserEventEmitter":128,"./accumulate":193,"./forEachAccumulated":206,"./invariant":219,"1YiZ5S":99}],124:[function(require,module,exports){
+},{"./ReactBrowserEventEmitter":93,"./accumulate":158,"./forEachAccumulated":171,"./invariant":184,"1YiZ5S":64}],89:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -14267,7 +9058,7 @@ var MobileSafariClickEventPlugin = {
 
 module.exports = MobileSafariClickEventPlugin;
 
-},{"./EventConstants":114,"./emptyFunction":201}],125:[function(require,module,exports){
+},{"./EventConstants":79,"./emptyFunction":166}],90:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -14390,7 +9181,7 @@ var PooledClass = {
 module.exports = PooledClass;
 
 }).call(this,require("1YiZ5S"))
-},{"./invariant":219,"1YiZ5S":99}],126:[function(require,module,exports){
+},{"./invariant":184,"1YiZ5S":64}],91:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -14545,7 +9336,7 @@ React.version = '0.11.2';
 module.exports = React;
 
 }).call(this,require("1YiZ5S"))
-},{"./DOMPropertyOperations":110,"./EventPluginUtils":118,"./ExecutionEnvironment":120,"./ReactChildren":129,"./ReactComponent":130,"./ReactCompositeComponent":132,"./ReactContext":133,"./ReactCurrentOwner":134,"./ReactDOM":135,"./ReactDOMComponent":137,"./ReactDefaultInjection":147,"./ReactDescriptor":150,"./ReactInstanceHandles":158,"./ReactMount":160,"./ReactMultiChild":161,"./ReactPerf":164,"./ReactPropTypes":168,"./ReactServerRendering":172,"./ReactTextComponent":174,"./onlyChild":234,"./warning":242,"1YiZ5S":99}],127:[function(require,module,exports){
+},{"./DOMPropertyOperations":75,"./EventPluginUtils":83,"./ExecutionEnvironment":85,"./ReactChildren":94,"./ReactComponent":95,"./ReactCompositeComponent":97,"./ReactContext":98,"./ReactCurrentOwner":99,"./ReactDOM":100,"./ReactDOMComponent":102,"./ReactDefaultInjection":112,"./ReactDescriptor":115,"./ReactInstanceHandles":123,"./ReactMount":125,"./ReactMultiChild":126,"./ReactPerf":129,"./ReactPropTypes":133,"./ReactServerRendering":137,"./ReactTextComponent":139,"./onlyChild":199,"./warning":207,"1YiZ5S":64}],92:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -14595,7 +9386,7 @@ var ReactBrowserComponentMixin = {
 module.exports = ReactBrowserComponentMixin;
 
 }).call(this,require("1YiZ5S"))
-},{"./ReactEmptyComponent":152,"./ReactMount":160,"./invariant":219,"1YiZ5S":99}],128:[function(require,module,exports){
+},{"./ReactEmptyComponent":117,"./ReactMount":125,"./invariant":184,"1YiZ5S":64}],93:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -14957,7 +9748,7 @@ var ReactBrowserEventEmitter = merge(ReactEventEmitterMixin, {
 
 module.exports = ReactBrowserEventEmitter;
 
-},{"./EventConstants":114,"./EventPluginHub":116,"./EventPluginRegistry":117,"./ReactEventEmitterMixin":154,"./ViewportMetrics":192,"./isEventSupported":220,"./merge":229}],129:[function(require,module,exports){
+},{"./EventConstants":79,"./EventPluginHub":81,"./EventPluginRegistry":82,"./ReactEventEmitterMixin":119,"./ViewportMetrics":157,"./isEventSupported":185,"./merge":194}],94:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -15114,7 +9905,7 @@ var ReactChildren = {
 module.exports = ReactChildren;
 
 }).call(this,require("1YiZ5S"))
-},{"./PooledClass":125,"./traverseAllChildren":241,"./warning":242,"1YiZ5S":99}],130:[function(require,module,exports){
+},{"./PooledClass":90,"./traverseAllChildren":206,"./warning":207,"1YiZ5S":64}],95:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -15564,7 +10355,7 @@ var ReactComponent = {
 module.exports = ReactComponent;
 
 }).call(this,require("1YiZ5S"))
-},{"./ReactDescriptor":150,"./ReactOwner":163,"./ReactUpdates":175,"./invariant":219,"./keyMirror":225,"./merge":229,"1YiZ5S":99}],131:[function(require,module,exports){
+},{"./ReactDescriptor":115,"./ReactOwner":128,"./ReactUpdates":140,"./invariant":184,"./keyMirror":190,"./merge":194,"1YiZ5S":64}],96:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -15693,7 +10484,7 @@ var ReactComponentBrowserEnvironment = {
 module.exports = ReactComponentBrowserEnvironment;
 
 }).call(this,require("1YiZ5S"))
-},{"./ReactDOMIDOperations":139,"./ReactMarkupChecksum":159,"./ReactMount":160,"./ReactPerf":164,"./ReactReconcileTransaction":170,"./getReactRootElementInContainer":213,"./invariant":219,"./setInnerHTML":237,"1YiZ5S":99}],132:[function(require,module,exports){
+},{"./ReactDOMIDOperations":104,"./ReactMarkupChecksum":124,"./ReactMount":125,"./ReactPerf":129,"./ReactReconcileTransaction":135,"./getReactRootElementInContainer":178,"./invariant":184,"./setInnerHTML":202,"1YiZ5S":64}],97:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -17122,7 +11913,7 @@ var ReactCompositeComponent = {
 module.exports = ReactCompositeComponent;
 
 }).call(this,require("1YiZ5S"))
-},{"./ReactComponent":130,"./ReactContext":133,"./ReactCurrentOwner":134,"./ReactDescriptor":150,"./ReactDescriptorValidator":151,"./ReactEmptyComponent":152,"./ReactErrorUtils":153,"./ReactOwner":163,"./ReactPerf":164,"./ReactPropTransferer":165,"./ReactPropTypeLocationNames":166,"./ReactPropTypeLocations":167,"./ReactUpdates":175,"./instantiateReactComponent":218,"./invariant":219,"./keyMirror":225,"./mapObject":227,"./merge":229,"./mixInto":232,"./monitorCodeUse":233,"./shouldUpdateReactComponent":239,"./warning":242,"1YiZ5S":99}],133:[function(require,module,exports){
+},{"./ReactComponent":95,"./ReactContext":98,"./ReactCurrentOwner":99,"./ReactDescriptor":115,"./ReactDescriptorValidator":116,"./ReactEmptyComponent":117,"./ReactErrorUtils":118,"./ReactOwner":128,"./ReactPerf":129,"./ReactPropTransferer":130,"./ReactPropTypeLocationNames":131,"./ReactPropTypeLocations":132,"./ReactUpdates":140,"./instantiateReactComponent":183,"./invariant":184,"./keyMirror":190,"./mapObject":192,"./merge":194,"./mixInto":197,"./monitorCodeUse":198,"./shouldUpdateReactComponent":204,"./warning":207,"1YiZ5S":64}],98:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -17191,7 +11982,7 @@ var ReactContext = {
 
 module.exports = ReactContext;
 
-},{"./merge":229}],134:[function(require,module,exports){
+},{"./merge":194}],99:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -17232,7 +12023,7 @@ var ReactCurrentOwner = {
 
 module.exports = ReactCurrentOwner;
 
-},{}],135:[function(require,module,exports){
+},{}],100:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -17447,7 +12238,7 @@ ReactDOM.injection = injection;
 module.exports = ReactDOM;
 
 }).call(this,require("1YiZ5S"))
-},{"./ReactDOMComponent":137,"./ReactDescriptor":150,"./ReactDescriptorValidator":151,"./mapObject":227,"./mergeInto":231,"1YiZ5S":99}],136:[function(require,module,exports){
+},{"./ReactDOMComponent":102,"./ReactDescriptor":115,"./ReactDescriptorValidator":116,"./mapObject":192,"./mergeInto":196,"1YiZ5S":64}],101:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -17518,7 +12309,7 @@ var ReactDOMButton = ReactCompositeComponent.createClass({
 
 module.exports = ReactDOMButton;
 
-},{"./AutoFocusMixin":100,"./ReactBrowserComponentMixin":127,"./ReactCompositeComponent":132,"./ReactDOM":135,"./keyMirror":225}],137:[function(require,module,exports){
+},{"./AutoFocusMixin":65,"./ReactBrowserComponentMixin":92,"./ReactCompositeComponent":97,"./ReactDOM":100,"./keyMirror":190}],102:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -17940,7 +12731,7 @@ mixInto(ReactDOMComponent, ReactBrowserComponentMixin);
 module.exports = ReactDOMComponent;
 
 }).call(this,require("1YiZ5S"))
-},{"./CSSPropertyOperations":103,"./DOMProperty":109,"./DOMPropertyOperations":110,"./ReactBrowserComponentMixin":127,"./ReactBrowserEventEmitter":128,"./ReactComponent":130,"./ReactMount":160,"./ReactMultiChild":161,"./ReactPerf":164,"./escapeTextForBrowser":203,"./invariant":219,"./keyOf":226,"./merge":229,"./mixInto":232,"1YiZ5S":99}],138:[function(require,module,exports){
+},{"./CSSPropertyOperations":68,"./DOMProperty":74,"./DOMPropertyOperations":75,"./ReactBrowserComponentMixin":92,"./ReactBrowserEventEmitter":93,"./ReactComponent":95,"./ReactMount":125,"./ReactMultiChild":126,"./ReactPerf":129,"./escapeTextForBrowser":168,"./invariant":184,"./keyOf":191,"./merge":194,"./mixInto":197,"1YiZ5S":64}],103:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -17996,7 +12787,7 @@ var ReactDOMForm = ReactCompositeComponent.createClass({
 
 module.exports = ReactDOMForm;
 
-},{"./EventConstants":114,"./LocalEventTrapMixin":123,"./ReactBrowserComponentMixin":127,"./ReactCompositeComponent":132,"./ReactDOM":135}],139:[function(require,module,exports){
+},{"./EventConstants":79,"./LocalEventTrapMixin":88,"./ReactBrowserComponentMixin":92,"./ReactCompositeComponent":97,"./ReactDOM":100}],104:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -18189,7 +12980,7 @@ var ReactDOMIDOperations = {
 module.exports = ReactDOMIDOperations;
 
 }).call(this,require("1YiZ5S"))
-},{"./CSSPropertyOperations":103,"./DOMChildrenOperations":108,"./DOMPropertyOperations":110,"./ReactMount":160,"./ReactPerf":164,"./invariant":219,"./setInnerHTML":237,"1YiZ5S":99}],140:[function(require,module,exports){
+},{"./CSSPropertyOperations":68,"./DOMChildrenOperations":73,"./DOMPropertyOperations":75,"./ReactMount":125,"./ReactPerf":129,"./invariant":184,"./setInnerHTML":202,"1YiZ5S":64}],105:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -18243,7 +13034,7 @@ var ReactDOMImg = ReactCompositeComponent.createClass({
 
 module.exports = ReactDOMImg;
 
-},{"./EventConstants":114,"./LocalEventTrapMixin":123,"./ReactBrowserComponentMixin":127,"./ReactCompositeComponent":132,"./ReactDOM":135}],141:[function(require,module,exports){
+},{"./EventConstants":79,"./LocalEventTrapMixin":88,"./ReactBrowserComponentMixin":92,"./ReactCompositeComponent":97,"./ReactDOM":100}],106:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -18429,7 +13220,7 @@ var ReactDOMInput = ReactCompositeComponent.createClass({
 module.exports = ReactDOMInput;
 
 }).call(this,require("1YiZ5S"))
-},{"./AutoFocusMixin":100,"./DOMPropertyOperations":110,"./LinkedValueUtils":122,"./ReactBrowserComponentMixin":127,"./ReactCompositeComponent":132,"./ReactDOM":135,"./ReactMount":160,"./invariant":219,"./merge":229,"1YiZ5S":99}],142:[function(require,module,exports){
+},{"./AutoFocusMixin":65,"./DOMPropertyOperations":75,"./LinkedValueUtils":87,"./ReactBrowserComponentMixin":92,"./ReactCompositeComponent":97,"./ReactDOM":100,"./ReactMount":125,"./invariant":184,"./merge":194,"1YiZ5S":64}],107:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -18488,7 +13279,7 @@ var ReactDOMOption = ReactCompositeComponent.createClass({
 module.exports = ReactDOMOption;
 
 }).call(this,require("1YiZ5S"))
-},{"./ReactBrowserComponentMixin":127,"./ReactCompositeComponent":132,"./ReactDOM":135,"./warning":242,"1YiZ5S":99}],143:[function(require,module,exports){
+},{"./ReactBrowserComponentMixin":92,"./ReactCompositeComponent":97,"./ReactDOM":100,"./warning":207,"1YiZ5S":64}],108:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -18671,7 +13462,7 @@ var ReactDOMSelect = ReactCompositeComponent.createClass({
 
 module.exports = ReactDOMSelect;
 
-},{"./AutoFocusMixin":100,"./LinkedValueUtils":122,"./ReactBrowserComponentMixin":127,"./ReactCompositeComponent":132,"./ReactDOM":135,"./merge":229}],144:[function(require,module,exports){
+},{"./AutoFocusMixin":65,"./LinkedValueUtils":87,"./ReactBrowserComponentMixin":92,"./ReactCompositeComponent":97,"./ReactDOM":100,"./merge":194}],109:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -18887,7 +13678,7 @@ var ReactDOMSelection = {
 
 module.exports = ReactDOMSelection;
 
-},{"./ExecutionEnvironment":120,"./getNodeForCharacterOffset":212,"./getTextContentAccessor":214}],145:[function(require,module,exports){
+},{"./ExecutionEnvironment":85,"./getNodeForCharacterOffset":177,"./getTextContentAccessor":179}],110:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -19033,7 +13824,7 @@ var ReactDOMTextarea = ReactCompositeComponent.createClass({
 module.exports = ReactDOMTextarea;
 
 }).call(this,require("1YiZ5S"))
-},{"./AutoFocusMixin":100,"./DOMPropertyOperations":110,"./LinkedValueUtils":122,"./ReactBrowserComponentMixin":127,"./ReactCompositeComponent":132,"./ReactDOM":135,"./invariant":219,"./merge":229,"./warning":242,"1YiZ5S":99}],146:[function(require,module,exports){
+},{"./AutoFocusMixin":65,"./DOMPropertyOperations":75,"./LinkedValueUtils":87,"./ReactBrowserComponentMixin":92,"./ReactCompositeComponent":97,"./ReactDOM":100,"./invariant":184,"./merge":194,"./warning":207,"1YiZ5S":64}],111:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -19110,7 +13901,7 @@ var ReactDefaultBatchingStrategy = {
 
 module.exports = ReactDefaultBatchingStrategy;
 
-},{"./ReactUpdates":175,"./Transaction":191,"./emptyFunction":201,"./mixInto":232}],147:[function(require,module,exports){
+},{"./ReactUpdates":140,"./Transaction":156,"./emptyFunction":166,"./mixInto":197}],112:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -19242,7 +14033,7 @@ module.exports = {
 };
 
 }).call(this,require("1YiZ5S"))
-},{"./BeforeInputEventPlugin":101,"./ChangeEventPlugin":105,"./ClientReactRootIndex":106,"./CompositionEventPlugin":107,"./DefaultEventPluginOrder":112,"./EnterLeaveEventPlugin":113,"./ExecutionEnvironment":120,"./HTMLDOMPropertyConfig":121,"./MobileSafariClickEventPlugin":124,"./ReactBrowserComponentMixin":127,"./ReactComponentBrowserEnvironment":131,"./ReactDOM":135,"./ReactDOMButton":136,"./ReactDOMForm":138,"./ReactDOMImg":140,"./ReactDOMInput":141,"./ReactDOMOption":142,"./ReactDOMSelect":143,"./ReactDOMTextarea":145,"./ReactDefaultBatchingStrategy":146,"./ReactDefaultPerf":148,"./ReactEventListener":155,"./ReactInjection":156,"./ReactInstanceHandles":158,"./ReactMount":160,"./SVGDOMPropertyConfig":176,"./SelectEventPlugin":177,"./ServerReactRootIndex":178,"./SimpleEventPlugin":179,"./createFullPageComponent":198,"1YiZ5S":99}],148:[function(require,module,exports){
+},{"./BeforeInputEventPlugin":66,"./ChangeEventPlugin":70,"./ClientReactRootIndex":71,"./CompositionEventPlugin":72,"./DefaultEventPluginOrder":77,"./EnterLeaveEventPlugin":78,"./ExecutionEnvironment":85,"./HTMLDOMPropertyConfig":86,"./MobileSafariClickEventPlugin":89,"./ReactBrowserComponentMixin":92,"./ReactComponentBrowserEnvironment":96,"./ReactDOM":100,"./ReactDOMButton":101,"./ReactDOMForm":103,"./ReactDOMImg":105,"./ReactDOMInput":106,"./ReactDOMOption":107,"./ReactDOMSelect":108,"./ReactDOMTextarea":110,"./ReactDefaultBatchingStrategy":111,"./ReactDefaultPerf":113,"./ReactEventListener":120,"./ReactInjection":121,"./ReactInstanceHandles":123,"./ReactMount":125,"./SVGDOMPropertyConfig":141,"./SelectEventPlugin":142,"./ServerReactRootIndex":143,"./SimpleEventPlugin":144,"./createFullPageComponent":163,"1YiZ5S":64}],113:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -19505,7 +14296,7 @@ var ReactDefaultPerf = {
 
 module.exports = ReactDefaultPerf;
 
-},{"./DOMProperty":109,"./ReactDefaultPerfAnalysis":149,"./ReactMount":160,"./ReactPerf":164,"./performanceNow":236}],149:[function(require,module,exports){
+},{"./DOMProperty":74,"./ReactDefaultPerfAnalysis":114,"./ReactMount":125,"./ReactPerf":129,"./performanceNow":201}],114:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -19710,7 +14501,7 @@ var ReactDefaultPerfAnalysis = {
 
 module.exports = ReactDefaultPerfAnalysis;
 
-},{"./merge":229}],150:[function(require,module,exports){
+},{"./merge":194}],115:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014 Facebook, Inc.
@@ -19965,7 +14756,7 @@ ReactDescriptor.isValidDescriptor = function(object) {
 module.exports = ReactDescriptor;
 
 }).call(this,require("1YiZ5S"))
-},{"./ReactContext":133,"./ReactCurrentOwner":134,"./merge":229,"./warning":242,"1YiZ5S":99}],151:[function(require,module,exports){
+},{"./ReactContext":98,"./ReactCurrentOwner":99,"./merge":194,"./warning":207,"1YiZ5S":64}],116:[function(require,module,exports){
 /**
  * Copyright 2014 Facebook, Inc.
  *
@@ -20250,7 +15041,7 @@ var ReactDescriptorValidator = {
 
 module.exports = ReactDescriptorValidator;
 
-},{"./ReactCurrentOwner":134,"./ReactDescriptor":150,"./ReactPropTypeLocations":167,"./monitorCodeUse":233}],152:[function(require,module,exports){
+},{"./ReactCurrentOwner":99,"./ReactDescriptor":115,"./ReactPropTypeLocations":132,"./monitorCodeUse":198}],117:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014 Facebook, Inc.
@@ -20332,7 +15123,7 @@ var ReactEmptyComponent = {
 module.exports = ReactEmptyComponent;
 
 }).call(this,require("1YiZ5S"))
-},{"./invariant":219,"1YiZ5S":99}],153:[function(require,module,exports){
+},{"./invariant":184,"1YiZ5S":64}],118:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -20371,7 +15162,7 @@ var ReactErrorUtils = {
 
 module.exports = ReactErrorUtils;
 
-},{}],154:[function(require,module,exports){
+},{}],119:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -20428,7 +15219,7 @@ var ReactEventEmitterMixin = {
 
 module.exports = ReactEventEmitterMixin;
 
-},{"./EventPluginHub":116}],155:[function(require,module,exports){
+},{"./EventPluginHub":81}],120:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -20619,7 +15410,7 @@ var ReactEventListener = {
 
 module.exports = ReactEventListener;
 
-},{"./EventListener":115,"./ExecutionEnvironment":120,"./PooledClass":125,"./ReactInstanceHandles":158,"./ReactMount":160,"./ReactUpdates":175,"./getEventTarget":210,"./getUnboundedScrollPosition":215,"./mixInto":232}],156:[function(require,module,exports){
+},{"./EventListener":80,"./ExecutionEnvironment":85,"./PooledClass":90,"./ReactInstanceHandles":123,"./ReactMount":125,"./ReactUpdates":140,"./getEventTarget":175,"./getUnboundedScrollPosition":180,"./mixInto":197}],121:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -20666,7 +15457,7 @@ var ReactInjection = {
 
 module.exports = ReactInjection;
 
-},{"./DOMProperty":109,"./EventPluginHub":116,"./ReactBrowserEventEmitter":128,"./ReactComponent":130,"./ReactCompositeComponent":132,"./ReactDOM":135,"./ReactEmptyComponent":152,"./ReactPerf":164,"./ReactRootIndex":171,"./ReactUpdates":175}],157:[function(require,module,exports){
+},{"./DOMProperty":74,"./EventPluginHub":81,"./ReactBrowserEventEmitter":93,"./ReactComponent":95,"./ReactCompositeComponent":97,"./ReactDOM":100,"./ReactEmptyComponent":117,"./ReactPerf":129,"./ReactRootIndex":136,"./ReactUpdates":140}],122:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -20809,7 +15600,7 @@ var ReactInputSelection = {
 
 module.exports = ReactInputSelection;
 
-},{"./ReactDOMSelection":144,"./containsNode":195,"./focusNode":205,"./getActiveElement":207}],158:[function(require,module,exports){
+},{"./ReactDOMSelection":109,"./containsNode":160,"./focusNode":170,"./getActiveElement":172}],123:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -21151,7 +15942,7 @@ var ReactInstanceHandles = {
 module.exports = ReactInstanceHandles;
 
 }).call(this,require("1YiZ5S"))
-},{"./ReactRootIndex":171,"./invariant":219,"1YiZ5S":99}],159:[function(require,module,exports){
+},{"./ReactRootIndex":136,"./invariant":184,"1YiZ5S":64}],124:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -21206,7 +15997,7 @@ var ReactMarkupChecksum = {
 
 module.exports = ReactMarkupChecksum;
 
-},{"./adler32":194}],160:[function(require,module,exports){
+},{"./adler32":159}],125:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -21891,7 +16682,7 @@ var ReactMount = {
 module.exports = ReactMount;
 
 }).call(this,require("1YiZ5S"))
-},{"./DOMProperty":109,"./ReactBrowserEventEmitter":128,"./ReactCurrentOwner":134,"./ReactDescriptor":150,"./ReactInstanceHandles":158,"./ReactPerf":164,"./containsNode":195,"./getReactRootElementInContainer":213,"./instantiateReactComponent":218,"./invariant":219,"./shouldUpdateReactComponent":239,"./warning":242,"1YiZ5S":99}],161:[function(require,module,exports){
+},{"./DOMProperty":74,"./ReactBrowserEventEmitter":93,"./ReactCurrentOwner":99,"./ReactDescriptor":115,"./ReactInstanceHandles":123,"./ReactPerf":129,"./containsNode":160,"./getReactRootElementInContainer":178,"./instantiateReactComponent":183,"./invariant":184,"./shouldUpdateReactComponent":204,"./warning":207,"1YiZ5S":64}],126:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -22323,7 +17114,7 @@ var ReactMultiChild = {
 
 module.exports = ReactMultiChild;
 
-},{"./ReactComponent":130,"./ReactMultiChildUpdateTypes":162,"./flattenChildren":204,"./instantiateReactComponent":218,"./shouldUpdateReactComponent":239}],162:[function(require,module,exports){
+},{"./ReactComponent":95,"./ReactMultiChildUpdateTypes":127,"./flattenChildren":169,"./instantiateReactComponent":183,"./shouldUpdateReactComponent":204}],127:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -22363,7 +17154,7 @@ var ReactMultiChildUpdateTypes = keyMirror({
 
 module.exports = ReactMultiChildUpdateTypes;
 
-},{"./keyMirror":225}],163:[function(require,module,exports){
+},{"./keyMirror":190}],128:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -22526,7 +17317,7 @@ var ReactOwner = {
 module.exports = ReactOwner;
 
 }).call(this,require("1YiZ5S"))
-},{"./emptyObject":202,"./invariant":219,"1YiZ5S":99}],164:[function(require,module,exports){
+},{"./emptyObject":167,"./invariant":184,"1YiZ5S":64}],129:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -22615,7 +17406,7 @@ function _noMeasure(objName, fnName, func) {
 module.exports = ReactPerf;
 
 }).call(this,require("1YiZ5S"))
-},{"1YiZ5S":99}],165:[function(require,module,exports){
+},{"1YiZ5S":64}],130:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -22781,7 +17572,7 @@ var ReactPropTransferer = {
 module.exports = ReactPropTransferer;
 
 }).call(this,require("1YiZ5S"))
-},{"./emptyFunction":201,"./invariant":219,"./joinClasses":224,"./merge":229,"1YiZ5S":99}],166:[function(require,module,exports){
+},{"./emptyFunction":166,"./invariant":184,"./joinClasses":189,"./merge":194,"1YiZ5S":64}],131:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -22816,7 +17607,7 @@ if ("production" !== process.env.NODE_ENV) {
 module.exports = ReactPropTypeLocationNames;
 
 }).call(this,require("1YiZ5S"))
-},{"1YiZ5S":99}],167:[function(require,module,exports){
+},{"1YiZ5S":64}],132:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -22847,7 +17638,7 @@ var ReactPropTypeLocations = keyMirror({
 
 module.exports = ReactPropTypeLocations;
 
-},{"./keyMirror":225}],168:[function(require,module,exports){
+},{"./keyMirror":190}],133:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -23192,7 +17983,7 @@ function getPreciseType(propValue) {
 
 module.exports = ReactPropTypes;
 
-},{"./ReactDescriptor":150,"./ReactPropTypeLocationNames":166,"./emptyFunction":201}],169:[function(require,module,exports){
+},{"./ReactDescriptor":115,"./ReactPropTypeLocationNames":131,"./emptyFunction":166}],134:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -23255,7 +18046,7 @@ PooledClass.addPoolingTo(ReactPutListenerQueue);
 
 module.exports = ReactPutListenerQueue;
 
-},{"./PooledClass":125,"./ReactBrowserEventEmitter":128,"./mixInto":232}],170:[function(require,module,exports){
+},{"./PooledClass":90,"./ReactBrowserEventEmitter":93,"./mixInto":197}],135:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -23439,7 +18230,7 @@ PooledClass.addPoolingTo(ReactReconcileTransaction);
 
 module.exports = ReactReconcileTransaction;
 
-},{"./CallbackQueue":104,"./PooledClass":125,"./ReactBrowserEventEmitter":128,"./ReactInputSelection":157,"./ReactPutListenerQueue":169,"./Transaction":191,"./mixInto":232}],171:[function(require,module,exports){
+},{"./CallbackQueue":69,"./PooledClass":90,"./ReactBrowserEventEmitter":93,"./ReactInputSelection":122,"./ReactPutListenerQueue":134,"./Transaction":156,"./mixInto":197}],136:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -23477,7 +18268,7 @@ var ReactRootIndex = {
 
 module.exports = ReactRootIndex;
 
-},{}],172:[function(require,module,exports){
+},{}],137:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -23570,7 +18361,7 @@ module.exports = {
 };
 
 }).call(this,require("1YiZ5S"))
-},{"./ReactDescriptor":150,"./ReactInstanceHandles":158,"./ReactMarkupChecksum":159,"./ReactServerRenderingTransaction":173,"./instantiateReactComponent":218,"./invariant":219,"1YiZ5S":99}],173:[function(require,module,exports){
+},{"./ReactDescriptor":115,"./ReactInstanceHandles":123,"./ReactMarkupChecksum":124,"./ReactServerRenderingTransaction":138,"./instantiateReactComponent":183,"./invariant":184,"1YiZ5S":64}],138:[function(require,module,exports){
 /**
  * Copyright 2014 Facebook, Inc.
  *
@@ -23687,7 +18478,7 @@ PooledClass.addPoolingTo(ReactServerRenderingTransaction);
 
 module.exports = ReactServerRenderingTransaction;
 
-},{"./CallbackQueue":104,"./PooledClass":125,"./ReactPutListenerQueue":169,"./Transaction":191,"./emptyFunction":201,"./mixInto":232}],174:[function(require,module,exports){
+},{"./CallbackQueue":69,"./PooledClass":90,"./ReactPutListenerQueue":134,"./Transaction":156,"./emptyFunction":166,"./mixInto":197}],139:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -23796,7 +18587,7 @@ mixInto(ReactTextComponent, {
 
 module.exports = ReactDescriptor.createFactory(ReactTextComponent);
 
-},{"./DOMPropertyOperations":110,"./ReactBrowserComponentMixin":127,"./ReactComponent":130,"./ReactDescriptor":150,"./escapeTextForBrowser":203,"./mixInto":232}],175:[function(require,module,exports){
+},{"./DOMPropertyOperations":75,"./ReactBrowserComponentMixin":92,"./ReactComponent":95,"./ReactDescriptor":115,"./escapeTextForBrowser":168,"./mixInto":197}],140:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -24065,7 +18856,7 @@ var ReactUpdates = {
 module.exports = ReactUpdates;
 
 }).call(this,require("1YiZ5S"))
-},{"./CallbackQueue":104,"./PooledClass":125,"./ReactCurrentOwner":134,"./ReactPerf":164,"./Transaction":191,"./invariant":219,"./mixInto":232,"./warning":242,"1YiZ5S":99}],176:[function(require,module,exports){
+},{"./CallbackQueue":69,"./PooledClass":90,"./ReactCurrentOwner":99,"./ReactPerf":129,"./Transaction":156,"./invariant":184,"./mixInto":197,"./warning":207,"1YiZ5S":64}],141:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -24164,7 +18955,7 @@ var SVGDOMPropertyConfig = {
 
 module.exports = SVGDOMPropertyConfig;
 
-},{"./DOMProperty":109}],177:[function(require,module,exports){
+},{"./DOMProperty":74}],142:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -24366,7 +19157,7 @@ var SelectEventPlugin = {
 
 module.exports = SelectEventPlugin;
 
-},{"./EventConstants":114,"./EventPropagators":119,"./ReactInputSelection":157,"./SyntheticEvent":183,"./getActiveElement":207,"./isTextInputElement":222,"./keyOf":226,"./shallowEqual":238}],178:[function(require,module,exports){
+},{"./EventConstants":79,"./EventPropagators":84,"./ReactInputSelection":122,"./SyntheticEvent":148,"./getActiveElement":172,"./isTextInputElement":187,"./keyOf":191,"./shallowEqual":203}],143:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -24404,7 +19195,7 @@ var ServerReactRootIndex = {
 
 module.exports = ServerReactRootIndex;
 
-},{}],179:[function(require,module,exports){
+},{}],144:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -24827,7 +19618,7 @@ var SimpleEventPlugin = {
 module.exports = SimpleEventPlugin;
 
 }).call(this,require("1YiZ5S"))
-},{"./EventConstants":114,"./EventPluginUtils":118,"./EventPropagators":119,"./SyntheticClipboardEvent":180,"./SyntheticDragEvent":182,"./SyntheticEvent":183,"./SyntheticFocusEvent":184,"./SyntheticKeyboardEvent":186,"./SyntheticMouseEvent":187,"./SyntheticTouchEvent":188,"./SyntheticUIEvent":189,"./SyntheticWheelEvent":190,"./invariant":219,"./keyOf":226,"1YiZ5S":99}],180:[function(require,module,exports){
+},{"./EventConstants":79,"./EventPluginUtils":83,"./EventPropagators":84,"./SyntheticClipboardEvent":145,"./SyntheticDragEvent":147,"./SyntheticEvent":148,"./SyntheticFocusEvent":149,"./SyntheticKeyboardEvent":151,"./SyntheticMouseEvent":152,"./SyntheticTouchEvent":153,"./SyntheticUIEvent":154,"./SyntheticWheelEvent":155,"./invariant":184,"./keyOf":191,"1YiZ5S":64}],145:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -24880,7 +19671,7 @@ SyntheticEvent.augmentClass(SyntheticClipboardEvent, ClipboardEventInterface);
 module.exports = SyntheticClipboardEvent;
 
 
-},{"./SyntheticEvent":183}],181:[function(require,module,exports){
+},{"./SyntheticEvent":148}],146:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -24933,7 +19724,7 @@ SyntheticEvent.augmentClass(
 module.exports = SyntheticCompositionEvent;
 
 
-},{"./SyntheticEvent":183}],182:[function(require,module,exports){
+},{"./SyntheticEvent":148}],147:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -24979,7 +19770,7 @@ SyntheticMouseEvent.augmentClass(SyntheticDragEvent, DragEventInterface);
 
 module.exports = SyntheticDragEvent;
 
-},{"./SyntheticMouseEvent":187}],183:[function(require,module,exports){
+},{"./SyntheticMouseEvent":152}],148:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -25145,7 +19936,7 @@ PooledClass.addPoolingTo(SyntheticEvent, PooledClass.threeArgumentPooler);
 
 module.exports = SyntheticEvent;
 
-},{"./PooledClass":125,"./emptyFunction":201,"./getEventTarget":210,"./merge":229,"./mergeInto":231}],184:[function(require,module,exports){
+},{"./PooledClass":90,"./emptyFunction":166,"./getEventTarget":175,"./merge":194,"./mergeInto":196}],149:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -25191,7 +19982,7 @@ SyntheticUIEvent.augmentClass(SyntheticFocusEvent, FocusEventInterface);
 
 module.exports = SyntheticFocusEvent;
 
-},{"./SyntheticUIEvent":189}],185:[function(require,module,exports){
+},{"./SyntheticUIEvent":154}],150:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -25245,7 +20036,7 @@ SyntheticEvent.augmentClass(
 module.exports = SyntheticInputEvent;
 
 
-},{"./SyntheticEvent":183}],186:[function(require,module,exports){
+},{"./SyntheticEvent":148}],151:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -25334,7 +20125,7 @@ SyntheticUIEvent.augmentClass(SyntheticKeyboardEvent, KeyboardEventInterface);
 
 module.exports = SyntheticKeyboardEvent;
 
-},{"./SyntheticUIEvent":189,"./getEventKey":208,"./getEventModifierState":209}],187:[function(require,module,exports){
+},{"./SyntheticUIEvent":154,"./getEventKey":173,"./getEventModifierState":174}],152:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -25424,7 +20215,7 @@ SyntheticUIEvent.augmentClass(SyntheticMouseEvent, MouseEventInterface);
 
 module.exports = SyntheticMouseEvent;
 
-},{"./SyntheticUIEvent":189,"./ViewportMetrics":192,"./getEventModifierState":209}],188:[function(require,module,exports){
+},{"./SyntheticUIEvent":154,"./ViewportMetrics":157,"./getEventModifierState":174}],153:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -25479,7 +20270,7 @@ SyntheticUIEvent.augmentClass(SyntheticTouchEvent, TouchEventInterface);
 
 module.exports = SyntheticTouchEvent;
 
-},{"./SyntheticUIEvent":189,"./getEventModifierState":209}],189:[function(require,module,exports){
+},{"./SyntheticUIEvent":154,"./getEventModifierState":174}],154:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -25548,7 +20339,7 @@ SyntheticEvent.augmentClass(SyntheticUIEvent, UIEventInterface);
 
 module.exports = SyntheticUIEvent;
 
-},{"./SyntheticEvent":183,"./getEventTarget":210}],190:[function(require,module,exports){
+},{"./SyntheticEvent":148,"./getEventTarget":175}],155:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -25616,7 +20407,7 @@ SyntheticMouseEvent.augmentClass(SyntheticWheelEvent, WheelEventInterface);
 
 module.exports = SyntheticWheelEvent;
 
-},{"./SyntheticMouseEvent":187}],191:[function(require,module,exports){
+},{"./SyntheticMouseEvent":152}],156:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -25864,7 +20655,7 @@ var Transaction = {
 module.exports = Transaction;
 
 }).call(this,require("1YiZ5S"))
-},{"./invariant":219,"1YiZ5S":99}],192:[function(require,module,exports){
+},{"./invariant":184,"1YiZ5S":64}],157:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -25903,7 +20694,7 @@ var ViewportMetrics = {
 
 module.exports = ViewportMetrics;
 
-},{"./getUnboundedScrollPosition":215}],193:[function(require,module,exports){
+},{"./getUnboundedScrollPosition":180}],158:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -25961,7 +20752,7 @@ function accumulate(current, next) {
 module.exports = accumulate;
 
 }).call(this,require("1YiZ5S"))
-},{"./invariant":219,"1YiZ5S":99}],194:[function(require,module,exports){
+},{"./invariant":184,"1YiZ5S":64}],159:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -26002,7 +20793,7 @@ function adler32(data) {
 
 module.exports = adler32;
 
-},{}],195:[function(require,module,exports){
+},{}],160:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -26053,7 +20844,7 @@ function containsNode(outerNode, innerNode) {
 
 module.exports = containsNode;
 
-},{"./isTextNode":223}],196:[function(require,module,exports){
+},{"./isTextNode":188}],161:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -26111,7 +20902,7 @@ function copyProperties(obj, a, b, c, d, e, f) {
 module.exports = copyProperties;
 
 }).call(this,require("1YiZ5S"))
-},{"1YiZ5S":99}],197:[function(require,module,exports){
+},{"1YiZ5S":64}],162:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -26204,7 +20995,7 @@ function createArrayFrom(obj) {
 
 module.exports = createArrayFrom;
 
-},{"./toArray":240}],198:[function(require,module,exports){
+},{"./toArray":205}],163:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -26271,7 +21062,7 @@ function createFullPageComponent(componentClass) {
 module.exports = createFullPageComponent;
 
 }).call(this,require("1YiZ5S"))
-},{"./ReactCompositeComponent":132,"./invariant":219,"1YiZ5S":99}],199:[function(require,module,exports){
+},{"./ReactCompositeComponent":97,"./invariant":184,"1YiZ5S":64}],164:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -26368,7 +21159,7 @@ function createNodesFromMarkup(markup, handleScript) {
 module.exports = createNodesFromMarkup;
 
 }).call(this,require("1YiZ5S"))
-},{"./ExecutionEnvironment":120,"./createArrayFrom":197,"./getMarkupWrap":211,"./invariant":219,"1YiZ5S":99}],200:[function(require,module,exports){
+},{"./ExecutionEnvironment":85,"./createArrayFrom":162,"./getMarkupWrap":176,"./invariant":184,"1YiZ5S":64}],165:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -26433,7 +21224,7 @@ function dangerousStyleValue(name, value) {
 
 module.exports = dangerousStyleValue;
 
-},{"./CSSProperty":102}],201:[function(require,module,exports){
+},{"./CSSProperty":67}],166:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -26478,7 +21269,7 @@ copyProperties(emptyFunction, {
 
 module.exports = emptyFunction;
 
-},{"./copyProperties":196}],202:[function(require,module,exports){
+},{"./copyProperties":161}],167:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -26509,7 +21300,7 @@ if ("production" !== process.env.NODE_ENV) {
 module.exports = emptyObject;
 
 }).call(this,require("1YiZ5S"))
-},{"1YiZ5S":99}],203:[function(require,module,exports){
+},{"1YiZ5S":64}],168:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -26557,7 +21348,7 @@ function escapeTextForBrowser(text) {
 
 module.exports = escapeTextForBrowser;
 
-},{}],204:[function(require,module,exports){
+},{}],169:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -26620,7 +21411,7 @@ function flattenChildren(children) {
 module.exports = flattenChildren;
 
 }).call(this,require("1YiZ5S"))
-},{"./traverseAllChildren":241,"./warning":242,"1YiZ5S":99}],205:[function(require,module,exports){
+},{"./traverseAllChildren":206,"./warning":207,"1YiZ5S":64}],170:[function(require,module,exports){
 /**
  * Copyright 2014 Facebook, Inc.
  *
@@ -26655,7 +21446,7 @@ function focusNode(node) {
 
 module.exports = focusNode;
 
-},{}],206:[function(require,module,exports){
+},{}],171:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -26693,7 +21484,7 @@ var forEachAccumulated = function(arr, cb, scope) {
 
 module.exports = forEachAccumulated;
 
-},{}],207:[function(require,module,exports){
+},{}],172:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -26729,7 +21520,7 @@ function getActiveElement() /*?DOMElement*/ {
 
 module.exports = getActiveElement;
 
-},{}],208:[function(require,module,exports){
+},{}],173:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -26848,7 +21639,7 @@ function getEventKey(nativeEvent) {
 module.exports = getEventKey;
 
 }).call(this,require("1YiZ5S"))
-},{"./invariant":219,"1YiZ5S":99}],209:[function(require,module,exports){
+},{"./invariant":184,"1YiZ5S":64}],174:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -26902,7 +21693,7 @@ function getEventModifierState(nativeEvent) {
 
 module.exports = getEventModifierState;
 
-},{}],210:[function(require,module,exports){
+},{}],175:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -26940,7 +21731,7 @@ function getEventTarget(nativeEvent) {
 
 module.exports = getEventTarget;
 
-},{}],211:[function(require,module,exports){
+},{}],176:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -27064,7 +21855,7 @@ function getMarkupWrap(nodeName) {
 module.exports = getMarkupWrap;
 
 }).call(this,require("1YiZ5S"))
-},{"./ExecutionEnvironment":120,"./invariant":219,"1YiZ5S":99}],212:[function(require,module,exports){
+},{"./ExecutionEnvironment":85,"./invariant":184,"1YiZ5S":64}],177:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -27146,7 +21937,7 @@ function getNodeForCharacterOffset(root, offset) {
 
 module.exports = getNodeForCharacterOffset;
 
-},{}],213:[function(require,module,exports){
+},{}],178:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -27188,7 +21979,7 @@ function getReactRootElementInContainer(container) {
 
 module.exports = getReactRootElementInContainer;
 
-},{}],214:[function(require,module,exports){
+},{}],179:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -27232,7 +22023,7 @@ function getTextContentAccessor() {
 
 module.exports = getTextContentAccessor;
 
-},{"./ExecutionEnvironment":120}],215:[function(require,module,exports){
+},{"./ExecutionEnvironment":85}],180:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -27279,7 +22070,7 @@ function getUnboundedScrollPosition(scrollable) {
 
 module.exports = getUnboundedScrollPosition;
 
-},{}],216:[function(require,module,exports){
+},{}],181:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -27319,7 +22110,7 @@ function hyphenate(string) {
 
 module.exports = hyphenate;
 
-},{}],217:[function(require,module,exports){
+},{}],182:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -27367,7 +22158,7 @@ function hyphenateStyleName(string) {
 
 module.exports = hyphenateStyleName;
 
-},{"./hyphenate":216}],218:[function(require,module,exports){
+},{"./hyphenate":181}],183:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -27433,7 +22224,7 @@ function instantiateReactComponent(descriptor) {
 module.exports = instantiateReactComponent;
 
 }).call(this,require("1YiZ5S"))
-},{"./invariant":219,"1YiZ5S":99}],219:[function(require,module,exports){
+},{"./invariant":184,"1YiZ5S":64}],184:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -27497,7 +22288,7 @@ var invariant = function(condition, format, a, b, c, d, e, f) {
 module.exports = invariant;
 
 }).call(this,require("1YiZ5S"))
-},{"1YiZ5S":99}],220:[function(require,module,exports){
+},{"1YiZ5S":64}],185:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -27569,7 +22360,7 @@ function isEventSupported(eventNameSuffix, capture) {
 
 module.exports = isEventSupported;
 
-},{"./ExecutionEnvironment":120}],221:[function(require,module,exports){
+},{"./ExecutionEnvironment":85}],186:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -27604,7 +22395,7 @@ function isNode(object) {
 
 module.exports = isNode;
 
-},{}],222:[function(require,module,exports){
+},{}],187:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -27655,7 +22446,7 @@ function isTextInputElement(elem) {
 
 module.exports = isTextInputElement;
 
-},{}],223:[function(require,module,exports){
+},{}],188:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -27687,7 +22478,7 @@ function isTextNode(object) {
 
 module.exports = isTextNode;
 
-},{"./isNode":221}],224:[function(require,module,exports){
+},{"./isNode":186}],189:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -27733,7 +22524,7 @@ function joinClasses(className/*, ... */) {
 
 module.exports = joinClasses;
 
-},{}],225:[function(require,module,exports){
+},{}],190:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -27795,7 +22586,7 @@ var keyMirror = function(obj) {
 module.exports = keyMirror;
 
 }).call(this,require("1YiZ5S"))
-},{"./invariant":219,"1YiZ5S":99}],226:[function(require,module,exports){
+},{"./invariant":184,"1YiZ5S":64}],191:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -27838,7 +22629,7 @@ var keyOf = function(oneKeyObj) {
 
 module.exports = keyOf;
 
-},{}],227:[function(require,module,exports){
+},{}],192:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -27892,7 +22683,7 @@ function mapObject(obj, func, context) {
 
 module.exports = mapObject;
 
-},{}],228:[function(require,module,exports){
+},{}],193:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -27933,7 +22724,7 @@ function memoizeStringOnly(callback) {
 
 module.exports = memoizeStringOnly;
 
-},{}],229:[function(require,module,exports){
+},{}],194:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -27972,7 +22763,7 @@ var merge = function(one, two) {
 
 module.exports = merge;
 
-},{"./mergeInto":231}],230:[function(require,module,exports){
+},{"./mergeInto":196}],195:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -28123,7 +22914,7 @@ var mergeHelpers = {
 module.exports = mergeHelpers;
 
 }).call(this,require("1YiZ5S"))
-},{"./invariant":219,"./keyMirror":225,"1YiZ5S":99}],231:[function(require,module,exports){
+},{"./invariant":184,"./keyMirror":190,"1YiZ5S":64}],196:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -28171,7 +22962,7 @@ function mergeInto(one, two) {
 
 module.exports = mergeInto;
 
-},{"./mergeHelpers":230}],232:[function(require,module,exports){
+},{"./mergeHelpers":195}],197:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -28207,7 +22998,7 @@ var mixInto = function(constructor, methodBag) {
 
 module.exports = mixInto;
 
-},{}],233:[function(require,module,exports){
+},{}],198:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014 Facebook, Inc.
@@ -28248,7 +23039,7 @@ function monitorCodeUse(eventName, data) {
 module.exports = monitorCodeUse;
 
 }).call(this,require("1YiZ5S"))
-},{"./invariant":219,"1YiZ5S":99}],234:[function(require,module,exports){
+},{"./invariant":184,"1YiZ5S":64}],199:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -28295,7 +23086,7 @@ function onlyChild(children) {
 module.exports = onlyChild;
 
 }).call(this,require("1YiZ5S"))
-},{"./ReactDescriptor":150,"./invariant":219,"1YiZ5S":99}],235:[function(require,module,exports){
+},{"./ReactDescriptor":115,"./invariant":184,"1YiZ5S":64}],200:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -28330,7 +23121,7 @@ if (ExecutionEnvironment.canUseDOM) {
 
 module.exports = performance || {};
 
-},{"./ExecutionEnvironment":120}],236:[function(require,module,exports){
+},{"./ExecutionEnvironment":85}],201:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -28365,7 +23156,7 @@ var performanceNow = performance.now.bind(performance);
 
 module.exports = performanceNow;
 
-},{"./performance":235}],237:[function(require,module,exports){
+},{"./performance":200}],202:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -28452,7 +23243,7 @@ if (ExecutionEnvironment.canUseDOM) {
 
 module.exports = setInnerHTML;
 
-},{"./ExecutionEnvironment":120}],238:[function(require,module,exports){
+},{"./ExecutionEnvironment":85}],203:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -28503,7 +23294,7 @@ function shallowEqual(objA, objB) {
 
 module.exports = shallowEqual;
 
-},{}],239:[function(require,module,exports){
+},{}],204:[function(require,module,exports){
 /**
  * Copyright 2013-2014 Facebook, Inc.
  *
@@ -28549,7 +23340,7 @@ function shouldUpdateReactComponent(prevDescriptor, nextDescriptor) {
 
 module.exports = shouldUpdateReactComponent;
 
-},{}],240:[function(require,module,exports){
+},{}],205:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014 Facebook, Inc.
@@ -28628,7 +23419,7 @@ function toArray(obj) {
 module.exports = toArray;
 
 }).call(this,require("1YiZ5S"))
-},{"./invariant":219,"1YiZ5S":99}],241:[function(require,module,exports){
+},{"./invariant":184,"1YiZ5S":64}],206:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -28825,7 +23616,7 @@ function traverseAllChildren(children, callback, traverseContext) {
 module.exports = traverseAllChildren;
 
 }).call(this,require("1YiZ5S"))
-},{"./ReactInstanceHandles":158,"./ReactTextComponent":174,"./invariant":219,"1YiZ5S":99}],242:[function(require,module,exports){
+},{"./ReactInstanceHandles":123,"./ReactTextComponent":139,"./invariant":184,"1YiZ5S":64}],207:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014 Facebook, Inc.
@@ -28877,10 +23668,10 @@ if ("production" !== process.env.NODE_ENV) {
 module.exports = warning;
 
 }).call(this,require("1YiZ5S"))
-},{"./emptyFunction":201,"1YiZ5S":99}],243:[function(require,module,exports){
+},{"./emptyFunction":166,"1YiZ5S":64}],208:[function(require,module,exports){
 module.exports = require('./lib/React');
 
-},{"./lib/React":126}],244:[function(require,module,exports){
+},{"./lib/React":91}],209:[function(require,module,exports){
 'use strict';
 
 var Promise = require('bluebird');
@@ -28919,7 +23710,5329 @@ module.exports.uncache = function () {
   nativePromiseEnd = undefined;
 };
 
-},{"bluebird":4}],245:[function(require,module,exports){
+},{"bluebird":212}],210:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+module.exports = function(Promise) {
+var SomePromiseArray = Promise._SomePromiseArray;
+function Promise$_Any(promises) {
+    var ret = new SomePromiseArray(promises);
+    var promise = ret.promise();
+    if (promise.isRejected()) {
+        return promise;
+    }
+    ret.setHowMany(1);
+    ret.setUnwrap();
+    ret.init();
+    return promise;
+}
+
+Promise.any = function Promise$Any(promises) {
+    return Promise$_Any(promises);
+};
+
+Promise.prototype.any = function Promise$any() {
+    return Promise$_Any(this);
+};
+
+};
+
+},{}],211:[function(require,module,exports){
+(function (process){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+var schedule = require("./schedule.js");
+var Queue = require("./queue.js");
+var errorObj = require("./util.js").errorObj;
+var tryCatch1 = require("./util.js").tryCatch1;
+var _process = typeof process !== "undefined" ? process : void 0;
+
+function Async() {
+    this._isTickUsed = false;
+    this._schedule = schedule;
+    this._length = 0;
+    this._lateBuffer = new Queue(16);
+    this._functionBuffer = new Queue(65536);
+    var self = this;
+    this.consumeFunctionBuffer = function Async$consumeFunctionBuffer() {
+        self._consumeFunctionBuffer();
+    };
+}
+
+Async.prototype.haveItemsQueued = function Async$haveItemsQueued() {
+    return this._length > 0;
+};
+
+Async.prototype.invokeLater = function Async$invokeLater(fn, receiver, arg) {
+    if (_process !== void 0 &&
+        _process.domain != null &&
+        !fn.domain) {
+        fn = _process.domain.bind(fn);
+    }
+    this._lateBuffer.push(fn, receiver, arg);
+    this._queueTick();
+};
+
+Async.prototype.invoke = function Async$invoke(fn, receiver, arg) {
+    if (_process !== void 0 &&
+        _process.domain != null &&
+        !fn.domain) {
+        fn = _process.domain.bind(fn);
+    }
+    var functionBuffer = this._functionBuffer;
+    functionBuffer.push(fn, receiver, arg);
+    this._length = functionBuffer.length();
+    this._queueTick();
+};
+
+Async.prototype._consumeFunctionBuffer =
+function Async$_consumeFunctionBuffer() {
+    var functionBuffer = this._functionBuffer;
+    while (functionBuffer.length() > 0) {
+        var fn = functionBuffer.shift();
+        var receiver = functionBuffer.shift();
+        var arg = functionBuffer.shift();
+        fn.call(receiver, arg);
+    }
+    this._reset();
+    this._consumeLateBuffer();
+};
+
+Async.prototype._consumeLateBuffer = function Async$_consumeLateBuffer() {
+    var buffer = this._lateBuffer;
+    while(buffer.length() > 0) {
+        var fn = buffer.shift();
+        var receiver = buffer.shift();
+        var arg = buffer.shift();
+        var res = tryCatch1(fn, receiver, arg);
+        if (res === errorObj) {
+            this._queueTick();
+            if (fn.domain != null) {
+                fn.domain.emit("error", res.e);
+            } else {
+                throw res.e;
+            }
+        }
+    }
+};
+
+Async.prototype._queueTick = function Async$_queue() {
+    if (!this._isTickUsed) {
+        this._schedule(this.consumeFunctionBuffer);
+        this._isTickUsed = true;
+    }
+};
+
+Async.prototype._reset = function Async$_reset() {
+    this._isTickUsed = false;
+    this._length = 0;
+};
+
+module.exports = new Async();
+
+}).call(this,require("1YiZ5S"))
+},{"./queue.js":234,"./schedule.js":237,"./util.js":244,"1YiZ5S":64}],212:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+var Promise = require("./promise.js")();
+module.exports = Promise;
+},{"./promise.js":229}],213:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+var cr = Object.create;
+if (cr) {
+    var callerCache = cr(null);
+    var getterCache = cr(null);
+    callerCache[" size"] = getterCache[" size"] = 0;
+}
+
+module.exports = function(Promise) {
+var util = require("./util.js");
+var canEvaluate = util.canEvaluate;
+var isIdentifier = util.isIdentifier;
+
+function makeMethodCaller (methodName) {
+    return new Function("obj", "                                             \n\
+        'use strict'                                                         \n\
+        var len = this.length;                                               \n\
+        switch(len) {                                                        \n\
+            case 1: return obj.methodName(this[0]);                          \n\
+            case 2: return obj.methodName(this[0], this[1]);                 \n\
+            case 3: return obj.methodName(this[0], this[1], this[2]);        \n\
+            case 0: return obj.methodName();                                 \n\
+            default: return obj.methodName.apply(obj, this);                 \n\
+        }                                                                    \n\
+        ".replace(/methodName/g, methodName));
+}
+
+function makeGetter (propertyName) {
+    return new Function("obj", "                                             \n\
+        'use strict';                                                        \n\
+        return obj.propertyName;                                             \n\
+        ".replace("propertyName", propertyName));
+}
+
+function getCompiled(name, compiler, cache) {
+    var ret = cache[name];
+    if (typeof ret !== "function") {
+        if (!isIdentifier(name)) {
+            return null;
+        }
+        ret = compiler(name);
+        cache[name] = ret;
+        cache[" size"]++;
+        if (cache[" size"] > 512) {
+            var keys = Object.keys(cache);
+            for (var i = 0; i < 256; ++i) delete cache[keys[i]];
+            cache[" size"] = keys.length - 256;
+        }
+    }
+    return ret;
+}
+
+function getMethodCaller(name) {
+    return getCompiled(name, makeMethodCaller, callerCache);
+}
+
+function getGetter(name) {
+    return getCompiled(name, makeGetter, getterCache);
+}
+
+function caller(obj) {
+    return obj[this.pop()].apply(obj, this);
+}
+Promise.prototype.call = function Promise$call(methodName) {
+    var $_len = arguments.length;var args = new Array($_len - 1); for(var $_i = 1; $_i < $_len; ++$_i) {args[$_i - 1] = arguments[$_i];}
+    if (canEvaluate) {
+        var maybeCaller = getMethodCaller(methodName);
+        if (maybeCaller !== null) {
+            return this._then(maybeCaller, void 0, void 0, args, void 0);
+        }
+    }
+    args.push(methodName);
+    return this._then(caller, void 0, void 0, args, void 0);
+};
+
+function namedGetter(obj) {
+    return obj[this];
+}
+function indexedGetter(obj) {
+    return obj[this];
+}
+Promise.prototype.get = function Promise$get(propertyName) {
+    var isIndex = (typeof propertyName === "number");
+    var getter;
+    if (!isIndex) {
+        if (canEvaluate) {
+            var maybeGetter = getGetter(propertyName);
+            getter = maybeGetter !== null ? maybeGetter : namedGetter;
+        } else {
+            getter = namedGetter;
+        }
+    } else {
+        getter = indexedGetter;
+    }
+    return this._then(getter, void 0, void 0, propertyName, void 0);
+};
+};
+
+},{"./util.js":244}],214:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+module.exports = function(Promise, INTERNAL) {
+var errors = require("./errors.js");
+var canAttach = errors.canAttach;
+var async = require("./async.js");
+var CancellationError = errors.CancellationError;
+
+Promise.prototype._cancel = function Promise$_cancel(reason) {
+    if (!this.isCancellable()) return this;
+    var parent;
+    var promiseToReject = this;
+    while ((parent = promiseToReject._cancellationParent) !== void 0 &&
+        parent.isCancellable()) {
+        promiseToReject = parent;
+    }
+    this._unsetCancellable();
+    promiseToReject._attachExtraTrace(reason);
+    promiseToReject._rejectUnchecked(reason);
+};
+
+Promise.prototype.cancel = function Promise$cancel(reason) {
+    if (!this.isCancellable()) return this;
+    reason = reason !== void 0
+        ? (canAttach(reason) ? reason : new Error(reason + ""))
+        : new CancellationError();
+    async.invokeLater(this._cancel, this, reason);
+    return this;
+};
+
+Promise.prototype.cancellable = function Promise$cancellable() {
+    if (this._cancellable()) return this;
+    this._setCancellable();
+    this._cancellationParent = void 0;
+    return this;
+};
+
+Promise.prototype.uncancellable = function Promise$uncancellable() {
+    var ret = new Promise(INTERNAL);
+    ret._propagateFrom(this, 2 | 4);
+    ret._follow(this);
+    ret._unsetCancellable();
+    return ret;
+};
+
+Promise.prototype.fork =
+function Promise$fork(didFulfill, didReject, didProgress) {
+    var ret = this._then(didFulfill, didReject, didProgress,
+                         void 0, void 0);
+
+    ret._setCancellable();
+    ret._cancellationParent = void 0;
+    return ret;
+};
+};
+
+},{"./async.js":211,"./errors.js":219}],215:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+module.exports = function() {
+var inherits = require("./util.js").inherits;
+var defineProperty = require("./es5.js").defineProperty;
+
+var rignore = new RegExp(
+    "\\b(?:[a-zA-Z0-9.]+\\$_\\w+|" +
+    "tryCatch(?:1|2|3|4|Apply)|new \\w*PromiseArray|" +
+    "\\w*PromiseArray\\.\\w*PromiseArray|" +
+    "setTimeout|CatchFilter\\$_\\w+|makeNodePromisified|processImmediate|" +
+    "process._tickCallback|nextTick|Async\\$\\w+)\\b"
+);
+
+var rtraceline = null;
+var formatStack = null;
+
+function formatNonError(obj) {
+    var str;
+    if (typeof obj === "function") {
+        str = "[function " +
+            (obj.name || "anonymous") +
+            "]";
+    } else {
+        str = obj.toString();
+        var ruselessToString = /\[object [a-zA-Z0-9$_]+\]/;
+        if (ruselessToString.test(str)) {
+            try {
+                var newStr = JSON.stringify(obj);
+                str = newStr;
+            }
+            catch(e) {
+
+            }
+        }
+        if (str.length === 0) {
+            str = "(empty array)";
+        }
+    }
+    return ("(<" + snip(str) + ">, no stack trace)");
+}
+
+function snip(str) {
+    var maxChars = 41;
+    if (str.length < maxChars) {
+        return str;
+    }
+    return str.substr(0, maxChars - 3) + "...";
+}
+
+function CapturedTrace(ignoreUntil, isTopLevel) {
+    this.captureStackTrace(CapturedTrace, isTopLevel);
+
+}
+inherits(CapturedTrace, Error);
+
+CapturedTrace.prototype.captureStackTrace =
+function CapturedTrace$captureStackTrace(ignoreUntil, isTopLevel) {
+    captureStackTrace(this, ignoreUntil, isTopLevel);
+};
+
+CapturedTrace.possiblyUnhandledRejection =
+function CapturedTrace$PossiblyUnhandledRejection(reason) {
+    if (typeof console === "object") {
+        var message;
+        if (typeof reason === "object" || typeof reason === "function") {
+            var stack = reason.stack;
+            message = "Possibly unhandled " + formatStack(stack, reason);
+        } else {
+            message = "Possibly unhandled " + String(reason);
+        }
+        if (typeof console.error === "function" ||
+            typeof console.error === "object") {
+            console.error(message);
+        } else if (typeof console.log === "function" ||
+            typeof console.log === "object") {
+            console.log(message);
+        }
+    }
+};
+
+CapturedTrace.combine = function CapturedTrace$Combine(current, prev) {
+    var currentLastIndex = current.length - 1;
+    var currentLastLine = current[currentLastIndex];
+    var commonRootMeetPoint = -1;
+    for (var i = prev.length - 1; i >= 0; --i) {
+        if (prev[i] === currentLastLine) {
+            commonRootMeetPoint = i;
+            break;
+        }
+    }
+
+    for (var i = commonRootMeetPoint; i >= 0; --i) {
+        var line = prev[i];
+        if (current[currentLastIndex] === line) {
+            current.pop();
+            currentLastIndex--;
+        } else {
+            break;
+        }
+    }
+
+    current.push("From previous event:");
+    var lines = current.concat(prev);
+
+    var ret = [];
+
+    for (var i = 0, len = lines.length; i < len; ++i) {
+
+        if (((rignore.test(lines[i]) && rtraceline.test(lines[i])) ||
+            (i > 0 && !rtraceline.test(lines[i])) &&
+            lines[i] !== "From previous event:")
+       ) {
+            continue;
+        }
+        ret.push(lines[i]);
+    }
+    return ret;
+};
+
+CapturedTrace.protectErrorMessageNewlines = function(stack) {
+    for (var i = 0; i < stack.length; ++i) {
+        if (rtraceline.test(stack[i])) {
+            break;
+        }
+    }
+
+    if (i <= 1) return;
+
+    var errorMessageLines = [];
+    for (var j = 0; j < i; ++j) {
+        errorMessageLines.push(stack.shift());
+    }
+    stack.unshift(errorMessageLines.join("\u0002\u0000\u0001"));
+};
+
+CapturedTrace.isSupported = function CapturedTrace$IsSupported() {
+    return typeof captureStackTrace === "function";
+};
+
+var captureStackTrace = (function stackDetection() {
+    if (typeof Error.stackTraceLimit === "number" &&
+        typeof Error.captureStackTrace === "function") {
+        rtraceline = /^\s*at\s*/;
+        formatStack = function(stack, error) {
+            if (typeof stack === "string") return stack;
+
+            if (error.name !== void 0 &&
+                error.message !== void 0) {
+                return error.name + ". " + error.message;
+            }
+            return formatNonError(error);
+
+
+        };
+        var captureStackTrace = Error.captureStackTrace;
+        return function CapturedTrace$_captureStackTrace(
+            receiver, ignoreUntil) {
+            captureStackTrace(receiver, ignoreUntil);
+        };
+    }
+    var err = new Error();
+
+    if (typeof err.stack === "string" &&
+        typeof "".startsWith === "function" &&
+        (err.stack.startsWith("stackDetection@")) &&
+        stackDetection.name === "stackDetection") {
+
+        defineProperty(Error, "stackTraceLimit", {
+            writable: true,
+            enumerable: false,
+            configurable: false,
+            value: 25
+        });
+        rtraceline = /@/;
+        var rline = /[@\n]/;
+
+        formatStack = function(stack, error) {
+            if (typeof stack === "string") {
+                return (error.name + ". " + error.message + "\n" + stack);
+            }
+
+            if (error.name !== void 0 &&
+                error.message !== void 0) {
+                return error.name + ". " + error.message;
+            }
+            return formatNonError(error);
+        };
+
+        return function captureStackTrace(o) {
+            var stack = new Error().stack;
+            var split = stack.split(rline);
+            var len = split.length;
+            var ret = "";
+            for (var i = 0; i < len; i += 2) {
+                ret += split[i];
+                ret += "@";
+                ret += split[i + 1];
+                ret += "\n";
+            }
+            o.stack = ret;
+        };
+    } else {
+        formatStack = function(stack, error) {
+            if (typeof stack === "string") return stack;
+
+            if ((typeof error === "object" ||
+                typeof error === "function") &&
+                error.name !== void 0 &&
+                error.message !== void 0) {
+                return error.name + ". " + error.message;
+            }
+            return formatNonError(error);
+        };
+
+        return null;
+    }
+})();
+
+return CapturedTrace;
+};
+
+},{"./es5.js":221,"./util.js":244}],216:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+module.exports = function(NEXT_FILTER) {
+var util = require("./util.js");
+var errors = require("./errors.js");
+var tryCatch1 = util.tryCatch1;
+var errorObj = util.errorObj;
+var keys = require("./es5.js").keys;
+var TypeError = errors.TypeError;
+
+function CatchFilter(instances, callback, promise) {
+    this._instances = instances;
+    this._callback = callback;
+    this._promise = promise;
+}
+
+function CatchFilter$_safePredicate(predicate, e) {
+    var safeObject = {};
+    var retfilter = tryCatch1(predicate, safeObject, e);
+
+    if (retfilter === errorObj) return retfilter;
+
+    var safeKeys = keys(safeObject);
+    if (safeKeys.length) {
+        errorObj.e = new TypeError(
+            "Catch filter must inherit from Error "
+          + "or be a simple predicate function");
+        return errorObj;
+    }
+    return retfilter;
+}
+
+CatchFilter.prototype.doFilter = function CatchFilter$_doFilter(e) {
+    var cb = this._callback;
+    var promise = this._promise;
+    var boundTo = promise._boundTo;
+    for (var i = 0, len = this._instances.length; i < len; ++i) {
+        var item = this._instances[i];
+        var itemIsErrorType = item === Error ||
+            (item != null && item.prototype instanceof Error);
+
+        if (itemIsErrorType && e instanceof item) {
+            var ret = tryCatch1(cb, boundTo, e);
+            if (ret === errorObj) {
+                NEXT_FILTER.e = ret.e;
+                return NEXT_FILTER;
+            }
+            return ret;
+        } else if (typeof item === "function" && !itemIsErrorType) {
+            var shouldHandle = CatchFilter$_safePredicate(item, e);
+            if (shouldHandle === errorObj) {
+                var trace = errors.canAttach(errorObj.e)
+                    ? errorObj.e
+                    : new Error(errorObj.e + "");
+                this._promise._attachExtraTrace(trace);
+                e = errorObj.e;
+                break;
+            } else if (shouldHandle) {
+                var ret = tryCatch1(cb, boundTo, e);
+                if (ret === errorObj) {
+                    NEXT_FILTER.e = ret.e;
+                    return NEXT_FILTER;
+                }
+                return ret;
+            }
+        }
+    }
+    NEXT_FILTER.e = e;
+    return NEXT_FILTER;
+};
+
+return CatchFilter;
+};
+
+},{"./errors.js":219,"./es5.js":221,"./util.js":244}],217:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+var util = require("./util.js");
+var isPrimitive = util.isPrimitive;
+var wrapsPrimitiveReceiver = util.wrapsPrimitiveReceiver;
+
+module.exports = function(Promise) {
+var returner = function Promise$_returner() {
+    return this;
+};
+var thrower = function Promise$_thrower() {
+    throw this;
+};
+
+var wrapper = function Promise$_wrapper(value, action) {
+    if (action === 1) {
+        return function Promise$_thrower() {
+            throw value;
+        };
+    } else if (action === 2) {
+        return function Promise$_returner() {
+            return value;
+        };
+    }
+};
+
+
+Promise.prototype["return"] =
+Promise.prototype.thenReturn =
+function Promise$thenReturn(value) {
+    if (wrapsPrimitiveReceiver && isPrimitive(value)) {
+        return this._then(
+            wrapper(value, 2),
+            void 0,
+            void 0,
+            void 0,
+            void 0
+       );
+    }
+    return this._then(returner, void 0, void 0, value, void 0);
+};
+
+Promise.prototype["throw"] =
+Promise.prototype.thenThrow =
+function Promise$thenThrow(reason) {
+    if (wrapsPrimitiveReceiver && isPrimitive(reason)) {
+        return this._then(
+            wrapper(reason, 1),
+            void 0,
+            void 0,
+            void 0,
+            void 0
+       );
+    }
+    return this._then(thrower, void 0, void 0, reason, void 0);
+};
+};
+
+},{"./util.js":244}],218:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+module.exports = function(Promise, INTERNAL) {
+var PromiseReduce = Promise.reduce;
+
+Promise.prototype.each = function Promise$each(fn) {
+    return PromiseReduce(this, fn, null, INTERNAL);
+};
+
+Promise.each = function Promise$Each(promises, fn) {
+    return PromiseReduce(promises, fn, null, INTERNAL);
+};
+};
+
+},{}],219:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+var Objectfreeze = require("./es5.js").freeze;
+var util = require("./util.js");
+var inherits = util.inherits;
+var notEnumerableProp = util.notEnumerableProp;
+
+function markAsOriginatingFromRejection(e) {
+    try {
+        notEnumerableProp(e, "isOperational", true);
+    }
+    catch(ignore) {}
+}
+
+function originatesFromRejection(e) {
+    if (e == null) return false;
+    return ((e instanceof OperationalError) ||
+        e["isOperational"] === true);
+}
+
+function isError(obj) {
+    return obj instanceof Error;
+}
+
+function canAttach(obj) {
+    return isError(obj);
+}
+
+function subError(nameProperty, defaultMessage) {
+    function SubError(message) {
+        if (!(this instanceof SubError)) return new SubError(message);
+        this.message = typeof message === "string" ? message : defaultMessage;
+        this.name = nameProperty;
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, this.constructor);
+        }
+    }
+    inherits(SubError, Error);
+    return SubError;
+}
+
+var _TypeError, _RangeError;
+var CancellationError = subError("CancellationError", "cancellation error");
+var TimeoutError = subError("TimeoutError", "timeout error");
+var AggregateError = subError("AggregateError", "aggregate error");
+try {
+    _TypeError = TypeError;
+    _RangeError = RangeError;
+} catch(e) {
+    _TypeError = subError("TypeError", "type error");
+    _RangeError = subError("RangeError", "range error");
+}
+
+var methods = ("join pop push shift unshift slice filter forEach some " +
+    "every map indexOf lastIndexOf reduce reduceRight sort reverse").split(" ");
+
+for (var i = 0; i < methods.length; ++i) {
+    if (typeof Array.prototype[methods[i]] === "function") {
+        AggregateError.prototype[methods[i]] = Array.prototype[methods[i]];
+    }
+}
+
+AggregateError.prototype.length = 0;
+AggregateError.prototype["isOperational"] = true;
+var level = 0;
+AggregateError.prototype.toString = function() {
+    var indent = Array(level * 4 + 1).join(" ");
+    var ret = "\n" + indent + "AggregateError of:" + "\n";
+    level++;
+    indent = Array(level * 4 + 1).join(" ");
+    for (var i = 0; i < this.length; ++i) {
+        var str = this[i] === this ? "[Circular AggregateError]" : this[i] + "";
+        var lines = str.split("\n");
+        for (var j = 0; j < lines.length; ++j) {
+            lines[j] = indent + lines[j];
+        }
+        str = lines.join("\n");
+        ret += str + "\n";
+    }
+    level--;
+    return ret;
+};
+
+function OperationalError(message) {
+    this.name = "OperationalError";
+    this.message = message;
+    this.cause = message;
+    this["isOperational"] = true;
+
+    if (message instanceof Error) {
+        this.message = message.message;
+        this.stack = message.stack;
+    } else if (Error.captureStackTrace) {
+        Error.captureStackTrace(this, this.constructor);
+    }
+
+}
+inherits(OperationalError, Error);
+
+var key = "__BluebirdErrorTypes__";
+var errorTypes = Error[key];
+if (!errorTypes) {
+    errorTypes = Objectfreeze({
+        CancellationError: CancellationError,
+        TimeoutError: TimeoutError,
+        OperationalError: OperationalError,
+        RejectionError: OperationalError,
+        AggregateError: AggregateError
+    });
+    notEnumerableProp(Error, key, errorTypes);
+}
+
+module.exports = {
+    Error: Error,
+    TypeError: _TypeError,
+    RangeError: _RangeError,
+    CancellationError: errorTypes.CancellationError,
+    OperationalError: errorTypes.OperationalError,
+    TimeoutError: errorTypes.TimeoutError,
+    AggregateError: errorTypes.AggregateError,
+    originatesFromRejection: originatesFromRejection,
+    markAsOriginatingFromRejection: markAsOriginatingFromRejection,
+    canAttach: canAttach
+};
+
+},{"./es5.js":221,"./util.js":244}],220:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+module.exports = function(Promise) {
+var TypeError = require('./errors.js').TypeError;
+
+function apiRejection(msg) {
+    var error = new TypeError(msg);
+    var ret = Promise.rejected(error);
+    var parent = ret._peekContext();
+    if (parent != null) {
+        parent._attachExtraTrace(error);
+    }
+    return ret;
+}
+
+return apiRejection;
+};
+
+},{"./errors.js":219}],221:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+var isES5 = (function(){
+    "use strict";
+    return this === void 0;
+})();
+
+if (isES5) {
+    module.exports = {
+        freeze: Object.freeze,
+        defineProperty: Object.defineProperty,
+        keys: Object.keys,
+        getPrototypeOf: Object.getPrototypeOf,
+        isArray: Array.isArray,
+        isES5: isES5
+    };
+} else {
+    var has = {}.hasOwnProperty;
+    var str = {}.toString;
+    var proto = {}.constructor.prototype;
+
+    var ObjectKeys = function ObjectKeys(o) {
+        var ret = [];
+        for (var key in o) {
+            if (has.call(o, key)) {
+                ret.push(key);
+            }
+        }
+        return ret;
+    }
+
+    var ObjectDefineProperty = function ObjectDefineProperty(o, key, desc) {
+        o[key] = desc.value;
+        return o;
+    }
+
+    var ObjectFreeze = function ObjectFreeze(obj) {
+        return obj;
+    }
+
+    var ObjectGetPrototypeOf = function ObjectGetPrototypeOf(obj) {
+        try {
+            return Object(obj).constructor.prototype;
+        }
+        catch (e) {
+            return proto;
+        }
+    }
+
+    var ArrayIsArray = function ArrayIsArray(obj) {
+        try {
+            return str.call(obj) === "[object Array]";
+        }
+        catch(e) {
+            return false;
+        }
+    }
+
+    module.exports = {
+        isArray: ArrayIsArray,
+        keys: ObjectKeys,
+        defineProperty: ObjectDefineProperty,
+        freeze: ObjectFreeze,
+        getPrototypeOf: ObjectGetPrototypeOf,
+        isES5: isES5
+    };
+}
+
+},{}],222:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+module.exports = function(Promise, INTERNAL) {
+var PromiseMap = Promise.map;
+
+Promise.prototype.filter = function Promise$filter(fn, options) {
+    return PromiseMap(this, fn, options, INTERNAL);
+};
+
+Promise.filter = function Promise$Filter(promises, fn, options) {
+    return PromiseMap(promises, fn, options, INTERNAL);
+};
+};
+
+},{}],223:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+module.exports = function(Promise, NEXT_FILTER, cast) {
+var util = require("./util.js");
+var wrapsPrimitiveReceiver = util.wrapsPrimitiveReceiver;
+var isPrimitive = util.isPrimitive;
+var thrower = util.thrower;
+
+function returnThis() {
+    return this;
+}
+function throwThis() {
+    throw this;
+}
+function return$(r) {
+    return function Promise$_returner() {
+        return r;
+    };
+}
+function throw$(r) {
+    return function Promise$_thrower() {
+        throw r;
+    };
+}
+function promisedFinally(ret, reasonOrValue, isFulfilled) {
+    var then;
+    if (wrapsPrimitiveReceiver && isPrimitive(reasonOrValue)) {
+        then = isFulfilled ? return$(reasonOrValue) : throw$(reasonOrValue);
+    } else {
+        then = isFulfilled ? returnThis : throwThis;
+    }
+    return ret._then(then, thrower, void 0, reasonOrValue, void 0);
+}
+
+function finallyHandler(reasonOrValue) {
+    var promise = this.promise;
+    var handler = this.handler;
+
+    var ret = promise._isBound()
+                    ? handler.call(promise._boundTo)
+                    : handler();
+
+    if (ret !== void 0) {
+        var maybePromise = cast(ret, void 0);
+        if (maybePromise instanceof Promise) {
+            return promisedFinally(maybePromise, reasonOrValue,
+                                    promise.isFulfilled());
+        }
+    }
+
+    if (promise.isRejected()) {
+        NEXT_FILTER.e = reasonOrValue;
+        return NEXT_FILTER;
+    } else {
+        return reasonOrValue;
+    }
+}
+
+function tapHandler(value) {
+    var promise = this.promise;
+    var handler = this.handler;
+
+    var ret = promise._isBound()
+                    ? handler.call(promise._boundTo, value)
+                    : handler(value);
+
+    if (ret !== void 0) {
+        var maybePromise = cast(ret, void 0);
+        if (maybePromise instanceof Promise) {
+            return promisedFinally(maybePromise, value, true);
+        }
+    }
+    return value;
+}
+
+Promise.prototype._passThroughHandler =
+function Promise$_passThroughHandler(handler, isFinally) {
+    if (typeof handler !== "function") return this.then();
+
+    var promiseAndHandler = {
+        promise: this,
+        handler: handler
+    };
+
+    return this._then(
+            isFinally ? finallyHandler : tapHandler,
+            isFinally ? finallyHandler : void 0, void 0,
+            promiseAndHandler, void 0);
+};
+
+Promise.prototype.lastly =
+Promise.prototype["finally"] = function Promise$finally(handler) {
+    return this._passThroughHandler(handler, true);
+};
+
+Promise.prototype.tap = function Promise$tap(handler) {
+    return this._passThroughHandler(handler, false);
+};
+};
+
+},{"./util.js":244}],224:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+module.exports = function(Promise, apiRejection, INTERNAL, cast) {
+var errors = require("./errors.js");
+var TypeError = errors.TypeError;
+var deprecated = require("./util.js").deprecated;
+var util = require("./util.js");
+var errorObj = util.errorObj;
+var tryCatch1 = util.tryCatch1;
+var yieldHandlers = [];
+
+function promiseFromYieldHandler(value, yieldHandlers) {
+    var _errorObj = errorObj;
+    var _Promise = Promise;
+    var len = yieldHandlers.length;
+    for (var i = 0; i < len; ++i) {
+        var result = tryCatch1(yieldHandlers[i], void 0, value);
+        if (result === _errorObj) {
+            return _Promise.reject(_errorObj.e);
+        }
+        var maybePromise = cast(result, promiseFromYieldHandler);
+        if (maybePromise instanceof _Promise) return maybePromise;
+    }
+    return null;
+}
+
+function PromiseSpawn(generatorFunction, receiver, yieldHandler) {
+    var promise = this._promise = new Promise(INTERNAL);
+    promise._setTrace(void 0);
+    this._generatorFunction = generatorFunction;
+    this._receiver = receiver;
+    this._generator = void 0;
+    this._yieldHandlers = typeof yieldHandler === "function"
+        ? [yieldHandler].concat(yieldHandlers)
+        : yieldHandlers;
+}
+
+PromiseSpawn.prototype.promise = function PromiseSpawn$promise() {
+    return this._promise;
+};
+
+PromiseSpawn.prototype._run = function PromiseSpawn$_run() {
+    this._generator = this._generatorFunction.call(this._receiver);
+    this._receiver =
+        this._generatorFunction = void 0;
+    this._next(void 0);
+};
+
+PromiseSpawn.prototype._continue = function PromiseSpawn$_continue(result) {
+    if (result === errorObj) {
+        this._generator = void 0;
+        var trace = errors.canAttach(result.e)
+            ? result.e : new Error(result.e + "");
+        this._promise._attachExtraTrace(trace);
+        this._promise._reject(result.e, trace);
+        return;
+    }
+
+    var value = result.value;
+    if (result.done === true) {
+        this._generator = void 0;
+        if (!this._promise._tryFollow(value)) {
+            this._promise._fulfill(value);
+        }
+    } else {
+        var maybePromise = cast(value, void 0);
+        if (!(maybePromise instanceof Promise)) {
+            maybePromise =
+                promiseFromYieldHandler(maybePromise, this._yieldHandlers);
+            if (maybePromise === null) {
+                this._throw(new TypeError("A value was yielded that could not be treated as a promise"));
+                return;
+            }
+        }
+        maybePromise._then(
+            this._next,
+            this._throw,
+            void 0,
+            this,
+            null
+       );
+    }
+};
+
+PromiseSpawn.prototype._throw = function PromiseSpawn$_throw(reason) {
+    if (errors.canAttach(reason))
+        this._promise._attachExtraTrace(reason);
+    this._continue(
+        tryCatch1(this._generator["throw"], this._generator, reason)
+   );
+};
+
+PromiseSpawn.prototype._next = function PromiseSpawn$_next(value) {
+    this._continue(
+        tryCatch1(this._generator.next, this._generator, value)
+   );
+};
+
+Promise.coroutine =
+function Promise$Coroutine(generatorFunction, options) {
+    if (typeof generatorFunction !== "function") {
+        throw new TypeError("generatorFunction must be a function");
+    }
+    var yieldHandler = Object(options).yieldHandler;
+    var PromiseSpawn$ = PromiseSpawn;
+    return function () {
+        var generator = generatorFunction.apply(this, arguments);
+        var spawn = new PromiseSpawn$(void 0, void 0, yieldHandler);
+        spawn._generator = generator;
+        spawn._next(void 0);
+        return spawn.promise();
+    };
+};
+
+Promise.coroutine.addYieldHandler = function(fn) {
+    if (typeof fn !== "function") throw new TypeError("fn must be a function");
+    yieldHandlers.push(fn);
+};
+
+Promise.spawn = function Promise$Spawn(generatorFunction) {
+    deprecated("Promise.spawn is deprecated. Use Promise.coroutine instead.");
+    if (typeof generatorFunction !== "function") {
+        return apiRejection("generatorFunction must be a function");
+    }
+    var spawn = new PromiseSpawn(generatorFunction, this);
+    var ret = spawn.promise();
+    spawn._run(Promise.spawn);
+    return ret;
+};
+};
+
+},{"./errors.js":219,"./util.js":244}],225:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+module.exports =
+function(Promise, PromiseArray, cast, INTERNAL) {
+var util = require("./util.js");
+var canEvaluate = util.canEvaluate;
+var tryCatch1 = util.tryCatch1;
+var errorObj = util.errorObj;
+
+
+if (canEvaluate) {
+    var thenCallback = function(i) {
+        return new Function("value", "holder", "                             \n\
+            'use strict';                                                    \n\
+            holder.pIndex = value;                                           \n\
+            holder.checkFulfillment(this);                                   \n\
+            ".replace(/Index/g, i));
+    };
+
+    var caller = function(count) {
+        var values = [];
+        for (var i = 1; i <= count; ++i) values.push("holder.p" + i);
+        return new Function("holder", "                                      \n\
+            'use strict';                                                    \n\
+            var callback = holder.fn;                                        \n\
+            return callback(values);                                         \n\
+            ".replace(/values/g, values.join(", ")));
+    };
+    var thenCallbacks = [];
+    var callers = [void 0];
+    for (var i = 1; i <= 5; ++i) {
+        thenCallbacks.push(thenCallback(i));
+        callers.push(caller(i));
+    }
+
+    var Holder = function(total, fn) {
+        this.p1 = this.p2 = this.p3 = this.p4 = this.p5 = null;
+        this.fn = fn;
+        this.total = total;
+        this.now = 0;
+    };
+
+    Holder.prototype.callers = callers;
+    Holder.prototype.checkFulfillment = function(promise) {
+        var now = this.now;
+        now++;
+        var total = this.total;
+        if (now >= total) {
+            var handler = this.callers[total];
+            var ret = tryCatch1(handler, void 0, this);
+            if (ret === errorObj) {
+                promise._rejectUnchecked(ret.e);
+            } else if (!promise._tryFollow(ret)) {
+                promise._fulfillUnchecked(ret);
+            }
+        } else {
+            this.now = now;
+        }
+    };
+}
+
+function reject(reason) {
+    this._reject(reason);
+}
+
+Promise.join = function Promise$Join() {
+    var last = arguments.length - 1;
+    var fn;
+    if (last > 0 && typeof arguments[last] === "function") {
+        fn = arguments[last];
+        if (last < 6 && canEvaluate) {
+            var ret = new Promise(INTERNAL);
+            ret._setTrace(void 0);
+            var holder = new Holder(last, fn);
+            var callbacks = thenCallbacks;
+            for (var i = 0; i < last; ++i) {
+                var maybePromise = cast(arguments[i], void 0);
+                if (maybePromise instanceof Promise) {
+                    if (maybePromise.isPending()) {
+                        maybePromise._then(callbacks[i], reject,
+                                           void 0, ret, holder);
+                    } else if (maybePromise.isFulfilled()) {
+                        callbacks[i].call(ret,
+                                          maybePromise._settledValue, holder);
+                    } else {
+                        ret._reject(maybePromise._settledValue);
+                        maybePromise._unsetRejectionIsUnhandled();
+                    }
+                } else {
+                    callbacks[i].call(ret, maybePromise, holder);
+                }
+            }
+            return ret;
+        }
+    }
+    var $_len = arguments.length;var args = new Array($_len); for(var $_i = 0; $_i < $_len; ++$_i) {args[$_i] = arguments[$_i];}
+    var ret = new PromiseArray(args).promise();
+    return fn !== void 0 ? ret.spread(fn) : ret;
+};
+
+};
+
+},{"./util.js":244}],226:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+module.exports = function(Promise, PromiseArray, apiRejection, cast, INTERNAL) {
+var util = require("./util.js");
+var tryCatch3 = util.tryCatch3;
+var errorObj = util.errorObj;
+var PENDING = {};
+var EMPTY_ARRAY = [];
+
+function MappingPromiseArray(promises, fn, limit, _filter) {
+    this.constructor$(promises);
+    this._callback = fn;
+    this._preservedValues = _filter === INTERNAL
+        ? new Array(this.length())
+        : null;
+    this._limit = limit;
+    this._inFlight = 0;
+    this._queue = limit >= 1 ? [] : EMPTY_ARRAY;
+    this._init$(void 0, -2);
+}
+util.inherits(MappingPromiseArray, PromiseArray);
+
+MappingPromiseArray.prototype._init = function MappingPromiseArray$_init() {};
+
+MappingPromiseArray.prototype._promiseFulfilled =
+function MappingPromiseArray$_promiseFulfilled(value, index) {
+    var values = this._values;
+    if (values === null) return;
+
+    var length = this.length();
+    var preservedValues = this._preservedValues;
+    var limit = this._limit;
+    if (values[index] === PENDING) {
+        values[index] = value;
+        if (limit >= 1) {
+            this._inFlight--;
+            this._drainQueue();
+            if (this._isResolved()) return;
+        }
+    } else {
+        if (limit >= 1 && this._inFlight >= limit) {
+            values[index] = value;
+            this._queue.push(index);
+            return;
+        }
+        if (preservedValues !== null) preservedValues[index] = value;
+
+        var callback = this._callback;
+        var receiver = this._promise._boundTo;
+        var ret = tryCatch3(callback, receiver, value, index, length);
+        if (ret === errorObj) return this._reject(ret.e);
+
+        var maybePromise = cast(ret, void 0);
+        if (maybePromise instanceof Promise) {
+            if (maybePromise.isPending()) {
+                if (limit >= 1) this._inFlight++;
+                values[index] = PENDING;
+                return maybePromise._proxyPromiseArray(this, index);
+            } else if (maybePromise.isFulfilled()) {
+                ret = maybePromise.value();
+            } else {
+                maybePromise._unsetRejectionIsUnhandled();
+                return this._reject(maybePromise.reason());
+            }
+        }
+        values[index] = ret;
+    }
+    var totalResolved = ++this._totalResolved;
+    if (totalResolved >= length) {
+        if (preservedValues !== null) {
+            this._filter(values, preservedValues);
+        } else {
+            this._resolve(values);
+        }
+
+    }
+};
+
+MappingPromiseArray.prototype._drainQueue =
+function MappingPromiseArray$_drainQueue() {
+    var queue = this._queue;
+    var limit = this._limit;
+    var values = this._values;
+    while (queue.length > 0 && this._inFlight < limit) {
+        var index = queue.pop();
+        this._promiseFulfilled(values[index], index);
+    }
+};
+
+MappingPromiseArray.prototype._filter =
+function MappingPromiseArray$_filter(booleans, values) {
+    var len = values.length;
+    var ret = new Array(len);
+    var j = 0;
+    for (var i = 0; i < len; ++i) {
+        if (booleans[i]) ret[j++] = values[i];
+    }
+    ret.length = j;
+    this._resolve(ret);
+};
+
+MappingPromiseArray.prototype.preservedValues =
+function MappingPromiseArray$preserveValues() {
+    return this._preservedValues;
+};
+
+function map(promises, fn, options, _filter) {
+    var limit = typeof options === "object" && options !== null
+        ? options.concurrency
+        : 0;
+    limit = typeof limit === "number" &&
+        isFinite(limit) && limit >= 1 ? limit : 0;
+    return new MappingPromiseArray(promises, fn, limit, _filter);
+}
+
+Promise.prototype.map = function Promise$map(fn, options) {
+    if (typeof fn !== "function") return apiRejection("fn must be a function");
+
+    return map(this, fn, options, null).promise();
+};
+
+Promise.map = function Promise$Map(promises, fn, options, _filter) {
+    if (typeof fn !== "function") return apiRejection("fn must be a function");
+    return map(promises, fn, options, _filter).promise();
+};
+
+
+};
+
+},{"./util.js":244}],227:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+module.exports = function(Promise) {
+var util = require("./util.js");
+var async = require("./async.js");
+var tryCatch2 = util.tryCatch2;
+var tryCatch1 = util.tryCatch1;
+var errorObj = util.errorObj;
+
+function thrower(r) {
+    throw r;
+}
+
+function Promise$_spreadAdapter(val, receiver) {
+    if (!util.isArray(val)) return Promise$_successAdapter(val, receiver);
+    var ret = util.tryCatchApply(this, [null].concat(val), receiver);
+    if (ret === errorObj) {
+        async.invokeLater(thrower, void 0, ret.e);
+    }
+}
+
+function Promise$_successAdapter(val, receiver) {
+    var nodeback = this;
+    var ret = val === void 0
+        ? tryCatch1(nodeback, receiver, null)
+        : tryCatch2(nodeback, receiver, null, val);
+    if (ret === errorObj) {
+        async.invokeLater(thrower, void 0, ret.e);
+    }
+}
+function Promise$_errorAdapter(reason, receiver) {
+    var nodeback = this;
+    var ret = tryCatch1(nodeback, receiver, reason);
+    if (ret === errorObj) {
+        async.invokeLater(thrower, void 0, ret.e);
+    }
+}
+
+Promise.prototype.nodeify = function Promise$nodeify(nodeback, options) {
+    if (typeof nodeback == "function") {
+        var adapter = Promise$_successAdapter;
+        if (options !== void 0 && Object(options).spread) {
+            adapter = Promise$_spreadAdapter;
+        }
+        this._then(
+            adapter,
+            Promise$_errorAdapter,
+            void 0,
+            nodeback,
+            this._boundTo
+        );
+    }
+    return this;
+};
+};
+
+},{"./async.js":211,"./util.js":244}],228:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+module.exports = function(Promise, PromiseArray) {
+var util = require("./util.js");
+var async = require("./async.js");
+var errors = require("./errors.js");
+var tryCatch1 = util.tryCatch1;
+var errorObj = util.errorObj;
+
+Promise.prototype.progressed = function Promise$progressed(handler) {
+    return this._then(void 0, void 0, handler, void 0, void 0);
+};
+
+Promise.prototype._progress = function Promise$_progress(progressValue) {
+    if (this._isFollowingOrFulfilledOrRejected()) return;
+    this._progressUnchecked(progressValue);
+
+};
+
+Promise.prototype._clearFirstHandlerData$Base =
+Promise.prototype._clearFirstHandlerData;
+Promise.prototype._clearFirstHandlerData =
+function Promise$_clearFirstHandlerData() {
+    this._clearFirstHandlerData$Base();
+    this._progressHandler0 = void 0;
+};
+
+Promise.prototype._progressHandlerAt =
+function Promise$_progressHandlerAt(index) {
+    return index === 0
+        ? this._progressHandler0
+        : this[(index << 2) + index - 5 + 2];
+};
+
+Promise.prototype._doProgressWith =
+function Promise$_doProgressWith(progression) {
+    var progressValue = progression.value;
+    var handler = progression.handler;
+    var promise = progression.promise;
+    var receiver = progression.receiver;
+
+    var ret = tryCatch1(handler, receiver, progressValue);
+    if (ret === errorObj) {
+        if (ret.e != null &&
+            ret.e.name !== "StopProgressPropagation") {
+            var trace = errors.canAttach(ret.e)
+                ? ret.e : new Error(ret.e + "");
+            promise._attachExtraTrace(trace);
+            promise._progress(ret.e);
+        }
+    } else if (ret instanceof Promise) {
+        ret._then(promise._progress, null, null, promise, void 0);
+    } else {
+        promise._progress(ret);
+    }
+};
+
+
+Promise.prototype._progressUnchecked =
+function Promise$_progressUnchecked(progressValue) {
+    if (!this.isPending()) return;
+    var len = this._length();
+    var progress = this._progress;
+    for (var i = 0; i < len; i++) {
+        var handler = this._progressHandlerAt(i);
+        var promise = this._promiseAt(i);
+        if (!(promise instanceof Promise)) {
+            var receiver = this._receiverAt(i);
+            if (typeof handler === "function") {
+                handler.call(receiver, progressValue, promise);
+            } else if (receiver instanceof Promise && receiver._isProxied()) {
+                receiver._progressUnchecked(progressValue);
+            } else if (receiver instanceof PromiseArray) {
+                receiver._promiseProgressed(progressValue, promise);
+            }
+            continue;
+        }
+
+        if (typeof handler === "function") {
+            async.invoke(this._doProgressWith, this, {
+                handler: handler,
+                promise: promise,
+                receiver: this._receiverAt(i),
+                value: progressValue
+            });
+        } else {
+            async.invoke(progress, promise, progressValue);
+        }
+    }
+};
+};
+
+},{"./async.js":211,"./errors.js":219,"./util.js":244}],229:[function(require,module,exports){
+(function (process){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+var old;
+if (typeof Promise !== "undefined") old = Promise;
+function noConflict(bluebird) {
+    try { if (Promise === bluebird) Promise = old; }
+    catch (e) {}
+    return bluebird;
+}
+module.exports = function() {
+var util = require("./util.js");
+var async = require("./async.js");
+var errors = require("./errors.js");
+
+var INTERNAL = function(){};
+var APPLY = {};
+var NEXT_FILTER = {e: null};
+
+var cast = require("./thenables.js")(Promise, INTERNAL);
+var PromiseArray = require("./promise_array.js")(Promise, INTERNAL, cast);
+var CapturedTrace = require("./captured_trace.js")();
+var CatchFilter = require("./catch_filter.js")(NEXT_FILTER);
+var PromiseResolver = require("./promise_resolver.js");
+
+var isArray = util.isArray;
+
+var errorObj = util.errorObj;
+var tryCatch1 = util.tryCatch1;
+var tryCatch2 = util.tryCatch2;
+var tryCatchApply = util.tryCatchApply;
+var RangeError = errors.RangeError;
+var TypeError = errors.TypeError;
+var CancellationError = errors.CancellationError;
+var TimeoutError = errors.TimeoutError;
+var OperationalError = errors.OperationalError;
+var originatesFromRejection = errors.originatesFromRejection;
+var markAsOriginatingFromRejection = errors.markAsOriginatingFromRejection;
+var canAttach = errors.canAttach;
+var thrower = util.thrower;
+var apiRejection = require("./errors_api_rejection")(Promise);
+
+
+var makeSelfResolutionError = function Promise$_makeSelfResolutionError() {
+    return new TypeError("circular promise resolution chain");
+};
+
+function Promise(resolver) {
+    if (typeof resolver !== "function") {
+        throw new TypeError("the promise constructor requires a resolver function");
+    }
+    if (this.constructor !== Promise) {
+        throw new TypeError("the promise constructor cannot be invoked directly");
+    }
+    this._bitField = 0;
+    this._fulfillmentHandler0 = void 0;
+    this._rejectionHandler0 = void 0;
+    this._promise0 = void 0;
+    this._receiver0 = void 0;
+    this._settledValue = void 0;
+    this._boundTo = void 0;
+    if (resolver !== INTERNAL) this._resolveFromResolver(resolver);
+}
+
+function returnFirstElement(elements) {
+    return elements[0];
+}
+
+Promise.prototype.bind = function Promise$bind(thisArg) {
+    var maybePromise = cast(thisArg, void 0);
+    var ret = new Promise(INTERNAL);
+    if (maybePromise instanceof Promise) {
+        var binder = maybePromise.then(function(thisArg) {
+            ret._setBoundTo(thisArg);
+        });
+        var p = Promise.all([this, binder]).then(returnFirstElement);
+        ret._follow(p);
+    } else {
+        ret._follow(this);
+        ret._setBoundTo(thisArg);
+    }
+    ret._propagateFrom(this, 2 | 1);
+    return ret;
+};
+
+Promise.prototype.toString = function Promise$toString() {
+    return "[object Promise]";
+};
+
+Promise.prototype.caught = Promise.prototype["catch"] =
+function Promise$catch(fn) {
+    var len = arguments.length;
+    if (len > 1) {
+        var catchInstances = new Array(len - 1),
+            j = 0, i;
+        for (i = 0; i < len - 1; ++i) {
+            var item = arguments[i];
+            if (typeof item === "function") {
+                catchInstances[j++] = item;
+            } else {
+                var catchFilterTypeError =
+                    new TypeError(
+                        "A catch filter must be an error constructor "
+                        + "or a filter function");
+
+                this._attachExtraTrace(catchFilterTypeError);
+                return Promise.reject(catchFilterTypeError);
+            }
+        }
+        catchInstances.length = j;
+        fn = arguments[i];
+
+        this._resetTrace();
+        var catchFilter = new CatchFilter(catchInstances, fn, this);
+        return this._then(void 0, catchFilter.doFilter, void 0,
+            catchFilter, void 0);
+    }
+    return this._then(void 0, fn, void 0, void 0, void 0);
+};
+
+function reflect() {
+    return new Promise.PromiseInspection(this);
+}
+
+Promise.prototype.reflect = function Promise$reflect() {
+    return this._then(reflect, reflect, void 0, this, void 0);
+};
+
+Promise.prototype.then =
+function Promise$then(didFulfill, didReject, didProgress) {
+    return this._then(didFulfill, didReject, didProgress,
+        void 0, void 0);
+};
+
+
+Promise.prototype.done =
+function Promise$done(didFulfill, didReject, didProgress) {
+    var promise = this._then(didFulfill, didReject, didProgress,
+        void 0, void 0);
+    promise._setIsFinal();
+};
+
+Promise.prototype.spread = function Promise$spread(didFulfill, didReject) {
+    return this._then(didFulfill, didReject, void 0,
+        APPLY, void 0);
+};
+
+Promise.prototype.isCancellable = function Promise$isCancellable() {
+    return !this.isResolved() &&
+        this._cancellable();
+};
+
+Promise.prototype.toJSON = function Promise$toJSON() {
+    var ret = {
+        isFulfilled: false,
+        isRejected: false,
+        fulfillmentValue: void 0,
+        rejectionReason: void 0
+    };
+    if (this.isFulfilled()) {
+        ret.fulfillmentValue = this._settledValue;
+        ret.isFulfilled = true;
+    } else if (this.isRejected()) {
+        ret.rejectionReason = this._settledValue;
+        ret.isRejected = true;
+    }
+    return ret;
+};
+
+Promise.prototype.all = function Promise$all() {
+    return new PromiseArray(this).promise();
+};
+
+
+Promise.is = function Promise$Is(val) {
+    return val instanceof Promise;
+};
+
+Promise.all = function Promise$All(promises) {
+    return new PromiseArray(promises).promise();
+};
+
+Promise.prototype.error = function Promise$_error(fn) {
+    return this.caught(originatesFromRejection, fn);
+};
+
+Promise.prototype._resolveFromSyncValue =
+function Promise$_resolveFromSyncValue(value) {
+    if (value === errorObj) {
+        this._cleanValues();
+        this._setRejected();
+        var reason = value.e;
+        this._settledValue = reason;
+        this._tryAttachExtraTrace(reason);
+        this._ensurePossibleRejectionHandled();
+    } else {
+        var maybePromise = cast(value, void 0);
+        if (maybePromise instanceof Promise) {
+            this._follow(maybePromise);
+        } else {
+            this._cleanValues();
+            this._setFulfilled();
+            this._settledValue = value;
+        }
+    }
+};
+
+Promise.method = function Promise$_Method(fn) {
+    if (typeof fn !== "function") {
+        throw new TypeError("fn must be a function");
+    }
+    return function Promise$_method() {
+        var value;
+        switch(arguments.length) {
+        case 0: value = tryCatch1(fn, this, void 0); break;
+        case 1: value = tryCatch1(fn, this, arguments[0]); break;
+        case 2: value = tryCatch2(fn, this, arguments[0], arguments[1]); break;
+        default:
+            var $_len = arguments.length;var args = new Array($_len); for(var $_i = 0; $_i < $_len; ++$_i) {args[$_i] = arguments[$_i];}
+            value = tryCatchApply(fn, args, this); break;
+        }
+        var ret = new Promise(INTERNAL);
+        ret._setTrace(void 0);
+        ret._resolveFromSyncValue(value);
+        return ret;
+    };
+};
+
+Promise.attempt = Promise["try"] = function Promise$_Try(fn, args, ctx) {
+    if (typeof fn !== "function") {
+        return apiRejection("fn must be a function");
+    }
+    var value = isArray(args)
+        ? tryCatchApply(fn, args, ctx)
+        : tryCatch1(fn, ctx, args);
+
+    var ret = new Promise(INTERNAL);
+    ret._setTrace(void 0);
+    ret._resolveFromSyncValue(value);
+    return ret;
+};
+
+Promise.defer = Promise.pending = function Promise$Defer() {
+    var promise = new Promise(INTERNAL);
+    promise._setTrace(void 0);
+    return new PromiseResolver(promise);
+};
+
+Promise.bind = function Promise$Bind(thisArg) {
+    var maybePromise = cast(thisArg, void 0);
+    var ret = new Promise(INTERNAL);
+    ret._setTrace(void 0);
+
+    if (maybePromise instanceof Promise) {
+        var p = maybePromise.then(function(thisArg) {
+            ret._setBoundTo(thisArg);
+        });
+        ret._follow(p);
+    } else {
+        ret._setBoundTo(thisArg);
+        ret._setFulfilled();
+    }
+    return ret;
+};
+
+Promise.cast = function Promise$_Cast(obj) {
+    var ret = cast(obj, void 0);
+    if (!(ret instanceof Promise)) {
+        var val = ret;
+        ret = new Promise(INTERNAL);
+        ret._setTrace(void 0);
+        ret._setFulfilled();
+        ret._cleanValues();
+        ret._settledValue = val;
+    }
+    return ret;
+};
+
+Promise.resolve = Promise.fulfilled = Promise.cast;
+
+Promise.reject = Promise.rejected = function Promise$Reject(reason) {
+    var ret = new Promise(INTERNAL);
+    ret._setTrace(void 0);
+    markAsOriginatingFromRejection(reason);
+    ret._cleanValues();
+    ret._setRejected();
+    ret._settledValue = reason;
+    if (!canAttach(reason)) {
+        var trace = new Error(reason + "");
+        ret._setCarriedStackTrace(trace);
+    }
+    ret._ensurePossibleRejectionHandled();
+    return ret;
+};
+
+Promise.onPossiblyUnhandledRejection =
+function Promise$OnPossiblyUnhandledRejection(fn) {
+        CapturedTrace.possiblyUnhandledRejection = typeof fn === "function"
+                                                    ? fn : void 0;
+};
+
+var unhandledRejectionHandled;
+Promise.onUnhandledRejectionHandled =
+function Promise$onUnhandledRejectionHandled(fn) {
+    unhandledRejectionHandled = typeof fn === "function" ? fn : void 0;
+};
+
+var debugging = false || !!(
+    typeof process !== "undefined" &&
+    typeof process.execPath === "string" &&
+    typeof process.env === "object" &&
+    (process.env["BLUEBIRD_DEBUG"] ||
+        process.env["NODE_ENV"] === "development")
+);
+
+
+Promise.longStackTraces = function Promise$LongStackTraces() {
+    if (async.haveItemsQueued() &&
+        debugging === false
+   ) {
+        throw new Error("cannot enable long stack traces after promises have been created");
+    }
+    debugging = CapturedTrace.isSupported();
+};
+
+Promise.hasLongStackTraces = function Promise$HasLongStackTraces() {
+    return debugging && CapturedTrace.isSupported();
+};
+
+Promise.prototype._then =
+function Promise$_then(
+    didFulfill,
+    didReject,
+    didProgress,
+    receiver,
+    internalData
+) {
+    var haveInternalData = internalData !== void 0;
+    var ret = haveInternalData ? internalData : new Promise(INTERNAL);
+
+    if (!haveInternalData) {
+        if (debugging) {
+            var haveSameContext = this._peekContext() === this._traceParent;
+            ret._traceParent = haveSameContext ? this._traceParent : this;
+        }
+        ret._propagateFrom(this, 7);
+    }
+
+    var callbackIndex =
+        this._addCallbacks(didFulfill, didReject, didProgress, ret, receiver);
+
+    if (this.isResolved()) {
+        async.invoke(this._queueSettleAt, this, callbackIndex);
+    }
+
+    return ret;
+};
+
+Promise.prototype._length = function Promise$_length() {
+    return this._bitField & 262143;
+};
+
+Promise.prototype._isFollowingOrFulfilledOrRejected =
+function Promise$_isFollowingOrFulfilledOrRejected() {
+    return (this._bitField & 939524096) > 0;
+};
+
+Promise.prototype._isFollowing = function Promise$_isFollowing() {
+    return (this._bitField & 536870912) === 536870912;
+};
+
+Promise.prototype._setLength = function Promise$_setLength(len) {
+    this._bitField = (this._bitField & -262144) |
+        (len & 262143);
+};
+
+Promise.prototype._setFulfilled = function Promise$_setFulfilled() {
+    this._bitField = this._bitField | 268435456;
+};
+
+Promise.prototype._setRejected = function Promise$_setRejected() {
+    this._bitField = this._bitField | 134217728;
+};
+
+Promise.prototype._setFollowing = function Promise$_setFollowing() {
+    this._bitField = this._bitField | 536870912;
+};
+
+Promise.prototype._setIsFinal = function Promise$_setIsFinal() {
+    this._bitField = this._bitField | 33554432;
+};
+
+Promise.prototype._isFinal = function Promise$_isFinal() {
+    return (this._bitField & 33554432) > 0;
+};
+
+Promise.prototype._cancellable = function Promise$_cancellable() {
+    return (this._bitField & 67108864) > 0;
+};
+
+Promise.prototype._setCancellable = function Promise$_setCancellable() {
+    this._bitField = this._bitField | 67108864;
+};
+
+Promise.prototype._unsetCancellable = function Promise$_unsetCancellable() {
+    this._bitField = this._bitField & (~67108864);
+};
+
+Promise.prototype._setRejectionIsUnhandled =
+function Promise$_setRejectionIsUnhandled() {
+    this._bitField = this._bitField | 2097152;
+};
+
+Promise.prototype._unsetRejectionIsUnhandled =
+function Promise$_unsetRejectionIsUnhandled() {
+    this._bitField = this._bitField & (~2097152);
+    if (this._isUnhandledRejectionNotified()) {
+        this._unsetUnhandledRejectionIsNotified();
+        this._notifyUnhandledRejectionIsHandled();
+    }
+};
+
+Promise.prototype._isRejectionUnhandled =
+function Promise$_isRejectionUnhandled() {
+    return (this._bitField & 2097152) > 0;
+};
+
+Promise.prototype._setUnhandledRejectionIsNotified =
+function Promise$_setUnhandledRejectionIsNotified() {
+    this._bitField = this._bitField | 524288;
+};
+
+Promise.prototype._unsetUnhandledRejectionIsNotified =
+function Promise$_unsetUnhandledRejectionIsNotified() {
+    this._bitField = this._bitField & (~524288);
+};
+
+Promise.prototype._isUnhandledRejectionNotified =
+function Promise$_isUnhandledRejectionNotified() {
+    return (this._bitField & 524288) > 0;
+};
+
+Promise.prototype._setCarriedStackTrace =
+function Promise$_setCarriedStackTrace(capturedTrace) {
+    this._bitField = this._bitField | 1048576;
+    this._fulfillmentHandler0 = capturedTrace;
+};
+
+Promise.prototype._unsetCarriedStackTrace =
+function Promise$_unsetCarriedStackTrace() {
+    this._bitField = this._bitField & (~1048576);
+    this._fulfillmentHandler0 = void 0;
+};
+
+Promise.prototype._isCarryingStackTrace =
+function Promise$_isCarryingStackTrace() {
+    return (this._bitField & 1048576) > 0;
+};
+
+Promise.prototype._getCarriedStackTrace =
+function Promise$_getCarriedStackTrace() {
+    return this._isCarryingStackTrace()
+        ? this._fulfillmentHandler0
+        : void 0;
+};
+
+Promise.prototype._receiverAt = function Promise$_receiverAt(index) {
+    var ret = index === 0
+        ? this._receiver0
+        : this[(index << 2) + index - 5 + 4];
+    if (this._isBound() && ret === void 0) {
+        return this._boundTo;
+    }
+    return ret;
+};
+
+Promise.prototype._promiseAt = function Promise$_promiseAt(index) {
+    return index === 0
+        ? this._promise0
+        : this[(index << 2) + index - 5 + 3];
+};
+
+Promise.prototype._fulfillmentHandlerAt =
+function Promise$_fulfillmentHandlerAt(index) {
+    return index === 0
+        ? this._fulfillmentHandler0
+        : this[(index << 2) + index - 5 + 0];
+};
+
+Promise.prototype._rejectionHandlerAt =
+function Promise$_rejectionHandlerAt(index) {
+    return index === 0
+        ? this._rejectionHandler0
+        : this[(index << 2) + index - 5 + 1];
+};
+
+Promise.prototype._addCallbacks = function Promise$_addCallbacks(
+    fulfill,
+    reject,
+    progress,
+    promise,
+    receiver
+) {
+    var index = this._length();
+
+    if (index >= 262143 - 5) {
+        index = 0;
+        this._setLength(0);
+    }
+
+    if (index === 0) {
+        this._promise0 = promise;
+        if (receiver !== void 0) this._receiver0 = receiver;
+        if (typeof fulfill === "function" && !this._isCarryingStackTrace())
+            this._fulfillmentHandler0 = fulfill;
+        if (typeof reject === "function") this._rejectionHandler0 = reject;
+        if (typeof progress === "function") this._progressHandler0 = progress;
+    } else {
+        var base = (index << 2) + index - 5;
+        this[base + 3] = promise;
+        this[base + 4] = receiver;
+        this[base + 0] = typeof fulfill === "function"
+                                            ? fulfill : void 0;
+        this[base + 1] = typeof reject === "function"
+                                            ? reject : void 0;
+        this[base + 2] = typeof progress === "function"
+                                            ? progress : void 0;
+    }
+    this._setLength(index + 1);
+    return index;
+};
+
+Promise.prototype._setProxyHandlers =
+function Promise$_setProxyHandlers(receiver, promiseSlotValue) {
+    var index = this._length();
+
+    if (index >= 262143 - 5) {
+        index = 0;
+        this._setLength(0);
+    }
+    if (index === 0) {
+        this._promise0 = promiseSlotValue;
+        this._receiver0 = receiver;
+    } else {
+        var base = (index << 2) + index - 5;
+        this[base + 3] = promiseSlotValue;
+        this[base + 4] = receiver;
+        this[base + 0] =
+        this[base + 1] =
+        this[base + 2] = void 0;
+    }
+    this._setLength(index + 1);
+};
+
+Promise.prototype._proxyPromiseArray =
+function Promise$_proxyPromiseArray(promiseArray, index) {
+    this._setProxyHandlers(promiseArray, index);
+};
+
+Promise.prototype._proxyPromise = function Promise$_proxyPromise(promise) {
+    promise._setProxied();
+    this._setProxyHandlers(promise, -15);
+};
+
+Promise.prototype._setBoundTo = function Promise$_setBoundTo(obj) {
+    if (obj !== void 0) {
+        this._bitField = this._bitField | 8388608;
+        this._boundTo = obj;
+    } else {
+        this._bitField = this._bitField & (~8388608);
+    }
+};
+
+Promise.prototype._isBound = function Promise$_isBound() {
+    return (this._bitField & 8388608) === 8388608;
+};
+
+Promise.prototype._resolveFromResolver =
+function Promise$_resolveFromResolver(resolver) {
+    var promise = this;
+    this._setTrace(void 0);
+    this._pushContext();
+
+    function Promise$_resolver(val) {
+        if (promise._tryFollow(val)) {
+            return;
+        }
+        promise._fulfill(val);
+    }
+    function Promise$_rejecter(val) {
+        var trace = canAttach(val) ? val : new Error(val + "");
+        promise._attachExtraTrace(trace);
+        markAsOriginatingFromRejection(val);
+        promise._reject(val, trace === val ? void 0 : trace);
+    }
+    var r = tryCatch2(resolver, void 0, Promise$_resolver, Promise$_rejecter);
+    this._popContext();
+
+    if (r !== void 0 && r === errorObj) {
+        var e = r.e;
+        var trace = canAttach(e) ? e : new Error(e + "");
+        promise._reject(e, trace);
+    }
+};
+
+Promise.prototype._spreadSlowCase =
+function Promise$_spreadSlowCase(targetFn, promise, values, boundTo) {
+    var promiseForAll = new PromiseArray(values).promise();
+    var promise2 = promiseForAll._then(function() {
+        return targetFn.apply(boundTo, arguments);
+    }, void 0, void 0, APPLY, void 0);
+    promise._follow(promise2);
+};
+
+Promise.prototype._callSpread =
+function Promise$_callSpread(handler, promise, value) {
+    var boundTo = this._boundTo;
+    if (isArray(value)) {
+        for (var i = 0, len = value.length; i < len; ++i) {
+            if (cast(value[i], void 0) instanceof Promise) {
+                this._spreadSlowCase(handler, promise, value, boundTo);
+                return;
+            }
+        }
+    }
+    promise._pushContext();
+    return tryCatchApply(handler, value, boundTo);
+};
+
+Promise.prototype._callHandler =
+function Promise$_callHandler(
+    handler, receiver, promise, value) {
+    var x;
+    if (receiver === APPLY && !this.isRejected()) {
+        x = this._callSpread(handler, promise, value);
+    } else {
+        promise._pushContext();
+        x = tryCatch1(handler, receiver, value);
+    }
+    promise._popContext();
+    return x;
+};
+
+Promise.prototype._settlePromiseFromHandler =
+function Promise$_settlePromiseFromHandler(
+    handler, receiver, value, promise
+) {
+    if (!(promise instanceof Promise)) {
+        handler.call(receiver, value, promise);
+        return;
+    }
+    if (promise.isResolved()) return;
+    var x = this._callHandler(handler, receiver, promise, value);
+    if (promise._isFollowing()) return;
+
+    if (x === errorObj || x === promise || x === NEXT_FILTER) {
+        var err = x === promise
+                    ? makeSelfResolutionError()
+                    : x.e;
+        var trace = canAttach(err) ? err : new Error(err + "");
+        if (x !== NEXT_FILTER) promise._attachExtraTrace(trace);
+        promise._rejectUnchecked(err, trace);
+    } else {
+        var castValue = cast(x, promise);
+        if (castValue instanceof Promise) {
+            if (castValue.isRejected() &&
+                !castValue._isCarryingStackTrace() &&
+                !canAttach(castValue._settledValue)) {
+                var trace = new Error(castValue._settledValue + "");
+                promise._attachExtraTrace(trace);
+                castValue._setCarriedStackTrace(trace);
+            }
+            promise._follow(castValue);
+            promise._propagateFrom(castValue, 1);
+        } else {
+            promise._fulfillUnchecked(x);
+        }
+    }
+};
+
+Promise.prototype._follow =
+function Promise$_follow(promise) {
+    this._setFollowing();
+
+    if (promise.isPending()) {
+        this._propagateFrom(promise, 1);
+        promise._proxyPromise(this);
+    } else if (promise.isFulfilled()) {
+        this._fulfillUnchecked(promise._settledValue);
+    } else {
+        this._rejectUnchecked(promise._settledValue,
+            promise._getCarriedStackTrace());
+    }
+
+    if (promise._isRejectionUnhandled()) promise._unsetRejectionIsUnhandled();
+
+    if (debugging &&
+        promise._traceParent == null) {
+        promise._traceParent = this;
+    }
+};
+
+Promise.prototype._tryFollow =
+function Promise$_tryFollow(value) {
+    if (this._isFollowingOrFulfilledOrRejected() ||
+        value === this) {
+        return false;
+    }
+    var maybePromise = cast(value, void 0);
+    if (!(maybePromise instanceof Promise)) {
+        return false;
+    }
+    this._follow(maybePromise);
+    return true;
+};
+
+Promise.prototype._resetTrace = function Promise$_resetTrace() {
+    if (debugging) {
+        this._trace = new CapturedTrace(this._peekContext() === void 0);
+    }
+};
+
+Promise.prototype._setTrace = function Promise$_setTrace(parent) {
+    if (debugging) {
+        var context = this._peekContext();
+        this._traceParent = context;
+        var isTopLevel = context === void 0;
+        if (parent !== void 0 &&
+            parent._traceParent === context) {
+            this._trace = parent._trace;
+        } else {
+            this._trace = new CapturedTrace(isTopLevel);
+        }
+    }
+    return this;
+};
+
+Promise.prototype._tryAttachExtraTrace =
+function Promise$_tryAttachExtraTrace(error) {
+    if (canAttach(error)) {
+        this._attachExtraTrace(error);
+    }
+};
+
+Promise.prototype._attachExtraTrace =
+function Promise$_attachExtraTrace(error) {
+    if (debugging) {
+        var promise = this;
+        var stack = error.stack;
+        stack = typeof stack === "string" ? stack.split("\n") : [];
+        CapturedTrace.protectErrorMessageNewlines(stack);
+        var headerLineCount = 1;
+        var combinedTraces = 1;
+        while(promise != null &&
+            promise._trace != null) {
+            stack = CapturedTrace.combine(
+                stack,
+                promise._trace.stack.split("\n")
+            );
+            promise = promise._traceParent;
+            combinedTraces++;
+        }
+
+        var stackTraceLimit = Error.stackTraceLimit || 10;
+        var max = (stackTraceLimit + headerLineCount) * combinedTraces;
+        var len = stack.length;
+        if (len > max) {
+            stack.length = max;
+        }
+
+        if (len > 0)
+            stack[0] = stack[0].split("\u0002\u0000\u0001").join("\n");
+
+        if (stack.length <= headerLineCount) {
+            error.stack = "(No stack trace)";
+        } else {
+            error.stack = stack.join("\n");
+        }
+    }
+};
+
+Promise.prototype._cleanValues = function Promise$_cleanValues() {
+    if (this._cancellable()) {
+        this._cancellationParent = void 0;
+    }
+};
+
+Promise.prototype._propagateFrom =
+function Promise$_propagateFrom(parent, flags) {
+    if ((flags & 1) > 0 && parent._cancellable()) {
+        this._setCancellable();
+        this._cancellationParent = parent;
+    }
+    if ((flags & 4) > 0) {
+        this._setBoundTo(parent._boundTo);
+    }
+    if ((flags & 2) > 0) {
+        this._setTrace(parent);
+    }
+};
+
+Promise.prototype._fulfill = function Promise$_fulfill(value) {
+    if (this._isFollowingOrFulfilledOrRejected()) return;
+    this._fulfillUnchecked(value);
+};
+
+Promise.prototype._reject =
+function Promise$_reject(reason, carriedStackTrace) {
+    if (this._isFollowingOrFulfilledOrRejected()) return;
+    this._rejectUnchecked(reason, carriedStackTrace);
+};
+
+Promise.prototype._settlePromiseAt = function Promise$_settlePromiseAt(index) {
+    var handler = this.isFulfilled()
+        ? this._fulfillmentHandlerAt(index)
+        : this._rejectionHandlerAt(index);
+
+    var value = this._settledValue;
+    var receiver = this._receiverAt(index);
+    var promise = this._promiseAt(index);
+
+    if (typeof handler === "function") {
+        this._settlePromiseFromHandler(handler, receiver, value, promise);
+    } else {
+        var done = false;
+        var isFulfilled = this.isFulfilled();
+        if (receiver !== void 0) {
+            if (receiver instanceof Promise &&
+                receiver._isProxied()) {
+                receiver._unsetProxied();
+
+                if (isFulfilled) receiver._fulfillUnchecked(value);
+                else receiver._rejectUnchecked(value,
+                    this._getCarriedStackTrace());
+                done = true;
+            } else if (receiver instanceof PromiseArray) {
+                if (isFulfilled) receiver._promiseFulfilled(value, promise);
+                else receiver._promiseRejected(value, promise);
+                done = true;
+            }
+        }
+
+        if (!done) {
+            if (isFulfilled) promise._fulfill(value);
+            else promise._reject(value, this._getCarriedStackTrace());
+        }
+    }
+
+    if (index >= 4) {
+        this._queueGC();
+    }
+};
+
+Promise.prototype._isProxied = function Promise$_isProxied() {
+    return (this._bitField & 4194304) === 4194304;
+};
+
+Promise.prototype._setProxied = function Promise$_setProxied() {
+    this._bitField = this._bitField | 4194304;
+};
+
+Promise.prototype._unsetProxied = function Promise$_unsetProxied() {
+    this._bitField = this._bitField & (~4194304);
+};
+
+Promise.prototype._isGcQueued = function Promise$_isGcQueued() {
+    return (this._bitField & -1073741824) === -1073741824;
+};
+
+Promise.prototype._setGcQueued = function Promise$_setGcQueued() {
+    this._bitField = this._bitField | -1073741824;
+};
+
+Promise.prototype._unsetGcQueued = function Promise$_unsetGcQueued() {
+    this._bitField = this._bitField & (~-1073741824);
+};
+
+Promise.prototype._queueGC = function Promise$_queueGC() {
+    if (this._isGcQueued()) return;
+    this._setGcQueued();
+    async.invokeLater(this._gc, this, void 0);
+};
+
+Promise.prototype._gc = function Promise$gc() {
+    var len = this._length() * 5 - 5;
+    for (var i = 0; i < len; i++) {
+        delete this[i];
+    }
+    this._clearFirstHandlerData();
+    this._setLength(0);
+    this._unsetGcQueued();
+};
+
+Promise.prototype._clearFirstHandlerData =
+function Promise$_clearFirstHandlerData() {
+    this._fulfillmentHandler0 = void 0;
+    this._rejectionHandler0 = void 0;
+    this._promise0 = void 0;
+    this._receiver0 = void 0;
+};
+
+Promise.prototype._queueSettleAt = function Promise$_queueSettleAt(index) {
+    if (this._isRejectionUnhandled()) this._unsetRejectionIsUnhandled();
+    async.invoke(this._settlePromiseAt, this, index);
+};
+
+Promise.prototype._fulfillUnchecked =
+function Promise$_fulfillUnchecked(value) {
+    if (!this.isPending()) return;
+    if (value === this) {
+        var err = makeSelfResolutionError();
+        this._attachExtraTrace(err);
+        return this._rejectUnchecked(err, void 0);
+    }
+    this._cleanValues();
+    this._setFulfilled();
+    this._settledValue = value;
+    var len = this._length();
+
+    if (len > 0) {
+        async.invoke(this._settlePromises, this, len);
+    }
+};
+
+Promise.prototype._rejectUncheckedCheckError =
+function Promise$_rejectUncheckedCheckError(reason) {
+    var trace = canAttach(reason) ? reason : new Error(reason + "");
+    this._rejectUnchecked(reason, trace === reason ? void 0 : trace);
+};
+
+Promise.prototype._rejectUnchecked =
+function Promise$_rejectUnchecked(reason, trace) {
+    if (!this.isPending()) return;
+    if (reason === this) {
+        var err = makeSelfResolutionError();
+        this._attachExtraTrace(err);
+        return this._rejectUnchecked(err);
+    }
+    this._cleanValues();
+    this._setRejected();
+    this._settledValue = reason;
+
+    if (this._isFinal()) {
+        async.invokeLater(thrower, void 0, trace === void 0 ? reason : trace);
+        return;
+    }
+    var len = this._length();
+
+    if (trace !== void 0) this._setCarriedStackTrace(trace);
+
+    if (len > 0) {
+        async.invoke(this._rejectPromises, this, null);
+    } else {
+        this._ensurePossibleRejectionHandled();
+    }
+};
+
+Promise.prototype._rejectPromises = function Promise$_rejectPromises() {
+    this._settlePromises();
+    this._unsetCarriedStackTrace();
+};
+
+Promise.prototype._settlePromises = function Promise$_settlePromises() {
+    var len = this._length();
+    for (var i = 0; i < len; i++) {
+        this._settlePromiseAt(i);
+    }
+};
+
+Promise.prototype._ensurePossibleRejectionHandled =
+function Promise$_ensurePossibleRejectionHandled() {
+    this._setRejectionIsUnhandled();
+    if (CapturedTrace.possiblyUnhandledRejection !== void 0) {
+        async.invokeLater(this._notifyUnhandledRejection, this, void 0);
+    }
+};
+
+Promise.prototype._notifyUnhandledRejectionIsHandled =
+function Promise$_notifyUnhandledRejectionIsHandled() {
+    if (typeof unhandledRejectionHandled === "function") {
+        async.invokeLater(unhandledRejectionHandled, void 0, this);
+    }
+};
+
+Promise.prototype._notifyUnhandledRejection =
+function Promise$_notifyUnhandledRejection() {
+    if (this._isRejectionUnhandled()) {
+        var reason = this._settledValue;
+        var trace = this._getCarriedStackTrace();
+
+        this._setUnhandledRejectionIsNotified();
+
+        if (trace !== void 0) {
+            this._unsetCarriedStackTrace();
+            reason = trace;
+        }
+        if (typeof CapturedTrace.possiblyUnhandledRejection === "function") {
+            CapturedTrace.possiblyUnhandledRejection(reason, this);
+        }
+    }
+};
+
+var contextStack = [];
+Promise.prototype._peekContext = function Promise$_peekContext() {
+    var lastIndex = contextStack.length - 1;
+    if (lastIndex >= 0) {
+        return contextStack[lastIndex];
+    }
+    return void 0;
+
+};
+
+Promise.prototype._pushContext = function Promise$_pushContext() {
+    if (!debugging) return;
+    contextStack.push(this);
+};
+
+Promise.prototype._popContext = function Promise$_popContext() {
+    if (!debugging) return;
+    contextStack.pop();
+};
+
+Promise.noConflict = function Promise$NoConflict() {
+    return noConflict(Promise);
+};
+
+Promise.setScheduler = function(fn) {
+    if (typeof fn !== "function") throw new TypeError("fn must be a function");
+    async._schedule = fn;
+};
+
+if (!CapturedTrace.isSupported()) {
+    Promise.longStackTraces = function(){};
+    debugging = false;
+}
+
+Promise._makeSelfResolutionError = makeSelfResolutionError;
+require("./finally.js")(Promise, NEXT_FILTER, cast);
+require("./direct_resolve.js")(Promise);
+require("./synchronous_inspection.js")(Promise);
+require("./join.js")(Promise, PromiseArray, cast, INTERNAL);
+Promise.RangeError = RangeError;
+Promise.CancellationError = CancellationError;
+Promise.TimeoutError = TimeoutError;
+Promise.TypeError = TypeError;
+Promise.OperationalError = OperationalError;
+Promise.RejectionError = OperationalError;
+Promise.AggregateError = errors.AggregateError;
+
+util.toFastProperties(Promise);
+util.toFastProperties(Promise.prototype);
+Promise.Promise = Promise;
+require('./timers.js')(Promise,INTERNAL,cast);
+require('./race.js')(Promise,INTERNAL,cast);
+require('./call_get.js')(Promise);
+require('./generators.js')(Promise,apiRejection,INTERNAL,cast);
+require('./map.js')(Promise,PromiseArray,apiRejection,cast,INTERNAL);
+require('./nodeify.js')(Promise);
+require('./promisify.js')(Promise,INTERNAL);
+require('./props.js')(Promise,PromiseArray,cast);
+require('./reduce.js')(Promise,PromiseArray,apiRejection,cast,INTERNAL);
+require('./settle.js')(Promise,PromiseArray);
+require('./some.js')(Promise,PromiseArray,apiRejection);
+require('./progress.js')(Promise,PromiseArray);
+require('./cancel.js')(Promise,INTERNAL);
+require('./filter.js')(Promise,INTERNAL);
+require('./any.js')(Promise,PromiseArray);
+require('./each.js')(Promise,INTERNAL);
+require('./using.js')(Promise,apiRejection,cast);
+
+Promise.prototype = Promise.prototype;
+return Promise;
+
+};
+
+}).call(this,require("1YiZ5S"))
+},{"./any.js":210,"./async.js":211,"./call_get.js":213,"./cancel.js":214,"./captured_trace.js":215,"./catch_filter.js":216,"./direct_resolve.js":217,"./each.js":218,"./errors.js":219,"./errors_api_rejection":220,"./filter.js":222,"./finally.js":223,"./generators.js":224,"./join.js":225,"./map.js":226,"./nodeify.js":227,"./progress.js":228,"./promise_array.js":230,"./promise_resolver.js":231,"./promisify.js":232,"./props.js":233,"./race.js":235,"./reduce.js":236,"./settle.js":238,"./some.js":239,"./synchronous_inspection.js":240,"./thenables.js":241,"./timers.js":242,"./using.js":243,"./util.js":244,"1YiZ5S":64}],230:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+module.exports = function(Promise, INTERNAL, cast) {
+var canAttach = require("./errors.js").canAttach;
+var util = require("./util.js");
+var isArray = util.isArray;
+
+function toResolutionValue(val) {
+    switch(val) {
+    case -1: return void 0;
+    case -2: return [];
+    case -3: return {};
+    }
+}
+
+function PromiseArray(values) {
+    var promise = this._promise = new Promise(INTERNAL);
+    var parent = void 0;
+    if (values instanceof Promise) {
+        parent = values;
+        promise._propagateFrom(parent, 1 | 4);
+    }
+    promise._setTrace(parent);
+    this._values = values;
+    this._length = 0;
+    this._totalResolved = 0;
+    this._init(void 0, -2);
+}
+PromiseArray.prototype.length = function PromiseArray$length() {
+    return this._length;
+};
+
+PromiseArray.prototype.promise = function PromiseArray$promise() {
+    return this._promise;
+};
+
+PromiseArray.prototype._init =
+function PromiseArray$_init(_, resolveValueIfEmpty) {
+    var values = cast(this._values, void 0);
+    if (values instanceof Promise) {
+        this._values = values;
+        values._setBoundTo(this._promise._boundTo);
+        if (values.isFulfilled()) {
+            values = values._settledValue;
+            if (!isArray(values)) {
+                var err = new Promise.TypeError("expecting an array, a promise or a thenable");
+                this.__hardReject__(err);
+                return;
+            }
+        } else if (values.isPending()) {
+            values._then(
+                PromiseArray$_init,
+                this._reject,
+                void 0,
+                this,
+                resolveValueIfEmpty
+           );
+            return;
+        } else {
+            values._unsetRejectionIsUnhandled();
+            this._reject(values._settledValue);
+            return;
+        }
+    } else if (!isArray(values)) {
+        var err = new Promise.TypeError("expecting an array, a promise or a thenable");
+        this.__hardReject__(err);
+        return;
+    }
+
+    if (values.length === 0) {
+        if (resolveValueIfEmpty === -5) {
+            this._resolveEmptyArray();
+        }
+        else {
+            this._resolve(toResolutionValue(resolveValueIfEmpty));
+        }
+        return;
+    }
+    var len = this.getActualLength(values.length);
+    var newLen = len;
+    var newValues = this.shouldCopyValues() ? new Array(len) : this._values;
+    var isDirectScanNeeded = false;
+    for (var i = 0; i < len; ++i) {
+        var maybePromise = cast(values[i], void 0);
+        if (maybePromise instanceof Promise) {
+            if (maybePromise.isPending()) {
+                maybePromise._proxyPromiseArray(this, i);
+            } else {
+                maybePromise._unsetRejectionIsUnhandled();
+                isDirectScanNeeded = true;
+            }
+        } else {
+            isDirectScanNeeded = true;
+        }
+        newValues[i] = maybePromise;
+    }
+    this._values = newValues;
+    this._length = newLen;
+    if (isDirectScanNeeded) {
+        this._scanDirectValues(len);
+    }
+};
+
+PromiseArray.prototype._settlePromiseAt =
+function PromiseArray$_settlePromiseAt(index) {
+    var value = this._values[index];
+    if (!(value instanceof Promise)) {
+        this._promiseFulfilled(value, index);
+    } else if (value.isFulfilled()) {
+        this._promiseFulfilled(value._settledValue, index);
+    } else if (value.isRejected()) {
+        this._promiseRejected(value._settledValue, index);
+    }
+};
+
+PromiseArray.prototype._scanDirectValues =
+function PromiseArray$_scanDirectValues(len) {
+    for (var i = 0; i < len; ++i) {
+        if (this._isResolved()) {
+            break;
+        }
+        this._settlePromiseAt(i);
+    }
+};
+
+PromiseArray.prototype._isResolved = function PromiseArray$_isResolved() {
+    return this._values === null;
+};
+
+PromiseArray.prototype._resolve = function PromiseArray$_resolve(value) {
+    this._values = null;
+    this._promise._fulfill(value);
+};
+
+PromiseArray.prototype.__hardReject__ =
+PromiseArray.prototype._reject = function PromiseArray$_reject(reason) {
+    this._values = null;
+    var trace = canAttach(reason) ? reason : new Error(reason + "");
+    this._promise._attachExtraTrace(trace);
+    this._promise._reject(reason, trace);
+};
+
+PromiseArray.prototype._promiseProgressed =
+function PromiseArray$_promiseProgressed(progressValue, index) {
+    if (this._isResolved()) return;
+    this._promise._progress({
+        index: index,
+        value: progressValue
+    });
+};
+
+
+PromiseArray.prototype._promiseFulfilled =
+function PromiseArray$_promiseFulfilled(value, index) {
+    if (this._isResolved()) return;
+    this._values[index] = value;
+    var totalResolved = ++this._totalResolved;
+    if (totalResolved >= this._length) {
+        this._resolve(this._values);
+    }
+};
+
+PromiseArray.prototype._promiseRejected =
+function PromiseArray$_promiseRejected(reason, index) {
+    if (this._isResolved()) return;
+    this._totalResolved++;
+    this._reject(reason);
+};
+
+PromiseArray.prototype.shouldCopyValues =
+function PromiseArray$_shouldCopyValues() {
+    return true;
+};
+
+PromiseArray.prototype.getActualLength =
+function PromiseArray$getActualLength(len) {
+    return len;
+};
+
+return PromiseArray;
+};
+
+},{"./errors.js":219,"./util.js":244}],231:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+var util = require("./util.js");
+var maybeWrapAsError = util.maybeWrapAsError;
+var errors = require("./errors.js");
+var TimeoutError = errors.TimeoutError;
+var OperationalError = errors.OperationalError;
+var async = require("./async.js");
+var haveGetters = util.haveGetters;
+var es5 = require("./es5.js");
+
+function isUntypedError(obj) {
+    return obj instanceof Error &&
+        es5.getPrototypeOf(obj) === Error.prototype;
+}
+
+function wrapAsOperationalError(obj) {
+    var ret;
+    if (isUntypedError(obj)) {
+        ret = new OperationalError(obj);
+    } else {
+        ret = obj;
+    }
+    errors.markAsOriginatingFromRejection(ret);
+    return ret;
+}
+
+function nodebackForPromise(promise) {
+    function PromiseResolver$_callback(err, value) {
+        if (promise === null) return;
+
+        if (err) {
+            var wrapped = wrapAsOperationalError(maybeWrapAsError(err));
+            promise._attachExtraTrace(wrapped);
+            promise._reject(wrapped);
+        } else if (arguments.length > 2) {
+            var $_len = arguments.length;var args = new Array($_len - 1); for(var $_i = 1; $_i < $_len; ++$_i) {args[$_i - 1] = arguments[$_i];}
+            promise._fulfill(args);
+        } else {
+            promise._fulfill(value);
+        }
+
+        promise = null;
+    }
+    return PromiseResolver$_callback;
+}
+
+
+var PromiseResolver;
+if (!haveGetters) {
+    PromiseResolver = function PromiseResolver(promise) {
+        this.promise = promise;
+        this.asCallback = nodebackForPromise(promise);
+        this.callback = this.asCallback;
+    };
+}
+else {
+    PromiseResolver = function PromiseResolver(promise) {
+        this.promise = promise;
+    };
+}
+if (haveGetters) {
+    var prop = {
+        get: function() {
+            return nodebackForPromise(this.promise);
+        }
+    };
+    es5.defineProperty(PromiseResolver.prototype, "asCallback", prop);
+    es5.defineProperty(PromiseResolver.prototype, "callback", prop);
+}
+
+PromiseResolver._nodebackForPromise = nodebackForPromise;
+
+PromiseResolver.prototype.toString = function PromiseResolver$toString() {
+    return "[object PromiseResolver]";
+};
+
+PromiseResolver.prototype.resolve =
+PromiseResolver.prototype.fulfill = function PromiseResolver$resolve(value) {
+    if (!(this instanceof PromiseResolver)) {
+        throw new TypeError("Illegal invocation, resolver resolve/reject must be called within a resolver context. Consider using the promise constructor instead.");
+    }
+
+    var promise = this.promise;
+    if (promise._tryFollow(value)) {
+        return;
+    }
+    async.invoke(promise._fulfill, promise, value);
+};
+
+PromiseResolver.prototype.reject = function PromiseResolver$reject(reason) {
+    if (!(this instanceof PromiseResolver)) {
+        throw new TypeError("Illegal invocation, resolver resolve/reject must be called within a resolver context. Consider using the promise constructor instead.");
+    }
+
+    var promise = this.promise;
+    errors.markAsOriginatingFromRejection(reason);
+    var trace = errors.canAttach(reason) ? reason : new Error(reason + "");
+    promise._attachExtraTrace(trace);
+    async.invoke(promise._reject, promise, reason);
+    if (trace !== reason) {
+        async.invoke(this._setCarriedStackTrace, this, trace);
+    }
+};
+
+PromiseResolver.prototype.progress =
+function PromiseResolver$progress(value) {
+    if (!(this instanceof PromiseResolver)) {
+        throw new TypeError("Illegal invocation, resolver resolve/reject must be called within a resolver context. Consider using the promise constructor instead.");
+    }
+    async.invoke(this.promise._progress, this.promise, value);
+};
+
+PromiseResolver.prototype.cancel = function PromiseResolver$cancel() {
+    async.invoke(this.promise.cancel, this.promise, void 0);
+};
+
+PromiseResolver.prototype.timeout = function PromiseResolver$timeout() {
+    this.reject(new TimeoutError("timeout"));
+};
+
+PromiseResolver.prototype.isResolved = function PromiseResolver$isResolved() {
+    return this.promise.isResolved();
+};
+
+PromiseResolver.prototype.toJSON = function PromiseResolver$toJSON() {
+    return this.promise.toJSON();
+};
+
+PromiseResolver.prototype._setCarriedStackTrace =
+function PromiseResolver$_setCarriedStackTrace(trace) {
+    if (this.promise.isRejected()) {
+        this.promise._setCarriedStackTrace(trace);
+    }
+};
+
+module.exports = PromiseResolver;
+
+},{"./async.js":211,"./errors.js":219,"./es5.js":221,"./util.js":244}],232:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+module.exports = function(Promise, INTERNAL) {
+var THIS = {};
+var util = require("./util.js");
+var nodebackForPromise = require("./promise_resolver.js")
+    ._nodebackForPromise;
+var withAppended = util.withAppended;
+var maybeWrapAsError = util.maybeWrapAsError;
+var canEvaluate = util.canEvaluate;
+var TypeError = require("./errors").TypeError;
+var defaultSuffix = "Async";
+var defaultFilter = function(name, func) {
+    return util.isIdentifier(name) &&
+        name.charAt(0) !== "_" &&
+        !util.isClass(func);
+};
+var defaultPromisified = {__isPromisified__: true};
+
+
+function escapeIdentRegex(str) {
+    return str.replace(/([$])/, "\\$");
+}
+
+function isPromisified(fn) {
+    try {
+        return fn.__isPromisified__ === true;
+    }
+    catch (e) {
+        return false;
+    }
+}
+
+function hasPromisified(obj, key, suffix) {
+    var val = util.getDataPropertyOrDefault(obj, key + suffix,
+                                            defaultPromisified);
+    return val ? isPromisified(val) : false;
+}
+function checkValid(ret, suffix, suffixRegexp) {
+    for (var i = 0; i < ret.length; i += 2) {
+        var key = ret[i];
+        if (suffixRegexp.test(key)) {
+            var keyWithoutAsyncSuffix = key.replace(suffixRegexp, "");
+            for (var j = 0; j < ret.length; j += 2) {
+                if (ret[j] === keyWithoutAsyncSuffix) {
+                    throw new TypeError("Cannot promisify an API " +
+                        "that has normal methods with '"+suffix+"'-suffix");
+                }
+            }
+        }
+    }
+}
+
+function promisifiableMethods(obj, suffix, suffixRegexp, filter) {
+    var keys = util.inheritedDataKeys(obj);
+    var ret = [];
+    for (var i = 0; i < keys.length; ++i) {
+        var key = keys[i];
+        var value = obj[key];
+        if (typeof value === "function" &&
+            !isPromisified(value) &&
+            !hasPromisified(obj, key, suffix) &&
+            filter(key, value, obj)) {
+            ret.push(key, value);
+        }
+    }
+    checkValid(ret, suffix, suffixRegexp);
+    return ret;
+}
+
+function switchCaseArgumentOrder(likelyArgumentCount) {
+    var ret = [likelyArgumentCount];
+    var min = Math.max(0, likelyArgumentCount - 1 - 5);
+    for(var i = likelyArgumentCount - 1; i >= min; --i) {
+        if (i === likelyArgumentCount) continue;
+        ret.push(i);
+    }
+    for(var i = likelyArgumentCount + 1; i <= 5; ++i) {
+        ret.push(i);
+    }
+    return ret;
+}
+
+function argumentSequence(argumentCount) {
+    return util.filledRange(argumentCount, "arguments[", "]");
+}
+
+function parameterDeclaration(parameterCount) {
+    return util.filledRange(parameterCount, "_arg", "");
+}
+
+function parameterCount(fn) {
+    if (typeof fn.length === "number") {
+        return Math.max(Math.min(fn.length, 1023 + 1), 0);
+    }
+    return 0;
+}
+
+function generatePropertyAccess(key) {
+    if (util.isIdentifier(key)) {
+        return "." + key;
+    }
+    else return "['" + key.replace(/(['\\])/g, "\\$1") + "']";
+}
+
+function makeNodePromisifiedEval(callback, receiver, originalName, fn, suffix) {
+    var newParameterCount = Math.max(0, parameterCount(fn) - 1);
+    var argumentOrder = switchCaseArgumentOrder(newParameterCount);
+    var callbackName =
+        (typeof originalName === "string" && util.isIdentifier(originalName)
+            ? originalName + suffix
+            : "promisified");
+
+    function generateCallForArgumentCount(count) {
+        var args = argumentSequence(count).join(", ");
+        var comma = count > 0 ? ", " : "";
+        var ret;
+        if (typeof callback === "string") {
+            ret = "                                                          \n\
+                this.method({{args}}, fn);                                   \n\
+                break;                                                       \n\
+            ".replace(".method", generatePropertyAccess(callback));
+        } else if (receiver === THIS) {
+            ret =  "                                                         \n\
+                callback.call(this, {{args}}, fn);                           \n\
+                break;                                                       \n\
+            ";
+        } else if (receiver !== void 0) {
+            ret =  "                                                         \n\
+                callback.call(receiver, {{args}}, fn);                       \n\
+                break;                                                       \n\
+            ";
+        } else {
+            ret =  "                                                         \n\
+                callback({{args}}, fn);                                      \n\
+                break;                                                       \n\
+            ";
+        }
+        return ret.replace("{{args}}", args).replace(", ", comma);
+    }
+
+    function generateArgumentSwitchCase() {
+        var ret = "";
+        for(var i = 0; i < argumentOrder.length; ++i) {
+            ret += "case " + argumentOrder[i] +":" +
+                generateCallForArgumentCount(argumentOrder[i]);
+        }
+        var codeForCall;
+        if (typeof callback === "string") {
+            codeForCall = "                                                  \n\
+                this.property.apply(this, args);                             \n\
+            "
+                .replace(".property", generatePropertyAccess(callback));
+        } else if (receiver === THIS) {
+            codeForCall = "                                                  \n\
+                callback.apply(this, args);                                  \n\
+            ";
+        } else {
+            codeForCall = "                                                  \n\
+                callback.apply(receiver, args);                              \n\
+            ";
+        }
+
+        ret += "                                                             \n\
+        default:                                                             \n\
+            var args = new Array(len + 1);                                   \n\
+            var i = 0;                                                       \n\
+            for (var i = 0; i < len; ++i) {                                  \n\
+               args[i] = arguments[i];                                       \n\
+            }                                                                \n\
+            args[i] = fn;                                                    \n\
+            [CodeForCall]                                                    \n\
+            break;                                                           \n\
+        ".replace("[CodeForCall]", codeForCall);
+        return ret;
+    }
+
+    return new Function("Promise",
+                        "callback",
+                        "receiver",
+                        "withAppended",
+                        "maybeWrapAsError",
+                        "nodebackForPromise",
+                        "INTERNAL","                                         \n\
+        var ret = function FunctionName(Parameters) {                        \n\
+            'use strict';                                                    \n\
+            var len = arguments.length;                                      \n\
+            var promise = new Promise(INTERNAL);                             \n\
+            promise._setTrace(void 0);                                       \n\
+            var fn = nodebackForPromise(promise);                            \n\
+            try {                                                            \n\
+                switch(len) {                                                \n\
+                    [CodeForSwitchCase]                                      \n\
+                }                                                            \n\
+            } catch (e) {                                                    \n\
+                var wrapped = maybeWrapAsError(e);                           \n\
+                promise._attachExtraTrace(wrapped);                          \n\
+                promise._reject(wrapped);                                    \n\
+            }                                                                \n\
+            return promise;                                                  \n\
+        };                                                                   \n\
+        ret.__isPromisified__ = true;                                        \n\
+        return ret;                                                          \n\
+        "
+        .replace("FunctionName", callbackName)
+        .replace("Parameters", parameterDeclaration(newParameterCount))
+        .replace("[CodeForSwitchCase]", generateArgumentSwitchCase()))(
+            Promise,
+            callback,
+            receiver,
+            withAppended,
+            maybeWrapAsError,
+            nodebackForPromise,
+            INTERNAL
+        );
+}
+
+function makeNodePromisifiedClosure(callback, receiver) {
+    function promisified() {
+        var _receiver = receiver;
+        if (receiver === THIS) _receiver = this;
+        if (typeof callback === "string") {
+            callback = _receiver[callback];
+        }
+        var promise = new Promise(INTERNAL);
+        promise._setTrace(void 0);
+        var fn = nodebackForPromise(promise);
+        try {
+            callback.apply(_receiver, withAppended(arguments, fn));
+        } catch(e) {
+            var wrapped = maybeWrapAsError(e);
+            promise._attachExtraTrace(wrapped);
+            promise._reject(wrapped);
+        }
+        return promise;
+    }
+    promisified.__isPromisified__ = true;
+    return promisified;
+}
+
+var makeNodePromisified = canEvaluate
+    ? makeNodePromisifiedEval
+    : makeNodePromisifiedClosure;
+
+function promisifyAll(obj, suffix, filter, promisifier) {
+    var suffixRegexp = new RegExp(escapeIdentRegex(suffix) + "$");
+    var methods =
+        promisifiableMethods(obj, suffix, suffixRegexp, filter);
+
+    for (var i = 0, len = methods.length; i < len; i+= 2) {
+        var key = methods[i];
+        var fn = methods[i+1];
+        var promisifiedKey = key + suffix;
+        obj[promisifiedKey] = promisifier === makeNodePromisified
+                ? makeNodePromisified(key, THIS, key, fn, suffix)
+                : promisifier(fn);
+    }
+    util.toFastProperties(obj);
+    return obj;
+}
+
+function promisify(callback, receiver) {
+    return makeNodePromisified(callback, receiver, void 0, callback);
+}
+
+Promise.promisify = function Promise$Promisify(fn, receiver) {
+    if (typeof fn !== "function") {
+        throw new TypeError("fn must be a function");
+    }
+    if (isPromisified(fn)) {
+        return fn;
+    }
+    return promisify(fn, arguments.length < 2 ? THIS : receiver);
+};
+
+Promise.promisifyAll = function Promise$PromisifyAll(target, options) {
+    if (typeof target !== "function" && typeof target !== "object") {
+        throw new TypeError("the target of promisifyAll must be an object or a function");
+    }
+    options = Object(options);
+    var suffix = options.suffix;
+    if (typeof suffix !== "string") suffix = defaultSuffix;
+    var filter = options.filter;
+    if (typeof filter !== "function") filter = defaultFilter;
+    var promisifier = options.promisifier;
+    if (typeof promisifier !== "function") promisifier = makeNodePromisified;
+
+    if (!util.isIdentifier(suffix)) {
+        throw new RangeError("suffix must be a valid identifier");
+    }
+
+    var keys = util.inheritedDataKeys(target, {includeHidden: true});
+    for (var i = 0; i < keys.length; ++i) {
+        var value = target[keys[i]];
+        if (keys[i] !== "constructor" &&
+            util.isClass(value)) {
+            promisifyAll(value.prototype, suffix, filter, promisifier);
+            promisifyAll(value, suffix, filter, promisifier);
+        }
+    }
+
+    return promisifyAll(target, suffix, filter, promisifier);
+};
+};
+
+
+},{"./errors":219,"./promise_resolver.js":231,"./util.js":244}],233:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+module.exports = function(Promise, PromiseArray, cast) {
+var util = require("./util.js");
+var apiRejection = require("./errors_api_rejection")(Promise);
+var isObject = util.isObject;
+var es5 = require("./es5.js");
+
+function PropertiesPromiseArray(obj) {
+    var keys = es5.keys(obj);
+    var len = keys.length;
+    var values = new Array(len * 2);
+    for (var i = 0; i < len; ++i) {
+        var key = keys[i];
+        values[i] = obj[key];
+        values[i + len] = key;
+    }
+    this.constructor$(values);
+}
+util.inherits(PropertiesPromiseArray, PromiseArray);
+
+PropertiesPromiseArray.prototype._init =
+function PropertiesPromiseArray$_init() {
+    this._init$(void 0, -3) ;
+};
+
+PropertiesPromiseArray.prototype._promiseFulfilled =
+function PropertiesPromiseArray$_promiseFulfilled(value, index) {
+    if (this._isResolved()) return;
+    this._values[index] = value;
+    var totalResolved = ++this._totalResolved;
+    if (totalResolved >= this._length) {
+        var val = {};
+        var keyOffset = this.length();
+        for (var i = 0, len = this.length(); i < len; ++i) {
+            val[this._values[i + keyOffset]] = this._values[i];
+        }
+        this._resolve(val);
+    }
+};
+
+PropertiesPromiseArray.prototype._promiseProgressed =
+function PropertiesPromiseArray$_promiseProgressed(value, index) {
+    if (this._isResolved()) return;
+
+    this._promise._progress({
+        key: this._values[index + this.length()],
+        value: value
+    });
+};
+
+PropertiesPromiseArray.prototype.shouldCopyValues =
+function PropertiesPromiseArray$_shouldCopyValues() {
+    return false;
+};
+
+PropertiesPromiseArray.prototype.getActualLength =
+function PropertiesPromiseArray$getActualLength(len) {
+    return len >> 1;
+};
+
+function Promise$_Props(promises) {
+    var ret;
+    var castValue = cast(promises, void 0);
+
+    if (!isObject(castValue)) {
+        return apiRejection("cannot await properties of a non-object");
+    } else if (castValue instanceof Promise) {
+        ret = castValue._then(Promise.props, void 0, void 0, void 0, void 0);
+    } else {
+        ret = new PropertiesPromiseArray(castValue).promise();
+    }
+
+    if (castValue instanceof Promise) {
+        ret._propagateFrom(castValue, 4);
+    }
+    return ret;
+}
+
+Promise.prototype.props = function Promise$props() {
+    return Promise$_Props(this);
+};
+
+Promise.props = function Promise$Props(promises) {
+    return Promise$_Props(promises);
+};
+};
+
+},{"./errors_api_rejection":220,"./es5.js":221,"./util.js":244}],234:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+function arrayCopy(src, srcIndex, dst, dstIndex, len) {
+    for (var j = 0; j < len; ++j) {
+        dst[j + dstIndex] = src[j + srcIndex];
+    }
+}
+
+function Queue(capacity) {
+    this._capacity = capacity;
+    this._length = 0;
+    this._front = 0;
+    this._makeCapacity();
+}
+
+Queue.prototype._willBeOverCapacity =
+function Queue$_willBeOverCapacity(size) {
+    return this._capacity < size;
+};
+
+Queue.prototype._pushOne = function Queue$_pushOne(arg) {
+    var length = this.length();
+    this._checkCapacity(length + 1);
+    var i = (this._front + length) & (this._capacity - 1);
+    this[i] = arg;
+    this._length = length + 1;
+};
+
+Queue.prototype.push = function Queue$push(fn, receiver, arg) {
+    var length = this.length() + 3;
+    if (this._willBeOverCapacity(length)) {
+        this._pushOne(fn);
+        this._pushOne(receiver);
+        this._pushOne(arg);
+        return;
+    }
+    var j = this._front + length - 3;
+    this._checkCapacity(length);
+    var wrapMask = this._capacity - 1;
+    this[(j + 0) & wrapMask] = fn;
+    this[(j + 1) & wrapMask] = receiver;
+    this[(j + 2) & wrapMask] = arg;
+    this._length = length;
+};
+
+Queue.prototype.shift = function Queue$shift() {
+    var front = this._front,
+        ret = this[front];
+
+    this[front] = void 0;
+    this._front = (front + 1) & (this._capacity - 1);
+    this._length--;
+    return ret;
+};
+
+Queue.prototype.length = function Queue$length() {
+    return this._length;
+};
+
+Queue.prototype._makeCapacity = function Queue$_makeCapacity() {
+    var len = this._capacity;
+    for (var i = 0; i < len; ++i) {
+        this[i] = void 0;
+    }
+};
+
+Queue.prototype._checkCapacity = function Queue$_checkCapacity(size) {
+    if (this._capacity < size) {
+        this._resizeTo(this._capacity << 3);
+    }
+};
+
+Queue.prototype._resizeTo = function Queue$_resizeTo(capacity) {
+    var oldFront = this._front;
+    var oldCapacity = this._capacity;
+    var oldQueue = new Array(oldCapacity);
+    var length = this.length();
+
+    arrayCopy(this, 0, oldQueue, 0, oldCapacity);
+    this._capacity = capacity;
+    this._makeCapacity();
+    this._front = 0;
+    if (oldFront + length <= oldCapacity) {
+        arrayCopy(oldQueue, oldFront, this, 0, length);
+    } else {        var lengthBeforeWrapping =
+            length - ((oldFront + length) & (oldCapacity - 1));
+
+        arrayCopy(oldQueue, oldFront, this, 0, lengthBeforeWrapping);
+        arrayCopy(oldQueue, 0, this, lengthBeforeWrapping,
+                    length - lengthBeforeWrapping);
+    }
+};
+
+module.exports = Queue;
+
+},{}],235:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+module.exports = function(Promise, INTERNAL, cast) {
+var apiRejection = require("./errors_api_rejection.js")(Promise);
+var isArray = require("./util.js").isArray;
+
+var raceLater = function Promise$_raceLater(promise) {
+    return promise.then(function(array) {
+        return Promise$_Race(array, promise);
+    });
+};
+
+var hasOwn = {}.hasOwnProperty;
+function Promise$_Race(promises, parent) {
+    var maybePromise = cast(promises, void 0);
+
+    if (maybePromise instanceof Promise) {
+        return raceLater(maybePromise);
+    } else if (!isArray(promises)) {
+        return apiRejection("expecting an array, a promise or a thenable");
+    }
+
+    var ret = new Promise(INTERNAL);
+    if (parent !== void 0) {
+        ret._propagateFrom(parent, 7);
+    } else {
+        ret._setTrace(void 0);
+    }
+    var fulfill = ret._fulfill;
+    var reject = ret._reject;
+    for (var i = 0, len = promises.length; i < len; ++i) {
+        var val = promises[i];
+
+        if (val === void 0 && !(hasOwn.call(promises, i))) {
+            continue;
+        }
+
+        Promise.cast(val)._then(fulfill, reject, void 0, ret, null);
+    }
+    return ret;
+}
+
+Promise.race = function Promise$Race(promises) {
+    return Promise$_Race(promises, void 0);
+};
+
+Promise.prototype.race = function Promise$race() {
+    return Promise$_Race(this, void 0);
+};
+
+};
+
+},{"./errors_api_rejection.js":220,"./util.js":244}],236:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+module.exports = function(Promise, PromiseArray, apiRejection, cast, INTERNAL) {
+var util = require("./util.js");
+var tryCatch4 = util.tryCatch4;
+var tryCatch3 = util.tryCatch3;
+var errorObj = util.errorObj;
+function ReductionPromiseArray(promises, fn, accum, _each) {
+    this.constructor$(promises);
+    this._preservedValues = _each === INTERNAL ? [] : null;
+    this._zerothIsAccum = (accum === void 0);
+    this._gotAccum = false;
+    this._reducingIndex = (this._zerothIsAccum ? 1 : 0);
+    this._valuesPhase = undefined;
+
+    var maybePromise = cast(accum, void 0);
+    var rejected = false;
+    var isPromise = maybePromise instanceof Promise;
+    if (isPromise) {
+        if (maybePromise.isPending()) {
+            maybePromise._proxyPromiseArray(this, -1);
+        } else if (maybePromise.isFulfilled()) {
+            accum = maybePromise.value();
+            this._gotAccum = true;
+        } else {
+            maybePromise._unsetRejectionIsUnhandled();
+            this._reject(maybePromise.reason());
+            rejected = true;
+        }
+    }
+    if (!(isPromise || this._zerothIsAccum)) this._gotAccum = true;
+    this._callback = fn;
+    this._accum = accum;
+    if (!rejected) this._init$(void 0, -5);
+}
+util.inherits(ReductionPromiseArray, PromiseArray);
+
+ReductionPromiseArray.prototype._init =
+function ReductionPromiseArray$_init() {};
+
+ReductionPromiseArray.prototype._resolveEmptyArray =
+function ReductionPromiseArray$_resolveEmptyArray() {
+    if (this._gotAccum || this._zerothIsAccum) {
+        this._resolve(this._preservedValues !== null
+                        ? [] : this._accum);
+    }
+};
+
+ReductionPromiseArray.prototype._promiseFulfilled =
+function ReductionPromiseArray$_promiseFulfilled(value, index) {
+    var values = this._values;
+    if (values === null) return;
+    var length = this.length();
+    var preservedValues = this._preservedValues;
+    var isEach = preservedValues !== null;
+    var gotAccum = this._gotAccum;
+    var valuesPhase = this._valuesPhase;
+    var valuesPhaseIndex;
+    if (!valuesPhase) {
+        valuesPhase = this._valuesPhase = Array(length);
+        for (valuesPhaseIndex=0; valuesPhaseIndex<length; ++valuesPhaseIndex) {
+            valuesPhase[valuesPhaseIndex] = 0;
+        }
+    }
+    valuesPhaseIndex = valuesPhase[index];
+
+    if (index === 0 && this._zerothIsAccum) {
+        if (!gotAccum) {
+            this._accum = value;
+            this._gotAccum = gotAccum = true;
+        }
+        valuesPhase[index] = ((valuesPhaseIndex === 0)
+            ? 1 : 2);
+    } else if (index === -1) {
+        if (!gotAccum) {
+            this._accum = value;
+            this._gotAccum = gotAccum = true;
+        }
+    } else {
+        if (valuesPhaseIndex === 0) {
+            valuesPhase[index] = 1;
+        }
+        else {
+            valuesPhase[index] = 2;
+            if (gotAccum) {
+                this._accum = value;
+            }
+        }
+    }
+    if (!gotAccum) return;
+
+    var callback = this._callback;
+    var receiver = this._promise._boundTo;
+    var ret;
+
+    for (var i = this._reducingIndex; i < length; ++i) {
+        valuesPhaseIndex = valuesPhase[i];
+        if (valuesPhaseIndex === 2) {
+            this._reducingIndex = i + 1;
+            continue;
+        }
+        if (valuesPhaseIndex !== 1) return;
+
+        value = values[i];
+        if (value instanceof Promise) {
+            if (value.isFulfilled()) {
+                value = value._settledValue;
+            } else if (value.isPending()) {
+                return;
+            } else {
+                value._unsetRejectionIsUnhandled();
+                return this._reject(value.reason());
+            }
+        }
+
+        if (isEach) {
+            preservedValues.push(value);
+            ret = tryCatch3(callback, receiver, value, i, length);
+        }
+        else {
+            ret = tryCatch4(callback, receiver, this._accum, value, i, length);
+        }
+
+        if (ret === errorObj) return this._reject(ret.e);
+
+        var maybePromise = cast(ret, void 0);
+        if (maybePromise instanceof Promise) {
+            if (maybePromise.isPending()) {
+                valuesPhase[i] = 4;
+                return maybePromise._proxyPromiseArray(this, i);
+            } else if (maybePromise.isFulfilled()) {
+                ret = maybePromise.value();
+            } else {
+                maybePromise._unsetRejectionIsUnhandled();
+                return this._reject(maybePromise.reason());
+            }
+        }
+
+        this._reducingIndex = i + 1;
+        this._accum = ret;
+    }
+
+    if (this._reducingIndex < length) return;
+    this._resolve(isEach ? preservedValues : this._accum);
+};
+
+function reduce(promises, fn, initialValue, _each) {
+    if (typeof fn !== "function") return apiRejection("fn must be a function");
+    var array = new ReductionPromiseArray(promises, fn, initialValue, _each);
+    return array.promise();
+}
+
+Promise.prototype.reduce = function Promise$reduce(fn, initialValue) {
+    return reduce(this, fn, initialValue, null);
+};
+
+Promise.reduce = function Promise$Reduce(promises, fn, initialValue, _each) {
+    return reduce(promises, fn, initialValue, _each);
+};
+};
+
+},{"./util.js":244}],237:[function(require,module,exports){
+(function (process){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+var schedule;
+var _MutationObserver;
+if (typeof process === "object" && typeof process.version === "string") {
+    schedule = function Promise$_Scheduler(fn) {
+        process.nextTick(fn);
+    };
+}
+else if ((typeof MutationObserver !== "undefined" &&
+         (_MutationObserver = MutationObserver)) ||
+         (typeof WebKitMutationObserver !== "undefined" &&
+         (_MutationObserver = WebKitMutationObserver))) {
+    schedule = (function() {
+        var div = document.createElement("div");
+        var queuedFn = void 0;
+        var observer = new _MutationObserver(
+            function Promise$_Scheduler() {
+                var fn = queuedFn;
+                queuedFn = void 0;
+                fn();
+            }
+       );
+        observer.observe(div, {
+            attributes: true
+        });
+        return function Promise$_Scheduler(fn) {
+            queuedFn = fn;
+            div.classList.toggle("foo");
+        };
+
+    })();
+}
+else if (typeof setTimeout !== "undefined") {
+    schedule = function Promise$_Scheduler(fn) {
+        setTimeout(fn, 0);
+    };
+}
+else throw new Error("no async scheduler available");
+module.exports = schedule;
+
+}).call(this,require("1YiZ5S"))
+},{"1YiZ5S":64}],238:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+module.exports =
+    function(Promise, PromiseArray) {
+var PromiseInspection = Promise.PromiseInspection;
+var util = require("./util.js");
+
+function SettledPromiseArray(values) {
+    this.constructor$(values);
+}
+util.inherits(SettledPromiseArray, PromiseArray);
+
+SettledPromiseArray.prototype._promiseResolved =
+function SettledPromiseArray$_promiseResolved(index, inspection) {
+    this._values[index] = inspection;
+    var totalResolved = ++this._totalResolved;
+    if (totalResolved >= this._length) {
+        this._resolve(this._values);
+    }
+};
+
+SettledPromiseArray.prototype._promiseFulfilled =
+function SettledPromiseArray$_promiseFulfilled(value, index) {
+    if (this._isResolved()) return;
+    var ret = new PromiseInspection();
+    ret._bitField = 268435456;
+    ret._settledValue = value;
+    this._promiseResolved(index, ret);
+};
+SettledPromiseArray.prototype._promiseRejected =
+function SettledPromiseArray$_promiseRejected(reason, index) {
+    if (this._isResolved()) return;
+    var ret = new PromiseInspection();
+    ret._bitField = 134217728;
+    ret._settledValue = reason;
+    this._promiseResolved(index, ret);
+};
+
+Promise.settle = function Promise$Settle(promises) {
+    return new SettledPromiseArray(promises).promise();
+};
+
+Promise.prototype.settle = function Promise$settle() {
+    return new SettledPromiseArray(this).promise();
+};
+};
+
+},{"./util.js":244}],239:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+module.exports =
+function(Promise, PromiseArray, apiRejection) {
+var util = require("./util.js");
+var RangeError = require("./errors.js").RangeError;
+var AggregateError = require("./errors.js").AggregateError;
+var isArray = util.isArray;
+
+
+function SomePromiseArray(values) {
+    this.constructor$(values);
+    this._howMany = 0;
+    this._unwrap = false;
+    this._initialized = false;
+}
+util.inherits(SomePromiseArray, PromiseArray);
+
+SomePromiseArray.prototype._init = function SomePromiseArray$_init() {
+    if (!this._initialized) {
+        return;
+    }
+    if (this._howMany === 0) {
+        this._resolve([]);
+        return;
+    }
+    this._init$(void 0, -5);
+    var isArrayResolved = isArray(this._values);
+    if (!this._isResolved() &&
+        isArrayResolved &&
+        this._howMany > this._canPossiblyFulfill()) {
+        this._reject(this._getRangeError(this.length()));
+    }
+};
+
+SomePromiseArray.prototype.init = function SomePromiseArray$init() {
+    this._initialized = true;
+    this._init();
+};
+
+SomePromiseArray.prototype.setUnwrap = function SomePromiseArray$setUnwrap() {
+    this._unwrap = true;
+};
+
+SomePromiseArray.prototype.howMany = function SomePromiseArray$howMany() {
+    return this._howMany;
+};
+
+SomePromiseArray.prototype.setHowMany =
+function SomePromiseArray$setHowMany(count) {
+    if (this._isResolved()) return;
+    this._howMany = count;
+};
+
+SomePromiseArray.prototype._promiseFulfilled =
+function SomePromiseArray$_promiseFulfilled(value) {
+    if (this._isResolved()) return;
+    this._addFulfilled(value);
+    if (this._fulfilled() === this.howMany()) {
+        this._values.length = this.howMany();
+        if (this.howMany() === 1 && this._unwrap) {
+            this._resolve(this._values[0]);
+        } else {
+            this._resolve(this._values);
+        }
+    }
+
+};
+SomePromiseArray.prototype._promiseRejected =
+function SomePromiseArray$_promiseRejected(reason) {
+    if (this._isResolved()) return;
+    this._addRejected(reason);
+    if (this.howMany() > this._canPossiblyFulfill()) {
+        var e = new AggregateError();
+        for (var i = this.length(); i < this._values.length; ++i) {
+            e.push(this._values[i]);
+        }
+        this._reject(e);
+    }
+};
+
+SomePromiseArray.prototype._fulfilled = function SomePromiseArray$_fulfilled() {
+    return this._totalResolved;
+};
+
+SomePromiseArray.prototype._rejected = function SomePromiseArray$_rejected() {
+    return this._values.length - this.length();
+};
+
+SomePromiseArray.prototype._addRejected =
+function SomePromiseArray$_addRejected(reason) {
+    this._values.push(reason);
+};
+
+SomePromiseArray.prototype._addFulfilled =
+function SomePromiseArray$_addFulfilled(value) {
+    this._values[this._totalResolved++] = value;
+};
+
+SomePromiseArray.prototype._canPossiblyFulfill =
+function SomePromiseArray$_canPossiblyFulfill() {
+    return this.length() - this._rejected();
+};
+
+SomePromiseArray.prototype._getRangeError =
+function SomePromiseArray$_getRangeError(count) {
+    var message = "Input array must contain at least " +
+            this._howMany + " items but contains only " + count + " items";
+    return new RangeError(message);
+};
+
+SomePromiseArray.prototype._resolveEmptyArray =
+function SomePromiseArray$_resolveEmptyArray() {
+    this._reject(this._getRangeError(0));
+};
+
+function Promise$_Some(promises, howMany) {
+    if ((howMany | 0) !== howMany || howMany < 0) {
+        return apiRejection("expecting a positive integer");
+    }
+    var ret = new SomePromiseArray(promises);
+    var promise = ret.promise();
+    if (promise.isRejected()) {
+        return promise;
+    }
+    ret.setHowMany(howMany);
+    ret.init();
+    return promise;
+}
+
+Promise.some = function Promise$Some(promises, howMany) {
+    return Promise$_Some(promises, howMany);
+};
+
+Promise.prototype.some = function Promise$some(howMany) {
+    return Promise$_Some(this, howMany);
+};
+
+Promise._SomePromiseArray = SomePromiseArray;
+};
+
+},{"./errors.js":219,"./util.js":244}],240:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+module.exports = function(Promise) {
+function PromiseInspection(promise) {
+    if (promise !== void 0) {
+        this._bitField = promise._bitField;
+        this._settledValue = promise.isResolved()
+            ? promise._settledValue
+            : void 0;
+    }
+    else {
+        this._bitField = 0;
+        this._settledValue = void 0;
+    }
+}
+
+PromiseInspection.prototype.isFulfilled =
+Promise.prototype.isFulfilled = function Promise$isFulfilled() {
+    return (this._bitField & 268435456) > 0;
+};
+
+PromiseInspection.prototype.isRejected =
+Promise.prototype.isRejected = function Promise$isRejected() {
+    return (this._bitField & 134217728) > 0;
+};
+
+PromiseInspection.prototype.isPending =
+Promise.prototype.isPending = function Promise$isPending() {
+    return (this._bitField & 402653184) === 0;
+};
+
+PromiseInspection.prototype.value =
+Promise.prototype.value = function Promise$value() {
+    if (!this.isFulfilled()) {
+        throw new TypeError("cannot get fulfillment value of a non-fulfilled promise");
+    }
+    return this._settledValue;
+};
+
+PromiseInspection.prototype.error =
+PromiseInspection.prototype.reason =
+Promise.prototype.reason = function Promise$reason() {
+    if (!this.isRejected()) {
+        throw new TypeError("cannot get rejection reason of a non-rejected promise");
+    }
+    return this._settledValue;
+};
+
+PromiseInspection.prototype.isResolved =
+Promise.prototype.isResolved = function Promise$isResolved() {
+    return (this._bitField & 402653184) > 0;
+};
+
+Promise.PromiseInspection = PromiseInspection;
+};
+
+},{}],241:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+module.exports = function(Promise, INTERNAL) {
+var util = require("./util.js");
+var canAttach = require("./errors.js").canAttach;
+var errorObj = util.errorObj;
+var isObject = util.isObject;
+
+function getThen(obj) {
+    try {
+        return obj.then;
+    }
+    catch(e) {
+        errorObj.e = e;
+        return errorObj;
+    }
+}
+
+function Promise$_Cast(obj, originalPromise) {
+    if (isObject(obj)) {
+        if (obj instanceof Promise) {
+            return obj;
+        }
+        else if (isAnyBluebirdPromise(obj)) {
+            var ret = new Promise(INTERNAL);
+            ret._setTrace(void 0);
+            obj._then(
+                ret._fulfillUnchecked,
+                ret._rejectUncheckedCheckError,
+                ret._progressUnchecked,
+                ret,
+                null
+            );
+            ret._setFollowing();
+            return ret;
+        }
+        var then = getThen(obj);
+        if (then === errorObj) {
+            if (originalPromise !== void 0 && canAttach(then.e)) {
+                originalPromise._attachExtraTrace(then.e);
+            }
+            return Promise.reject(then.e);
+        } else if (typeof then === "function") {
+            return Promise$_doThenable(obj, then, originalPromise);
+        }
+    }
+    return obj;
+}
+
+var hasProp = {}.hasOwnProperty;
+function isAnyBluebirdPromise(obj) {
+    return hasProp.call(obj, "_promise0");
+}
+
+function Promise$_doThenable(x, then, originalPromise) {
+    var resolver = Promise.defer();
+    var called = false;
+    try {
+        then.call(
+            x,
+            Promise$_resolveFromThenable,
+            Promise$_rejectFromThenable,
+            Promise$_progressFromThenable
+        );
+    } catch(e) {
+        if (!called) {
+            called = true;
+            var trace = canAttach(e) ? e : new Error(e + "");
+            if (originalPromise !== void 0) {
+                originalPromise._attachExtraTrace(trace);
+            }
+            resolver.promise._reject(e, trace);
+        }
+    }
+    return resolver.promise;
+
+    function Promise$_resolveFromThenable(y) {
+        if (called) return;
+        called = true;
+
+        if (x === y) {
+            var e = Promise._makeSelfResolutionError();
+            if (originalPromise !== void 0) {
+                originalPromise._attachExtraTrace(e);
+            }
+            resolver.promise._reject(e, void 0);
+            return;
+        }
+        resolver.resolve(y);
+    }
+
+    function Promise$_rejectFromThenable(r) {
+        if (called) return;
+        called = true;
+        var trace = canAttach(r) ? r : new Error(r + "");
+        if (originalPromise !== void 0) {
+            originalPromise._attachExtraTrace(trace);
+        }
+        resolver.promise._reject(r, trace);
+    }
+
+    function Promise$_progressFromThenable(v) {
+        if (called) return;
+        var promise = resolver.promise;
+        if (typeof promise._progress === "function") {
+            promise._progress(v);
+        }
+    }
+}
+
+return Promise$_Cast;
+};
+
+},{"./errors.js":219,"./util.js":244}],242:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+var _setTimeout = function(fn, ms) {
+    var len = arguments.length;
+    var arg0 = arguments[2];
+    var arg1 = arguments[3];
+    var arg2 = len >= 5 ? arguments[4] : void 0;
+    return setTimeout(function() {
+        fn(arg0, arg1, arg2);
+    }, ms|0);
+};
+
+module.exports = function(Promise, INTERNAL, cast) {
+var util = require("./util.js");
+var errors = require("./errors.js");
+var apiRejection = require("./errors_api_rejection")(Promise);
+var TimeoutError = Promise.TimeoutError;
+
+var afterTimeout = function Promise$_afterTimeout(promise, message, ms) {
+    if (!promise.isPending()) return;
+    if (typeof message !== "string") {
+        message = "operation timed out after" + " " + ms + " ms"
+    }
+    var err = new TimeoutError(message);
+    errors.markAsOriginatingFromRejection(err);
+    promise._attachExtraTrace(err);
+    promise._cancel(err);
+};
+
+var afterDelay = function Promise$_afterDelay(value, promise) {
+    promise._fulfill(value);
+};
+
+var delay = Promise.delay = function Promise$Delay(value, ms) {
+    if (ms === void 0) {
+        ms = value;
+        value = void 0;
+    }
+    ms = +ms;
+    var maybePromise = cast(value, void 0);
+    var promise = new Promise(INTERNAL);
+
+    if (maybePromise instanceof Promise) {
+        promise._propagateFrom(maybePromise, 7);
+        promise._follow(maybePromise);
+        return promise.then(function(value) {
+            return Promise.delay(value, ms);
+        });
+    } else {
+        promise._setTrace(void 0);
+        _setTimeout(afterDelay, ms, value, promise);
+    }
+    return promise;
+};
+
+Promise.prototype.delay = function Promise$delay(ms) {
+    return delay(this, ms);
+};
+
+function successClear(value) {
+    var handle = this;
+    if (handle instanceof Number) handle = +handle;
+    clearTimeout(handle);
+    return value;
+}
+
+function failureClear(reason) {
+    var handle = this;
+    if (handle instanceof Number) handle = +handle;
+    clearTimeout(handle);
+    throw reason;
+}
+
+Promise.prototype.timeout = function Promise$timeout(ms, message) {
+    ms = +ms;
+
+    var ret = new Promise(INTERNAL);
+    ret._propagateFrom(this, 7);
+    ret._follow(this);
+    var handle = _setTimeout(afterTimeout, ms, ret, message, ms);
+    return ret.cancellable()
+              ._then(successClear, failureClear, void 0, handle, void 0);
+};
+
+};
+
+},{"./errors.js":219,"./errors_api_rejection":220,"./util.js":244}],243:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+module.exports = function (Promise, apiRejection, cast) {
+    var TypeError = require("./errors.js").TypeError;
+    var inherits = require("./util.js").inherits;
+    var PromiseInspection = Promise.PromiseInspection;
+
+    function inspectionMapper(inspections) {
+        var len = inspections.length;
+        for (var i = 0; i < len; ++i) {
+            var inspection = inspections[i];
+            if (inspection.isRejected()) {
+                return Promise.reject(inspection.error());
+            }
+            inspections[i] = inspection.value();
+        }
+        return inspections;
+    }
+
+    function thrower(e) {
+        setTimeout(function(){throw e;}, 0);
+    }
+
+    function castPreservingDisposable(thenable) {
+        var maybePromise = cast(thenable, void 0);
+        if (maybePromise !== thenable &&
+            typeof thenable._isDisposable === "function" &&
+            typeof thenable._getDisposer === "function" &&
+            thenable._isDisposable()) {
+            maybePromise._setDisposable(thenable._getDisposer());
+        }
+        return maybePromise;
+    }
+    function dispose(resources, inspection) {
+        var i = 0;
+        var len = resources.length;
+        var ret = Promise.defer();
+        function iterator() {
+            if (i >= len) return ret.resolve();
+            var maybePromise = castPreservingDisposable(resources[i++]);
+            if (maybePromise instanceof Promise &&
+                maybePromise._isDisposable()) {
+                try {
+                    maybePromise = cast(maybePromise._getDisposer()
+                                        .tryDispose(inspection), void 0);
+                } catch (e) {
+                    return thrower(e);
+                }
+                if (maybePromise instanceof Promise) {
+                    return maybePromise._then(iterator, thrower,
+                                              null, null, null);
+                }
+            }
+            iterator();
+        }
+        iterator();
+        return ret.promise;
+    }
+
+    function disposerSuccess(value) {
+        var inspection = new PromiseInspection();
+        inspection._settledValue = value;
+        inspection._bitField = 268435456;
+        return dispose(this, inspection).thenReturn(value);
+    }
+
+    function disposerFail(reason) {
+        var inspection = new PromiseInspection();
+        inspection._settledValue = reason;
+        inspection._bitField = 134217728;
+        return dispose(this, inspection).thenThrow(reason);
+    }
+
+    function Disposer(data, promise) {
+        this._data = data;
+        this._promise = promise;
+    }
+
+    Disposer.prototype.data = function Disposer$data() {
+        return this._data;
+    };
+
+    Disposer.prototype.promise = function Disposer$promise() {
+        return this._promise;
+    };
+
+    Disposer.prototype.resource = function Disposer$resource() {
+        if (this.promise().isFulfilled()) {
+            return this.promise().value();
+        }
+        return null;
+    };
+
+    Disposer.prototype.tryDispose = function(inspection) {
+        var resource = this.resource();
+        var ret = resource !== null
+            ? this.doDispose(resource, inspection) : null;
+        this._promise._unsetDisposable();
+        this._data = this._promise = null;
+        return ret;
+    };
+
+    Disposer.isDisposer = function Disposer$isDisposer(d) {
+        return (d != null &&
+                typeof d.resource === "function" &&
+                typeof d.tryDispose === "function");
+    };
+
+    function FunctionDisposer(fn, promise) {
+        this.constructor$(fn, promise);
+    }
+    inherits(FunctionDisposer, Disposer);
+
+    FunctionDisposer.prototype.doDispose = function (resource, inspection) {
+        var fn = this.data();
+        return fn.call(resource, resource, inspection);
+    };
+
+    Promise.using = function Promise$using() {
+        var len = arguments.length;
+        if (len < 2) return apiRejection(
+                        "you must pass at least 2 arguments to Promise.using");
+        var fn = arguments[len - 1];
+        if (typeof fn !== "function") return apiRejection("fn must be a function");
+        len--;
+        var resources = new Array(len);
+        for (var i = 0; i < len; ++i) {
+            var resource = arguments[i];
+            if (Disposer.isDisposer(resource)) {
+                var disposer = resource;
+                resource = resource.promise();
+                resource._setDisposable(disposer);
+            }
+            resources[i] = resource;
+        }
+
+        return Promise.settle(resources)
+            .then(inspectionMapper)
+            .spread(fn)
+            ._then(disposerSuccess, disposerFail, void 0, resources, void 0);
+    };
+
+    Promise.prototype._setDisposable =
+    function Promise$_setDisposable(disposer) {
+        this._bitField = this._bitField | 262144;
+        this._disposer = disposer;
+    };
+
+    Promise.prototype._isDisposable = function Promise$_isDisposable() {
+        return (this._bitField & 262144) > 0;
+    };
+
+    Promise.prototype._getDisposer = function Promise$_getDisposer() {
+        return this._disposer;
+    };
+
+    Promise.prototype._unsetDisposable = function Promise$_unsetDisposable() {
+        this._bitField = this._bitField & (~262144);
+        this._disposer = void 0;
+    };
+
+    Promise.prototype.disposer = function Promise$disposer(fn) {
+        if (typeof fn === "function") {
+            return new FunctionDisposer(fn, this);
+        }
+        throw new TypeError();
+    };
+
+};
+
+},{"./errors.js":219,"./util.js":244}],244:[function(require,module,exports){
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2014 Petka Antonov
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:</p>
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * 
+ */
+"use strict";
+var es5 = require("./es5.js");
+var haveGetters = (function(){
+    try {
+        var o = {};
+        es5.defineProperty(o, "f", {
+            get: function () {
+                return 3;
+            }
+        });
+        return o.f === 3;
+    }
+    catch (e) {
+        return false;
+    }
+
+})();
+var canEvaluate = typeof navigator == "undefined";
+var errorObj = {e: {}};
+function tryCatch1(fn, receiver, arg) {
+    try { return fn.call(receiver, arg); }
+    catch (e) {
+        errorObj.e = e;
+        return errorObj;
+    }
+}
+
+function tryCatch2(fn, receiver, arg, arg2) {
+    try { return fn.call(receiver, arg, arg2); }
+    catch (e) {
+        errorObj.e = e;
+        return errorObj;
+    }
+}
+
+function tryCatch3(fn, receiver, arg, arg2, arg3) {
+    try { return fn.call(receiver, arg, arg2, arg3); }
+    catch (e) {
+        errorObj.e = e;
+        return errorObj;
+    }
+}
+
+function tryCatch4(fn, receiver, arg, arg2, arg3, arg4) {
+    try { return fn.call(receiver, arg, arg2, arg3, arg4); }
+    catch (e) {
+        errorObj.e = e;
+        return errorObj;
+    }
+}
+
+function tryCatchApply(fn, args, receiver) {
+    try { return fn.apply(receiver, args); }
+    catch (e) {
+        errorObj.e = e;
+        return errorObj;
+    }
+}
+
+var inherits = function(Child, Parent) {
+    var hasProp = {}.hasOwnProperty;
+
+    function T() {
+        this.constructor = Child;
+        this.constructor$ = Parent;
+        for (var propertyName in Parent.prototype) {
+            if (hasProp.call(Parent.prototype, propertyName) &&
+                propertyName.charAt(propertyName.length-1) !== "$"
+           ) {
+                this[propertyName + "$"] = Parent.prototype[propertyName];
+            }
+        }
+    }
+    T.prototype = Parent.prototype;
+    Child.prototype = new T();
+    return Child.prototype;
+};
+
+function asString(val) {
+    return typeof val === "string" ? val : ("" + val);
+}
+
+function isPrimitive(val) {
+    return val == null || val === true || val === false ||
+        typeof val === "string" || typeof val === "number";
+
+}
+
+function isObject(value) {
+    return !isPrimitive(value);
+}
+
+function maybeWrapAsError(maybeError) {
+    if (!isPrimitive(maybeError)) return maybeError;
+
+    return new Error(asString(maybeError));
+}
+
+function withAppended(target, appendee) {
+    var len = target.length;
+    var ret = new Array(len + 1);
+    var i;
+    for (i = 0; i < len; ++i) {
+        ret[i] = target[i];
+    }
+    ret[i] = appendee;
+    return ret;
+}
+
+function getDataPropertyOrDefault(obj, key, defaultValue) {
+    if (es5.isES5) {
+        var desc = Object.getOwnPropertyDescriptor(obj, key);
+        if (desc != null) {
+            return desc.get == null && desc.set == null
+                    ? desc.value
+                    : defaultValue;
+        }
+    } else {
+        return {}.hasOwnProperty.call(obj, key) ? obj[key] : void 0;
+    }
+}
+
+function notEnumerableProp(obj, name, value) {
+    if (isPrimitive(obj)) return obj;
+    var descriptor = {
+        value: value,
+        configurable: true,
+        enumerable: false,
+        writable: true
+    };
+    es5.defineProperty(obj, name, descriptor);
+    return obj;
+}
+
+
+var wrapsPrimitiveReceiver = (function() {
+    return this !== "string";
+}).call("string");
+
+function thrower(r) {
+    throw r;
+}
+
+var inheritedDataKeys = (function() {
+    if (es5.isES5) {
+        return function(obj, opts) {
+            var ret = [];
+            var visitedKeys = Object.create(null);
+            var getKeys = Object(opts).includeHidden
+                ? Object.getOwnPropertyNames
+                : Object.keys;
+            while (obj != null) {
+                var keys;
+                try {
+                    keys = getKeys(obj);
+                } catch (e) {
+                    return ret;
+                }
+                for (var i = 0; i < keys.length; ++i) {
+                    var key = keys[i];
+                    if (visitedKeys[key]) continue;
+                    visitedKeys[key] = true;
+                    var desc = Object.getOwnPropertyDescriptor(obj, key);
+                    if (desc != null && desc.get == null && desc.set == null) {
+                        ret.push(key);
+                    }
+                }
+                obj = es5.getPrototypeOf(obj);
+            }
+            return ret;
+        };
+    } else {
+        return function(obj) {
+            var ret = [];
+            /*jshint forin:false */
+            for (var key in obj) {
+                ret.push(key);
+            }
+            return ret;
+        };
+    }
+
+})();
+
+function isClass(fn) {
+    try {
+        if (typeof fn === "function") {
+            var keys = es5.keys(fn.prototype);
+            return keys.length > 0 &&
+                   !(keys.length === 1 && keys[0] === "constructor");
+        }
+        return false;
+    } catch (e) {
+        return false;
+    }
+}
+
+function toFastProperties(obj) {
+    /*jshint -W027*/
+    function f() {}
+    f.prototype = obj;
+    return f;
+    eval(obj);
+}
+
+var rident = /^[a-z$_][a-z$_0-9]*$/i;
+function isIdentifier(str) {
+    return rident.test(str);
+}
+
+function filledRange(count, prefix, suffix) {
+    var ret = new Array(count);
+    for(var i = 0; i < count; ++i) {
+        ret[i] = prefix + i + suffix;
+    }
+    return ret;
+}
+
+var ret = {
+    isClass: isClass,
+    isIdentifier: isIdentifier,
+    inheritedDataKeys: inheritedDataKeys,
+    getDataPropertyOrDefault: getDataPropertyOrDefault,
+    thrower: thrower,
+    isArray: es5.isArray,
+    haveGetters: haveGetters,
+    notEnumerableProp: notEnumerableProp,
+    isPrimitive: isPrimitive,
+    isObject: isObject,
+    canEvaluate: canEvaluate,
+    errorObj: errorObj,
+    tryCatch1: tryCatch1,
+    tryCatch2: tryCatch2,
+    tryCatch3: tryCatch3,
+    tryCatch4: tryCatch4,
+    tryCatchApply: tryCatchApply,
+    inherits: inherits,
+    withAppended: withAppended,
+    asString: asString,
+    maybeWrapAsError: maybeWrapAsError,
+    wrapsPrimitiveReceiver: wrapsPrimitiveReceiver,
+    toFastProperties: toFastProperties,
+    filledRange: filledRange
+};
+
+module.exports = ret;
+
+},{"./es5.js":221}],245:[function(require,module,exports){
 /**
  * Module dependencies.
  */
@@ -29216,7 +29329,9 @@ function Response(req, options) {
   options = options || {};
   this.req = req;
   this.xhr = this.req.xhr;
-  this.text = this.xhr.responseText;
+  this.text = this.req.method !='HEAD' 
+     ? this.xhr.responseText 
+     : null;
   this.setStatusProperties(this.xhr.status);
   this.header = this.headers = parseHeader(this.xhr.getAllResponseHeaders());
   // getAllResponseHeaders sometimes falsely returns "" for CORS requests, but
@@ -29372,16 +29487,18 @@ function Request(method, url) {
   this.header = {};
   this._header = {};
   this.on('end', function(){
+    var err = null;
+    var res = null;
+
     try {
-      var res = new Response(self);
-      if ('HEAD' == method) res.text = null;
-      self.callback(null, res);
+      res = new Response(self); 
     } catch(e) {
-      var err = new Error('Parser is unable to parse the response');
+      err = new Error('Parser is unable to parse the response');
       err.parse = true;
       err.original = e;
-      self.callback(err);
     }
+
+    self.callback(err, res);
   });
 }
 
@@ -29728,6 +29845,7 @@ Request.prototype.send = function(data){
 
 Request.prototype.callback = function(err, res){
   var fn = this._callback;
+  this.clearTimeout();
   if (2 == fn.length) return fn(err, res);
   if (err) return this.emit('error', err);
   fn(res);
@@ -30220,7 +30338,7 @@ components.forEach(function(component) {
 
 
 
-},{"../src/flux":251,"../views/components.coffee":255,"react":243,"underscore":1}],249:[function(require,module,exports){
+},{"../src/flux":251,"../views/components.coffee":255,"react":208,"underscore":1}],249:[function(require,module,exports){
 var Agent, agentPromisePlugin, csrf, getResultsPromise;
 
 Agent = require('superagent');
@@ -30245,7 +30363,7 @@ module.exports = function(currentCsrf) {
 
 
 
-},{"superagent":245,"superagent-promises":244}],250:[function(require,module,exports){
+},{"superagent":245,"superagent-promises":209}],250:[function(require,module,exports){
 var methods, promiseAgent;
 
 promiseAgent = require('./promiseAgent');
@@ -30301,7 +30419,7 @@ module.exports = fluxxorFactory;
 
 
 
-},{"./workout/actions":252,"./workout/store":254,"fluxxor":37}],252:[function(require,module,exports){
+},{"./workout/actions":252,"./workout/store":254,"fluxxor":2}],252:[function(require,module,exports){
 var actions, constants, csrf, workoutData;
 
 constants = require('./constants');
@@ -30386,7 +30504,7 @@ module.exports = workoutStore;
 
 
 
-},{"./constants":253,"fluxxor":37,"underscore":1}],255:[function(require,module,exports){
+},{"./constants":253,"fluxxor":2,"underscore":1}],255:[function(require,module,exports){
 var processWorkout;
 
 processWorkout = require('./workouts/processWorkout.cjsx');
@@ -30461,35 +30579,35 @@ processWorkout = React.createClass({
   },
   render: function() {
     var _ref, _ref1;
-    return React.createElement(React.DOM.div, {
+    return React.createElement("div", {
       "className": 'processWorkout container'
-    }, React.createElement(React.DOM.div, {
+    }, React.createElement("div", {
       "className": 'row'
-    }, React.createElement(React.DOM.div, {
+    }, React.createElement("div", {
       "className": 'col-xs-6'
-    }, "Enter your workout")), React.createElement(React.DOM.div, {
+    }, "Enter your workout")), React.createElement("div", {
       "className": 'row'
-    }, React.createElement(React.DOM.div, {
+    }, React.createElement("div", {
       "className": 'col-xs-6'
-    }, React.createElement(React.DOM.textarea, {
+    }, React.createElement("textarea", {
       "className": 'processWorkout--input',
       "id": 'workoutInput',
       "ref": 'workoutInput',
       "defaultValue": ((_ref = this.props.data.workout) != null ? _ref.raw : void 0)
-    }))), React.createElement(React.DOM.div, {
+    }))), React.createElement("div", {
       "className": 'row'
-    }, React.createElement(React.DOM.div, {
+    }, React.createElement("div", {
       "className": 'col-xs-6'
-    }, React.createElement(React.DOM.input, {
+    }, React.createElement("input", {
       "className": 'input-sm processWorkout--date',
       "type": 'date',
       "ref": 'workoutDate',
       "defaultValue": (((_ref1 = this.props.data.workout) != null ? _ref1.date : void 0) != null ? this.getFormattedDate(new Date(this.props.data.workout.date)) : this.getFormattedDate(new Date()))
-    }))), React.createElement(React.DOM.div, {
+    }))), React.createElement("div", {
       "className": 'row'
-    }, React.createElement(React.DOM.div, {
+    }, React.createElement("div", {
       "className": 'col-xs-6'
-    }, React.createElement(React.DOM.button, {
+    }, React.createElement("button", {
       "id": 'process',
       "ref": 'process',
       "className": 'processWorkout--execute',
@@ -30504,4 +30622,4 @@ module.exports = processWorkout;
 
 
 
-},{"../../src/data/workout.coffee":250,"../mixins/dateFormatter.coffee":256,"react":243}]},{},[248])
+},{"../../src/data/workout.coffee":250,"../mixins/dateFormatter.coffee":256,"react":208}]},{},[248])
