@@ -48,7 +48,7 @@
     "songbird": "^1.0.1",
     "stripe": "^2.8.0",
     "superagent": "^0.21.0",
-    "superagent-promises": "git://github.com/duereg/superagent-promises",
+    "superagent-promises": "duereg/superagent-promises",
     "swim-parser": "duereg/swim-parser",
     "twilio": "^1.7.0",
     "uglify-js": "^2.4.15",
