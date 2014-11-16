@@ -8,7 +8,7 @@ buttonGroup = React.createClass
       {
         props = this.props
         props.items.map (item, index) ->
-          <label className="btn btn-primary">
+          <label key={if props.valueField then item[props.valueField] else item} className="btn btn-primary">
             <input type="radio" name={props.groupName} id={index} value={ if props.valueField then item[props.valueField] else item} />
             {if props.nameField then item[props.nameField] else item}
           </label>
