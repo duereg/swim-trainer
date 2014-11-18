@@ -8,9 +8,12 @@ dateFormatterMixin = require('../mixins/dateFormatter.coffee')
 buttonGroup = require('./buttonGroup.cjsx')
 smallRow = require('./smallRow.cjsx')
 panelBox = require('./panelBox.cjsx')
-mui = require 'material-ui'
-
-dropDownMenu = mui.DropDownMenu
+dropDown = require('./dropDown.cjsx')
+# mui = require 'material-ui'
+# dropDownMenu = mui.DropDownMenu
+# <smallRow>
+#   <dropDownMenu menuItems={intervals.map (interval) -> {payload: interval, text: interval} } />
+# </smallRow>
 
 containerId = "workout-simple-add"
 
@@ -40,7 +43,7 @@ processWorkout = React.createClass
         <input className='input-sm processWorkout--time' type='time' ref='workoutDuration' max='6:00:00' step={15 * 60} />
       </smallRow>
       <smallRow>
-        <dropDownMenu menuItems={intervals.map (interval) -> {payload: interval, text: interval} } />
+        <dropDown items={intervals} />
       </smallRow>
       <smallRow>
         <h3>Swimming</h3>
