@@ -34,6 +34,9 @@ processWorkout = React.createClass
         } />
       </smallRow>
       <smallRow>
+        <input className='input-sm processWorkout--time' type='time' ref='workoutDuration' max='6:00:00' step={15 * 60} />
+      </smallRow>
+      <smallRow>
         <h3>Swimming</h3>
         <div>
           <div className='col-xs-12'>
