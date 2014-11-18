@@ -10,7 +10,7 @@ smallRow = require('./smallRow.cjsx')
 panelBox = require('./panelBox.cjsx')
 # dropDown = require('./dropDown.cjsx')
 # <dropDown items={intervals} />
-{DropdownButton, SplitButton, MenuItem} = require('react-bootstrap')
+{DropdownButton, MenuItem} = require('react-bootstrap')
 # mui = require 'material-ui'
 # dropDownMenu = mui.DropDownMenu
 # <smallRow>
@@ -46,8 +46,10 @@ processWorkout = React.createClass
       </smallRow>
       <smallRow>
         <DropdownButton title="select an option">
-          <MenuItem key='1'>0:15</MenuItem>
-          <MenuItem key='2'>0:30</MenuItem>
+          {
+            intervals.map (interval, index) ->
+              <MenuItem key={index}>{interval}</MenuItem>
+          }
         </DropdownButton>
       </smallRow>
       <smallRow>

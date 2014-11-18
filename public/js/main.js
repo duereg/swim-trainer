@@ -6992,7 +6992,7 @@ var MenuItem = React.createClass({displayName: 'MenuItem',
 
   renderAnchor: function () {
     return (
-      React.createElement("a", {onClick: this.handleClick, href: this.props.href, title: this.props.title, tabIndex: "-1"}, 
+      React.createElement("a", {onClick: this.handleClick, href: this.props.href, title: this.props.title, tabIndex: "-1"},
         this.props.children
       )
     );
@@ -7012,8 +7012,8 @@ var MenuItem = React.createClass({displayName: 'MenuItem',
     }
 
     return (
-      React.createElement("li", React.__spread({},  this.props, {role: "presentation", title: null, href: null, 
-        className: joinClasses(this.props.className, classSet(classes))}), 
+      React.createElement("li", React.__spread({}, this.props, {role: "presentation", title: null, href: null,
+        className: joinClasses(this.props.className, classSet(classes))}),
         children
       )
     );
@@ -7021,6 +7021,7 @@ var MenuItem = React.createClass({displayName: 'MenuItem',
 });
 
 module.exports = MenuItem;
+
 },{"./utils/classSet":120,"./utils/joinClasses":124,"react":270}],91:[function(require,module,exports){
 /* global document:false */
 
@@ -35230,7 +35231,7 @@ module.exports = processWorkout;
 
 },{"../../src/data/workout.coffee":312,"../mixins/dateFormatter.coffee":318,"./smallRow.cjsx":323,"react":270}],322:[function(require,module,exports){
 'use strict';
-var DropdownButton, MenuItem, React, SplitButton, buttonGroup, containerId, dateFormatterMixin, intervals, panelBox, processWorkout, shortIntervals, smallRow, workoutData, _ref;
+var DropdownButton, MenuItem, React, buttonGroup, containerId, dateFormatterMixin, intervals, panelBox, processWorkout, shortIntervals, smallRow, workoutData, _ref;
 
 React = require('react');
 
@@ -35244,7 +35245,7 @@ smallRow = require('./smallRow.cjsx');
 
 panelBox = require('./panelBox.cjsx');
 
-_ref = require('react-bootstrap'), DropdownButton = _ref.DropdownButton, SplitButton = _ref.SplitButton, MenuItem = _ref.MenuItem;
+_ref = require('react-bootstrap'), DropdownButton = _ref.DropdownButton, MenuItem = _ref.MenuItem;
 
 containerId = "workout-simple-add";
 
@@ -35281,11 +35282,11 @@ processWorkout = React.createClass({
       "step": 15 * 60
     })), React.createElement(smallRow, null, React.createElement(DropdownButton, {
       "title": "select an option"
-    }, React.createElement(MenuItem, {
-      "key": '1'
-    }, "0:15"), React.createElement(MenuItem, {
-      "key": '2'
-    }, "0:30"))), React.createElement(smallRow, null, React.createElement("h3", null, "Swimming"), React.createElement("div", null, React.createElement("div", {
+    }, intervals.map(function(interval, index) {
+      return React.createElement(MenuItem, {
+        "key": index
+      }, interval);
+    }))), React.createElement(smallRow, null, React.createElement("h3", null, "Swimming"), React.createElement("div", null, React.createElement("div", {
       "className": 'col-xs-12'
     }, "UWH Game: ", React.createElement(buttonGroup, {
       "groupName": "practice",
