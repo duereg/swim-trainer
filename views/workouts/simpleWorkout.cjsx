@@ -8,6 +8,11 @@ dateFormatterMixin = require('../mixins/dateFormatter.coffee')
 buttonGroup = require('./buttonGroup.cjsx')
 smallRow = require('./smallRow.cjsx')
 panelBox = require('./panelBox.cjsx')
+# materialUI = require('material-ui')
+
+mui = require 'material-ui'
+
+# dropDownMenu = materialUI.DropDownMenu
 
 containerId = "workout-simple-add"
 
