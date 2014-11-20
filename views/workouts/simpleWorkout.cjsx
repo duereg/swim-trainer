@@ -27,6 +27,10 @@ processWorkout = React.createClass
   getInitialState: ->
     workout: {}
 
+  onIntervalSelect: (key) ->
+    interval = intervals[key]
+    @refs.btnIntervals.props.title = interval
+
   getCurrentDateFormatted: ->
     today = new Date()
     "#{today.getFullYear()}-#{today.getMonth() + 1}-#{today.getDate()}"
@@ -42,13 +46,10 @@ processWorkout = React.createClass
         } />
       </smallRow>
       <smallRow>
-        <input className='input-sm processWorkout--time' type='time' ref='workoutDuration' max='6:00:00' step={15 * 60} />
-      </smallRow>
-      <smallRow>
-        <DropdownButton title="select an option">
+        <DropdownButton ref='btnIntervals' title="select an option" onSelect={this.onIntervalSelect}>
           {
             intervals.map (interval, index) ->
-              <MenuItem key={index}>{interval}</MenuItem>
+              <MenuItem key={index} eventKey={index}>{interval}</MenuItem>
           }
         </DropdownButton>
       </smallRow>

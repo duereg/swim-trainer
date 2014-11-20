@@ -17,7 +17,7 @@ components.forEach (component) ->
   domElement = document.querySelector("##{component.containerId}")
   if domElement
     console.log("Found #{component.containerId}")
-    React.renderComponent component({data: window.data}), domElement
+    React.render <component data={window.data} />, domElement
   else
     console.log("No luck finding #{component.containerId}")
 
