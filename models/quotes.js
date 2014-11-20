@@ -399,7 +399,7 @@ module.exports = [
     "author": "Thomas Alva Edison"
   },
   {
-    "quote": "Only those who risk going to far can possibly find out how far one can go.",
+    "quote": "Only those who risk going too far can possibly find out how far one can go.",
     "author": "T.S. Eliot"
   },
   {
