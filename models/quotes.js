@@ -560,11 +560,11 @@ module.exports = [
   {
     "quote": "To boast of a performance which I cannot beat is merely stupid vanity. And if I can beat it that means there is nothing special about it.",
     "author": "Emil Zatopek"
-  }
+  },
   {
     "quote": "Far better is it to dare mighty things, to win glorious triumphs, even though checkered by failure... than to rank with those poor spirits who neither enjoy nor suffer much, because they live in a gray twilight that knows not victory nor defeat.",
     "author": "Theodore Roosevelt"
-  }
+  },
   {
     "quote": "Sons of Gondor. Of Rohan. My brothers. I see in your eyes the same fear that would take the heart of me. A day may come when the courage of men fails, when we forsake our friends and break all bonds of fellowship. But it is not this day. An hour of wolves and shattered shields when the age of Men comes crashing down. But it is not this day. This day we fight. By all that you hold dear on this good Earth, I bid you stand."
   }
