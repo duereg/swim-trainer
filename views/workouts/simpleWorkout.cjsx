@@ -46,7 +46,7 @@ processWorkout = React.createClass
         } />
       </smallRow>
       <smallRow>
-        <DropdownButton ref='btnIntervals' title="select an option" onSelect={this.onIntervalSelect}>
+        <DropdownButton ref='btnIntervals' title="Length of Workout" onSelect={this.onIntervalSelect}>
           {
             intervals.map (interval, index) ->
               <MenuItem key={index} eventKey={index}>{interval}</MenuItem>
