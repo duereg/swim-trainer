@@ -17,6 +17,7 @@ layout = React.createClass
         <meta name='description', content='Swim Trainer 3000' />
         <meta name='csrf-token', content={this.props.data._csrf} />
         <meta name='author', content='Matt Blair' />
+        <meta name="theme-color" content="#db5945" />
         <title>{this.props.data.title} | Swim Trainer</title>
       </head>
       <body>
