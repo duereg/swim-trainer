@@ -75,8 +75,13 @@ processWorkout = React.createClass
       <smallRow>
         <h3>Swimming</h3>
         <div>
-          <div className='col-xs-12'>
-            UWH Game: <buttonGroup groupName="practice" items={intervals} />
+          <div className='row'>
+            <div className='col-xs-1'>
+              UWH Game
+            </div>
+            <div className='col-xs-11'>
+              <buttonGroup justified={true} groupName="practice" items={intervals} />
+            </div>
           </div>
           <div className='col-xs-12'>
             Swimming: <buttonGroup groupName="swimming" items={intervals} />

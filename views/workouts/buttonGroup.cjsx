@@ -1,10 +1,25 @@
 # @cjsx React.DOM
 
-React = require('react')
+React = require('react/addons')
+classSet = React.addons.classSet
 
 buttonGroup = React.createClass
+
+  propTypes: {
+    justified: React.PropTypes.bool,
+    valueField: React.PropTypes.string,
+    nameField: React.PropTypes.string,
+    groupName: React.PropTypes.string
+  },
+
   render: ->
-    <div className="btn-group btn-group-xs" data-toggle="buttons" role="group" aria-label={this.props.groupName}>
+
+    classes = classSet
+      'btn-group': true
+      'btn-group-xs': true
+      'btn-group-justified': this.props.justified
+
+    <div className={classes} data-toggle="buttons" role="group" aria-label={this.props.groupName}>
       {
         props = this.props
         props.items.map (item, index) ->
