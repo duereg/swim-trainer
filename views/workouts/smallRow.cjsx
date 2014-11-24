@@ -1,13 +1,14 @@
 # @cjsx React.DOM
 
 React = require('react')
+{Col, Row} = require('react-bootstrap')
 
 smallRow = React.createClass
   render: ->
-    <div className='row'>
-      <div className='col-xs-12'>
+    <Row>
+      <Col xs={12}>
         {this.props.children}
-      </div>
-    </div>
+      </Col>
+    </Row>
 
 module.exports = smallRow
