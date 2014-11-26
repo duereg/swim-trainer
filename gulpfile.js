@@ -13,3 +13,4 @@ gulp.task('coffee', function() {
 });
 
 gulp.task('default', ['coffee']);
+gulp.task('heroku:production', ['coffee']);
