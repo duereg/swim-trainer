@@ -12,7 +12,7 @@ var lusca = require('lusca');
 var csrf = lusca.csrf();
 var methodOverride = require('method-override');
 
-var _ = require('lodash');
+var _ = require('underscore');
 var MongoStore = require('connect-mongo')({ session: session });
 var path = require('path');
 var mongoose = require('mongoose');
@@ -97,7 +97,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use(function(req, res, next) {
   // CSRF protection.
-  if (_.contains(csrfExclude, req.path)) return next();
+  if (_(csrfExclude).contains(req.path)) return next();
   csrf(req, res, next);
 });
 app.use(lusca.xssProtection(true));

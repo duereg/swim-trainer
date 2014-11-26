@@ -8,7 +8,7 @@ var graph = require('fbgraph');
 var Github = require('github-api');
 var stripe =  require('stripe')(secrets.stripe.apiKey);
 
-var _ = require('lodash');
+var _ = require('underscore');
 
 /**
  * GET /api
@@ -27,7 +27,7 @@ exports.getApi = function(req, res) {
  */
 
 exports.getFacebook = function(req, res, next) {
-  var token = _.find(req.user.tokens, { kind: 'facebook' });
+  var token = _(req.user.tokens).findWhere({ kind: 'facebook' });
   graph.setAccessToken(token.accessToken);
   async.parallel({
     getMe: function(done) {
@@ -56,7 +56,7 @@ exports.getFacebook = function(req, res, next) {
  * GitHub API Example.
  */
 exports.getGithub = function(req, res) {
-  var token = _.find(req.user.tokens, { kind: 'github' });
+  var token = _(req.user.tokens).findWhere({ kind: 'github' });
   var github = new Github({ token: token.accessToken });
   var repo = github.getRepo('sahat', 'requirejs-library');
   repo.show(function(err, repo) {
@@ -110,7 +110,7 @@ exports.postStripe = function(req, res, next) {
  */
 
 exports.getVenmo = function(req, res, next) {
-  var token = _.find(req.user.tokens, { kind: 'venmo' });
+  var token = _(req.user.tokens).findWhere({ kind: 'venmo' });
   var query = querystring.stringify({ access_token: token.accessToken });
 
   async.parallel({
@@ -156,7 +156,7 @@ exports.postVenmo = function(req, res, next) {
     return res.redirect('/api/venmo');
   }
 
-  var token = _.find(req.user.tokens, { kind: 'venmo' });
+  var token = _(req.user.tokens).findWhere({ kind: 'venmo' });
 
   var formData = {
     access_token: token.accessToken,

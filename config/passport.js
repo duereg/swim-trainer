@@ -1,4 +1,4 @@
-var _ = require('lodash');
+var _ = require('underscore');
 var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
 var FacebookStrategy = require('passport-facebook').Strategy;
@@ -174,7 +174,7 @@ exports.isAuthenticated = function(req, res, next) {
 exports.isAuthorized = function(req, res, next) {
   var provider = req.path.split('/').slice(-1)[0];
 
-  if (_.find(req.user.tokens, { kind: provider })) {
+  if (_(req.user.tokens).findWhere({ kind: provider })) {
     next();
   } else {
     res.redirect('/auth/' + provider);

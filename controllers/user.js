@@ -1,4 +1,4 @@
-var _ = require('lodash');
+var _ = require('underscore');
 var async = require('async');
 var crypto = require('crypto');
 var nodemailer = require('nodemailer');
@@ -200,7 +200,7 @@ exports.getOauthUnlink = function(req, res, next) {
     if (err) return next(err);
 
     user[provider] = undefined;
-    user.tokens = _.reject(user.tokens, function(token) { return token.kind === provider; });
+    user.tokens = _(user.tokens).reject(function(token) { return token.kind === provider; });
 
     user.save(function(err) {
       if (err) return next(err);
