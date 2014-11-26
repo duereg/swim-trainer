@@ -14,7 +14,7 @@ home = React.createClass
 
       <form method='POST'>
         <input type='hidden' name='_csrf' value={this.props._csrf} />
-          <div className='col-sm-12 col-md-6' >
+          <div className='col-sm-12 col-md-6 bottom-sm' >
             <a className='btn btn-block btn-facebook btn-social' href='/auth/facebook'>
               <i className='fa fa-facebook' /> | Sign in with Facebook
             </a>
