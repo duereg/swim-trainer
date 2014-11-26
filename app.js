@@ -70,7 +70,7 @@ var csrfExclude = ['/url1', '/url2'];
 
 app.set('port', process.env.PORT || 3000);
 app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'cjsx'); //jade
+app.set('view engine', 'cjsx');
 app.engine('cjsx', reactViews.createEngine({beautify: true}));
 
 // app.use(compress()); TODO: uncomment to compress html
