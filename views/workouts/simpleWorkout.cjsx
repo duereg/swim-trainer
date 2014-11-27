@@ -2,10 +2,66 @@
 
 'use strict'
 
+
+      # <smallRow>
+      #   <h3>Swimming</h3>
+      #   <div className='col-xs-12'>
+      #     UWH Game: <buttonGroup groupName="practice" items={intervals} />
+      #   </div>
+      #   <div className='col-xs-12'>
+      #     Swimming: <buttonGroup groupName="swimming" items={intervals} />
+      #   </div>
+      #   <div className='col-xs-12'>
+      #     Fin Swimming: <buttonGroup groupName="fin-swimming" items={intervals} />
+      #   </div>
+      #   <div className='col-xs-12'>
+      #     Dynamic Apnea: <buttonGroup groupName="apnea" items={intervals} />
+      #   </div>
+      #   <div className='col-xs-12'>
+      #     Puck Skills: <buttonGroup groupName="puck-skills" items={shortIntervals} />
+      #   </div>
+      # </smallRow>
+      # <smallRow>
+      #   <h3>Fitness</h3>
+      #   <div>
+      #     <div className='col-xs-12'>
+      #       Endurance: <buttonGroup groupName="endurance" items={intervals} />
+      #     </div>
+      #     <div className='col-xs-12'>
+      #       Strength: <buttonGroup groupName="strength" items={intervals} />
+      #     </div>
+      #     <div className='col-xs-12'>
+      #       Speed: <buttonGroup groupName="speed" items={intervals} />
+      #     </div>
+      #     <div className='col-xs-12'>
+      #       Agility: <buttonGroup groupName="agility" items={intervals} />
+      #     </div>
+      #     <div className='col-xs-12'>
+      #       Other: <buttonGroup groupName="other-fitness" items={intervals} />
+      #     </div>
+      #   </div>
+      # </smallRow>
+
+
+      # <formGroup className="hidden-xs" inputId="btnIntervals" label="Length of Workout">
+      #   <DropdownButton id="btnIntervals" ref='btnIntervals' className="form-control" onSelect={this.onIntervalSelect}>
+      #     {
+      #       intervals.map (interval, index) ->
+      #         <MenuItem key={index} eventKey={index}>{interval}</MenuItem>
+      #     }
+      #   </DropdownButton>
+      # </formGroup>
+
+
+      # <formGroup label="Length of Workout">
+      #   <autocomplete options={intervals.map (interval)-> {id: interval, title: interval} } />
+      # </formGroup>
+
 React = require('react')
 workoutData = require('../../src/data/workout.coffee')
 dateFormatterMixin = require('../mixins/dateFormatter.coffee')
 buttonGroup = require('./buttonGroup.cjsx')
+formGroup = require('./formGroup.cjsx')
 smallRow = require('./smallRow.cjsx')
 panelBox = require('./panelBox.cjsx')
 # dropDown = require('./dropDown.cjsx')
@@ -47,81 +103,27 @@ processWorkout = React.createClass
     "#{today.getFullYear()}-#{today.getMonth() + 1}-#{today.getDate()}"
 
   render: ->
-    <div className='processWorkout container'>
-      <smallRow>
-        Enter your workout
-      </smallRow>
-      <smallRow>
-        <input className='input-sm processWorkout--date' type='date' ref='workoutDate' defaultValue={
+    <form className='processWorkout form-horizontal' role="form">
+      <formGroup inputId="processWorkout--date" label="Workout Date">
+        <input id="processWorkout--date" className='form-control processWorkout--date' type='date' ref='workoutDate' defaultValue={
           if this.props.data.workout?.date? then @getFormattedDate(new Date(this.props.data.workout.date)) else @getFormattedDate(new Date())
         } />
-      </smallRow>
-      <smallRow className="hidden-xs">
-        <DropdownButton ref='btnIntervals' title="Length of Workout" onSelect={this.onIntervalSelect}>
+      </formGroup>
+      <formGroup label="Type of Workout">
+        <autocomplete options={typesOfWorkouts} />
+      </formGroup>
+      <formGroup inputId="length-of-workout" label="Length of Workout">
+        <select className="form-control">
           {
             intervals.map (interval, index) ->
-              <MenuItem key={index} eventKey={index}>{interval}</MenuItem>
+              <option key={index} value={interval}>{interval}</option>
           }
-        </DropdownButton>
-      </smallRow>
-      <smallRow className="visible-xs-block">
-        Length of Workout: <div className="btn-group">
-          <select className="btn btn-default">
-            {
-              intervals.map (interval, index) ->
-                <option key={index} value={interval}>{interval}</option>
-            }
-          </select>
-        </div>
-      </smallRow>
-      <smallRow>
-        Type of Workout: <autocomplete options={typesOfWorkouts} />
-      </smallRow>
-      <smallRow>
-        Interval Length: <autocomplete options={intervals.map (interval)-> {id: interval, title: interval} } />
-      </smallRow>
-      <smallRow>
-        <h3>Swimming</h3>
-        <div className='col-xs-12'>
-          UWH Game: <buttonGroup groupName="practice" items={intervals} />
-        </div>
-        <div className='col-xs-12'>
-          Swimming: <buttonGroup groupName="swimming" items={intervals} />
-        </div>
-        <div className='col-xs-12'>
-          Fin Swimming: <buttonGroup groupName="fin-swimming" items={intervals} />
-        </div>
-        <div className='col-xs-12'>
-          Dynamic Apnea: <buttonGroup groupName="apnea" items={intervals} />
-        </div>
-        <div className='col-xs-12'>
-          Puck Skills: <buttonGroup groupName="puck-skills" items={shortIntervals} />
-        </div>
-      </smallRow>
-      <smallRow>
-        <h3>Fitness</h3>
-        <div>
-          <div className='col-xs-12'>
-            Endurance: <buttonGroup groupName="endurance" items={intervals} />
-          </div>
-          <div className='col-xs-12'>
-            Strength: <buttonGroup groupName="strength" items={intervals} />
-          </div>
-          <div className='col-xs-12'>
-            Speed: <buttonGroup groupName="speed" items={intervals} />
-          </div>
-          <div className='col-xs-12'>
-            Agility: <buttonGroup groupName="agility" items={intervals} />
-          </div>
-          <div className='col-xs-12'>
-            Other: <buttonGroup groupName="other-fitness" items={intervals} />
-          </div>
-        </div>
-      </smallRow>
-      <smallRow>
-        <button id='process' ref='process' className='btn btn-success processWorkout--execute'>Save Workout</button>
-      </smallRow>
-    </div>
+        </select>
+      </formGroup>
+      <formGroup>
+        <button id='process' ref='process' className='btn btn-success form-control processWorkout--execute'>Save Workout</button>
+      </formGroup>
+    </form>
 
 processWorkout.containerId = containerId
 
