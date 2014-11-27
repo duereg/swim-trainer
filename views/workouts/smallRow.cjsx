@@ -5,7 +5,7 @@ React = require('react')
 
 smallRow = React.createClass
   render: ->
-    <Row>
+    <Row className={this.props.className}>
       <Col xs={12}>
         {this.props.children}
       </Col>
