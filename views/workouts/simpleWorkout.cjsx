@@ -82,7 +82,7 @@ processWorkout = React.createClass
             </Col>
           </Row>
         </Col>
-        <Col sm={4} style={border: '1px solid silver'}>
+        <Col sm={4} className='well'>
           1<br/><br/><br/><br/><br/>
         </Col>
       </Row>
