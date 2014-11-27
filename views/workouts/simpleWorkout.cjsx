@@ -109,11 +109,16 @@ processWorkout = React.createClass
           if this.props.data.workout?.date? then @getFormattedDate(new Date(this.props.data.workout.date)) else @getFormattedDate(new Date())
         } />
       </formGroup>
-      <formGroup label="Type of Workout">
-        <autocomplete options={typesOfWorkouts} />
+      <formGroup inputId="type-of-workout" label="Type of Workout">
+        <select id="type-of-workout" className="form-control">
+          {
+            typesOfWorkouts.map (workout) ->
+              <option key={workout.id} value={workout.id}>{workout.title}</option>
+          }
+        </select>
       </formGroup>
       <formGroup inputId="length-of-workout" label="Length of Workout">
-        <select className="form-control">
+        <select id="length-of-workout" className="form-control">
           {
             intervals.map (interval, index) ->
               <option key={index} value={interval}>{interval}</option>
