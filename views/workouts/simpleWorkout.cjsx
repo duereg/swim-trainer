@@ -65,7 +65,7 @@ processWorkout = React.createClass
         </DropdownButton>
       </smallRow>
       <smallRow className="visible-xs-block">
-        Length of Workout: <div className="btn-group btn-group-lg">
+        Length of Workout: <div className="btn-group">
           <select className="btn btn-default">
             {
               intervals.map (interval, index) ->
