@@ -3,17 +3,13 @@
 'use strict'
 
 React = require('react')
-workoutData = require('../../src/data/workout.coffee')
 dateFormatterMixin = require('../mixins/dateFormatter.coffee')
-buttonGroup = require('./buttonGroup.cjsx')
 formGroup = require('./formGroup.cjsx')
 {Col, Row} = require('react-bootstrap')
-autocomplete = require('ron-react-autocomplete')
 
 containerId = "workout-simple-add"
 
 intervals = ["0:00","0:15","0:30","0:45","1:00","1:15","1:30","1:45","2:00","2:15","2:30","2:45","3:00","3:30","4:00","4:30","5:00","6:00"]
-shortIntervals = ["0:05", "0:10", "0:15", "0:20", "0:25", "0:30", "0:35", "0:40", "0:45", "0:50", "0:55", "1:00"]
 
 typesOfWorkouts = [
   {id: 'uwh_game', title: 'UWH Game'},
