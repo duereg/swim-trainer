@@ -56,7 +56,7 @@ processWorkout = React.createClass
           if this.props.data.workout?.date? then @getFormattedDate(new Date(this.props.data.workout.date)) else @getFormattedDate(new Date())
         } />
       </smallRow>
-      <smallRow>
+      <smallRow className="hidden-xs">
         <DropdownButton ref='btnIntervals' title="Length of Workout" onSelect={this.onIntervalSelect}>
           {
             intervals.map (interval, index) ->
@@ -64,13 +64,15 @@ processWorkout = React.createClass
           }
         </DropdownButton>
       </smallRow>
-      <smallRow>
-        <select>
-          {
-            intervals.map (interval, index) ->
-              <option key={index} value={interval}>{interval}</option>
-          }
-        </select>
+      <smallRow className="visible-xs-block">
+        Length of Workout: <div className="btn-group btn-group-lg">
+          <select className="btn btn-default">
+            {
+              intervals.map (interval, index) ->
+                <option key={index} value={interval}>{interval}</option>
+            }
+          </select>
+        </div>
       </smallRow>
       <smallRow>
         Type of Workout: <autocomplete options={typesOfWorkouts} />
