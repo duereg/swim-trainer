@@ -18,8 +18,6 @@ containerId = "workout-simple-add"
 intervals = ["0:00","0:15","0:30","0:45","1:00","1:15","1:30","1:45","2:00","2:15","2:30","2:45","3:00","3:30","4:00","4:30","5:00","6:00"]
 shortIntervals = ["0:05", "0:10", "0:15", "0:20", "0:25", "0:30", "0:35", "0:40", "0:45", "0:50", "0:55", "1:00"]
 
-
-
 typesOfWorkouts = [
   {id: 'uwh_game', title: 'UWH Game'},
   {id: 'swimming', title: 'Swimming'},
@@ -67,6 +65,14 @@ processWorkout = React.createClass
         </DropdownButton>
       </smallRow>
       <smallRow>
+        <select>
+          {
+            intervals.map (interval, index) ->
+              <option key={index} value={interval}>{interval}</option>
+          }
+        </select>
+      </smallRow>
+      <smallRow>
         Type of Workout: <autocomplete options={typesOfWorkouts} />
       </smallRow>
       <smallRow>
@@ -74,27 +80,20 @@ processWorkout = React.createClass
       </smallRow>
       <smallRow>
         <h3>Swimming</h3>
-        <div>
-          <div className='row'>
-            <div className='col-xs-1'>
-              UWH Game
-            </div>
-            <div className='col-xs-11'>
-              <buttonGroup justified={true} groupName="practice" items={intervals} />
-            </div>
-          </div>
-          <div className='col-xs-12'>
-            Swimming: <buttonGroup groupName="swimming" items={intervals} />
-          </div>
-          <div className='col-xs-12'>
-            Fin Swimming: <buttonGroup groupName="fin-swimming" items={intervals} />
-          </div>
-          <div className='col-xs-12'>
-            Dynamic Apnea: <buttonGroup groupName="apnea" items={intervals} />
-          </div>
-          <div className='col-xs-12'>
-            Puck Skills: <buttonGroup groupName="puck-skills" items={shortIntervals} />
-          </div>
+        <div className='col-xs-12'>
+          UWH Game: <buttonGroup groupName="practice" items={intervals} />
+        </div>
+        <div className='col-xs-12'>
+          Swimming: <buttonGroup groupName="swimming" items={intervals} />
+        </div>
+        <div className='col-xs-12'>
+          Fin Swimming: <buttonGroup groupName="fin-swimming" items={intervals} />
+        </div>
+        <div className='col-xs-12'>
+          Dynamic Apnea: <buttonGroup groupName="apnea" items={intervals} />
+        </div>
+        <div className='col-xs-12'>
+          Puck Skills: <buttonGroup groupName="puck-skills" items={shortIntervals} />
         </div>
       </smallRow>
       <smallRow>
