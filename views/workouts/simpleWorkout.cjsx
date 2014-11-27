@@ -47,40 +47,47 @@ processWorkout = React.createClass
     <form className='processWorkout form-horizontal' role="form">
       <Row>
         <Col sm={8}>
-          <formGroup inputSize={10} labelSize={2} inputId="processWorkout--date" label="Workout Date">
-            <input id="processWorkout--date" className='form-control processWorkout--date' type='date' ref='workoutDate' defaultValue={
-              if this.props.data.workout?.date? then @getFormattedDate(new Date(this.props.data.workout.date)) else @getFormattedDate(new Date())
-            } />
-          </formGroup>
+          <Row>
+            <Col sm={12}>
+              <formGroup inputSize={10} labelSize={2} inputId="processWorkout--date" label="Workout Date">
+                <input id="processWorkout--date" className='form-control processWorkout--date' type='date' ref='workoutDate' defaultValue={
+                  if this.props.data.workout?.date? then @getFormattedDate(new Date(this.props.data.workout.date)) else @getFormattedDate(new Date())
+                } />
+              </formGroup>
+            </Col>
+          </Row>
+          <Row>
+            <Col sm={6}>
+              <formGroup inputId="type-of-workout" label="Type of Workout">
+                <select id="type-of-workout" className="form-control">
+                  {
+                    typesOfWorkouts.map (workout) ->
+                      <option key={workout.id} value={workout.id}>{workout.title}</option>
+                  }
+                </select>
+              </formGroup>
+            </Col>
+            <Col sm={6}>
+              <formGroup inputId="length-of-workout" label="Length of Workout">
+                <select id="length-of-workout" className="form-control">
+                  {
+                    intervals.map (interval, index) ->
+                      <option key={index} value={interval}>{interval}</option>
+                  }
+                </select>
+              </formGroup>
+            </Col>
+          </Row>
+          <Row>
+            <Col sm={12}>
+              <formGroup inputSize={10} labelSize={2} >
+                <button id='process' ref='process' className='btn btn-success form-control processWorkout--execute'>Save Workout</button>
+              </formGroup>
+            </Col>
+          </Row>
         </Col>
-      </Row>
-      <Row>
-        <Col sm={4}>
-          <formGroup inputId="type-of-workout" label="Type of Workout">
-            <select id="type-of-workout" className="form-control">
-              {
-                typesOfWorkouts.map (workout) ->
-                  <option key={workout.id} value={workout.id}>{workout.title}</option>
-              }
-            </select>
-          </formGroup>
-        </Col>
-        <Col sm={4}>
-          <formGroup inputId="length-of-workout" label="Length of Workout">
-            <select id="length-of-workout" className="form-control">
-              {
-                intervals.map (interval, index) ->
-                  <option key={index} value={interval}>{interval}</option>
-              }
-            </select>
-          </formGroup>
-        </Col>
-      </Row>
-      <Row>
-        <Col sm={8}>
-          <formGroup inputSize={10} labelSize={2} >
-            <button id='process' ref='process' className='btn btn-success form-control processWorkout--execute'>Save Workout</button>
-          </formGroup>
+        <Col sm={4} style={border: '1px solid silver'}>
+          1<br/><br/><br/><br/><br/>
         </Col>
       </Row>
     </form>
