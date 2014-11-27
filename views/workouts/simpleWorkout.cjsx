@@ -2,71 +2,12 @@
 
 'use strict'
 
-
-      # <smallRow>
-      #   <h3>Swimming</h3>
-      #   <div className='col-xs-12'>
-      #     UWH Game: <buttonGroup groupName="practice" items={intervals} />
-      #   </div>
-      #   <div className='col-xs-12'>
-      #     Swimming: <buttonGroup groupName="swimming" items={intervals} />
-      #   </div>
-      #   <div className='col-xs-12'>
-      #     Fin Swimming: <buttonGroup groupName="fin-swimming" items={intervals} />
-      #   </div>
-      #   <div className='col-xs-12'>
-      #     Dynamic Apnea: <buttonGroup groupName="apnea" items={intervals} />
-      #   </div>
-      #   <div className='col-xs-12'>
-      #     Puck Skills: <buttonGroup groupName="puck-skills" items={shortIntervals} />
-      #   </div>
-      # </smallRow>
-      # <smallRow>
-      #   <h3>Fitness</h3>
-      #   <div>
-      #     <div className='col-xs-12'>
-      #       Endurance: <buttonGroup groupName="endurance" items={intervals} />
-      #     </div>
-      #     <div className='col-xs-12'>
-      #       Strength: <buttonGroup groupName="strength" items={intervals} />
-      #     </div>
-      #     <div className='col-xs-12'>
-      #       Speed: <buttonGroup groupName="speed" items={intervals} />
-      #     </div>
-      #     <div className='col-xs-12'>
-      #       Agility: <buttonGroup groupName="agility" items={intervals} />
-      #     </div>
-      #     <div className='col-xs-12'>
-      #       Other: <buttonGroup groupName="other-fitness" items={intervals} />
-      #     </div>
-      #   </div>
-      # </smallRow>
-
-
-      # <formGroup className="hidden-xs" inputId="btnIntervals" label="Length of Workout">
-      #   <DropdownButton id="btnIntervals" ref='btnIntervals' className="form-control" onSelect={this.onIntervalSelect}>
-      #     {
-      #       intervals.map (interval, index) ->
-      #         <MenuItem key={index} eventKey={index}>{interval}</MenuItem>
-      #     }
-      #   </DropdownButton>
-      # </formGroup>
-
-
-      # <formGroup label="Length of Workout">
-      #   <autocomplete options={intervals.map (interval)-> {id: interval, title: interval} } />
-      # </formGroup>
-
 React = require('react')
 workoutData = require('../../src/data/workout.coffee')
 dateFormatterMixin = require('../mixins/dateFormatter.coffee')
 buttonGroup = require('./buttonGroup.cjsx')
 formGroup = require('./formGroup.cjsx')
-smallRow = require('./smallRow.cjsx')
-panelBox = require('./panelBox.cjsx')
-# dropDown = require('./dropDown.cjsx')
-# <dropDown items={intervals} />
-{DropdownButton, MenuItem} = require('react-bootstrap')
+{Col, Row} = require('react-bootstrap')
 autocomplete = require('ron-react-autocomplete')
 
 containerId = "workout-simple-add"
@@ -104,30 +45,44 @@ processWorkout = React.createClass
 
   render: ->
     <form className='processWorkout form-horizontal' role="form">
-      <formGroup inputId="processWorkout--date" label="Workout Date">
-        <input id="processWorkout--date" className='form-control processWorkout--date' type='date' ref='workoutDate' defaultValue={
-          if this.props.data.workout?.date? then @getFormattedDate(new Date(this.props.data.workout.date)) else @getFormattedDate(new Date())
-        } />
-      </formGroup>
-      <formGroup inputId="type-of-workout" label="Type of Workout">
-        <select id="type-of-workout" className="form-control">
-          {
-            typesOfWorkouts.map (workout) ->
-              <option key={workout.id} value={workout.id}>{workout.title}</option>
-          }
-        </select>
-      </formGroup>
-      <formGroup inputId="length-of-workout" label="Length of Workout">
-        <select id="length-of-workout" className="form-control">
-          {
-            intervals.map (interval, index) ->
-              <option key={index} value={interval}>{interval}</option>
-          }
-        </select>
-      </formGroup>
-      <formGroup>
-        <button id='process' ref='process' className='btn btn-success form-control processWorkout--execute'>Save Workout</button>
-      </formGroup>
+      <Row>
+        <Col sm={8}>
+          <formGroup inputSize={10} labelSize={2} inputId="processWorkout--date" label="Workout Date">
+            <input id="processWorkout--date" className='form-control processWorkout--date' type='date' ref='workoutDate' defaultValue={
+              if this.props.data.workout?.date? then @getFormattedDate(new Date(this.props.data.workout.date)) else @getFormattedDate(new Date())
+            } />
+          </formGroup>
+        </Col>
+      </Row>
+      <Row>
+        <Col sm={4}>
+          <formGroup inputId="type-of-workout" label="Type of Workout">
+            <select id="type-of-workout" className="form-control">
+              {
+                typesOfWorkouts.map (workout) ->
+                  <option key={workout.id} value={workout.id}>{workout.title}</option>
+              }
+            </select>
+          </formGroup>
+        </Col>
+        <Col sm={4}>
+          <formGroup inputId="length-of-workout" label="Length of Workout">
+            <select id="length-of-workout" className="form-control">
+              {
+                intervals.map (interval, index) ->
+                  <option key={index} value={interval}>{interval}</option>
+              }
+            </select>
+          </formGroup>
+        </Col>
+      </Row>
+      <Row>
+        <Col sm={8}>
+          <formGroup inputSize={10} labelSize={2} >
+            <button id='process' ref='process' className='btn btn-success form-control processWorkout--execute'>Save Workout</button>
+          </formGroup>
+        </Col>
+      </Row>
     </form>
 
 processWorkout.containerId = containerId
