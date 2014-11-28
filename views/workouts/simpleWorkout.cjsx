@@ -3,8 +3,8 @@
 'use strict'
 
 React = require('react')
-dateFormatterMixin = require('../mixins/dateFormatter.coffee')
 formGroup = require('./formGroup.cjsx')
+workoutDate = require('./workoutDate.cjsx')
 {Col, Row} = require('react-bootstrap')
 
 containerId = "workout-simple-add"
@@ -26,28 +26,11 @@ typesOfWorkouts = [
 ]
 
 processWorkout = React.createClass
-  mixins: [dateFormatterMixin]
-
-  getInitialState: ->
-    workout: {}
-
-  onIntervalSelect: (key) ->
-    interval = intervals[key]
-    @refs.btnIntervals.props.title = interval
-
-  getCurrentDateFormatted: ->
-    today = new Date()
-    "#{today.getFullYear()}-#{today.getMonth() + 1}-#{today.getDate()}"
-
   render: ->
     <form className='processWorkout form-horizontal' role="form">
       <Row>
         <Col sm={12}>
-          <formGroup inputSize={10} labelSize={2} inputId="processWorkout--date" label="Workout Date">
-            <input id="processWorkout--date" className='form-control processWorkout--date' type='date' ref='workoutDate' defaultValue={
-              if this.props.data.workout?.date? then @getFormattedDate(new Date(this.props.data.workout.date)) else @getFormattedDate(new Date())
-            } />
-          </formGroup>
+          <workoutDate date={this.props.data.workout.date} />
         </Col>
       </Row>
       <hr />
