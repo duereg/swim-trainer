@@ -5,25 +5,11 @@
 React = require('react')
 formGroup = require('./formGroup.cjsx')
 workoutDate = require('./workoutDate.cjsx')
+workoutLength = require('./workoutLength.cjsx')
+workoutType = require('./workoutType.cjsx')
 {Col, Row} = require('react-bootstrap')
 
 containerId = "workout-simple-add"
-
-intervals = ["0:00","0:15","0:30","0:45","1:00","1:15","1:30","1:45","2:00","2:15","2:30","2:45","3:00","3:30","4:00","4:30","5:00","6:00"]
-
-typesOfWorkouts = [
-  {id: 'uwh_game', title: 'UWH Game'},
-  {id: 'swimming', title: 'Swimming'},
-  {id: 'fin_swimming', title: 'Fin Swimming'},
-  {id: 'strawberry', title: 'Dynamic Apnea'},
-  {id: 'puck_skills', title: 'Puck Skills'},
-
-  {id: 'endurance', title: 'Endurance'},
-  {id: 'strength', title: 'Strength'},
-  {id: 'speed', title: 'Speed'},
-  {id: 'agility', title: 'Agility'},
-  {id: 'other', title: 'Other'},
-]
 
 processWorkout = React.createClass
   render: ->
@@ -36,26 +22,12 @@ processWorkout = React.createClass
       <hr />
       <Row>
         <Col sm={6}>
-          <formGroup inputId="type-of-workout" label="Type of Workout">
-            <select id="type-of-workout" className="form-control">
-              {
-                typesOfWorkouts.map (workout) ->
-                  <option key={workout.id} value={workout.id}>{workout.title}</option>
-              }
-            </select>
-          </formGroup>
+          <workoutType />
         </Col>
-        <Col sm={4}>
-          <formGroup labelSize={5} inputSize={6} inputId="length-of-workout" label="Length of Workout">
-            <select id="length-of-workout" className="form-control">
-              {
-                intervals.map (interval, index) ->
-                  <option key={index} value={interval}>{interval}</option>
-              }
-            </select>
-          </formGroup>
+        <Col sm={4} >
+          <workoutLength />
         </Col>
-        <Col sm={2}>
+        <Col sm={2} >
           <button id='addRow' ref='addRow' className='btn btn-success form-control processWorkout--addRow'>Add</button>
         </Col>
       </Row>
