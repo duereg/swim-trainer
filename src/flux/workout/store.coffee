@@ -4,33 +4,36 @@ Fluxxor = require('fluxxor')
 constants = require('./constants')
 
 workoutStore = Fluxxor.createStore
-  initialize: (workouts) ->
-    this.errors = []
-    this.messages = []
-    this.workouts = if workouts.length then workouts else []
+  initialize: (workouts, workout) ->
+    console.log "initialize", workouts, workout
 
-    this.bindActions(
-      constants.SAVE, this.onLoad,
-      constants.SAVE_SUCCESS, this.onWorkoutSaveSuccess,
-      constants.SAVE_FAILURE, this.onError
+    @errors = []
+    @messages = []
+    @workouts = if workouts?.length then workouts else []
+    @workout = if workout? then workout else {}
+
+    @bindActions(
+      constants.SAVE, @onLoad,
+      constants.SAVE_SUCCESS, @onWorkoutSaveSuccess,
+      constants.SAVE_FAILURE, @onError
     )
 
-  sortedWorkouts: () ->
-    _(this.workouts).sortBy (workout) -> workout.date
+  sortedWorkouts: ->
+    _(@workouts).sortBy (workout) -> workout.date
 
-  onLoad: () ->
-    this.errors = []
-    this.messages = []
-    this.emit("change")
+  onLoad: ->
+    @errors = []
+    @messages = []
+    @emit("change")
 
   onError: (payload) ->
-    this.messages = []
-    this.errors = [(payload.error && payload.error.error) || payload.error || payload.toString()]
-    this.emit("change")
+    @messages = []
+    @errors = [(payload.error && payload.error.error) || payload.error || payload.toString()]
+    @emit("change")
 
   onWorkoutSaveSuccess: (payload) ->
     #TODO: make sure save does something
-    # this.workouts.push(payload.workout)
-    this.emit("change")
+    # @workouts.push(payload.workout)
+    @emit("change")
 
 module.exports = workoutStore

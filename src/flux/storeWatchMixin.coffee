@@ -3,7 +3,6 @@ _ = require "underscore"
 flux = require "./index"
 
 module.exports = ->
-
   storeNames = Array::slice.call(arguments)
   storeWatchMixin = Fluxxor.StoreWatchMixin(storeNames)
 
@@ -19,7 +18,7 @@ module.exports = ->
       return
 
     storeWatchMixin._setStateFromFlux = ->
-      @setState @getStateFromFlux()  if @isMounted()
+      @setState @getStateFromFlux() if @isMounted()
       return
 
     storeWatchMixin.componentDidMount = ->
