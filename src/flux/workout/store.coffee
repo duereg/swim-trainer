@@ -4,8 +4,8 @@ Fluxxor = require('fluxxor')
 constants = require('./constants')
 
 workoutStore = Fluxxor.createStore
-  initialize: (workouts, workout) ->
-    console.log "initialize", workouts, workout
+  initialize: (options) ->
+    {workouts, workout, csrf} = options if options?
 
     @errors = []
     @messages = []

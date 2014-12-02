@@ -19,6 +19,7 @@
     "blessed": "^0.0.37",
     "body-parser": "^1.8.0",
     "chai": "^1.9.1",
+    "coffee-react": "^2.1.0",
     "coffee-reactify": "^2.0.0",
     "coffeeify": "^1.0.0",
     "compression": "^1.0.11",

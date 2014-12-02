@@ -1,6 +1,7 @@
+'use strict';
+
 require('songbird');
 var Workout = require('../models/Workout');
-var apiCatch = require('./api-catch');
 
 exports.getWorkouts = function(req, res) {
   if (!req.user) return res.redirect('/login');
@@ -13,33 +14,11 @@ exports.getWorkouts = function(req, res) {
       });
     })
     .catch(function(err){
+      //TODO: show 500 here
       console.log(err);
       res.redirect('/')
     });
 };
-
-exports.postAdd = function(req, res) {
-  if (!req.user) return res.redirect('/login');
-
-  var newWorkout = new Workout({ date: req.body.date, raw: req.body.workout, userId: req.user.id});
-
-  newWorkout.promise.save()
-    .then(function(savedWorkout) {res.status(200).send(savedWorkout);}) //this is weird
-    .catch(apiCatch(res));
-}
-
-exports.postSave = function(req, res) {
-  if (!req.user) return res.redirect('/login');
-
-  Workout.promise.findOne({_id: req.params.id, userId: req.user.id})
-    .then(function(origWorkout) {
-      origWorkout.raw = req.body.workout.raw;
-      origWorkout.date = req.body.workout.date;
-      return origWorkout.promise.save();
-    })
-    .then(function(savedWorkout) {res.status(200).send(savedWorkout);}) //this is weird
-    .catch(apiCatch(res));
-}
 
 exports.getAdd = function(req, res) {
   if (!req.user) return res.redirect('/login');
@@ -52,10 +31,16 @@ exports.getAdd = function(req, res) {
 exports.getEdit = function(req, res) {
   if (!req.user) return res.redirect('/login');
 
-  Workout.promise.findOne({_id: req.params.id, userId: req.user.id}).then(function(origWorkout) {
-    res.render('workouts/add', {
-      title: 'Workout',
-      workout: origWorkout
+  Workout.promise.findOne({_id: req.params.id, userId: req.user.id})
+    .then(function(origWorkout) {
+      res.render('workouts/add', {
+        title: 'Workout',
+        workout: origWorkout
+      });
+    })
+    .catch(function(err){
+      //TODO: show 500 here
+      console.log(err);
+      res.redirect('/')
     });
-  });
 }

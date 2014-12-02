@@ -1,7 +1,5 @@
 # @cjsx React.DOM
 
-'use strict'
-
 React = require('react')
 flux = require('../../src/flux')
 storeWatchMixin = require('../../src/flux/storeWatchMixin')

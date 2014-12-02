@@ -1,3 +1,7 @@
+'use strict';
+
+require('coffee-react/register');
+
 /**
  * Module dependencies.
  */
@@ -19,7 +23,7 @@ var mongoose = require('mongoose');
 var passport = require('passport');
 var expressValidator = require('express-validator');
 var connectAssets = require('connect-assets');
-var reactViews = require('express-coffee-react-views')
+var reactFluxViews = require('./viewEngines/flux');
 
 /**
  * Controllers (route handlers).
@@ -71,7 +75,7 @@ var csrfExclude = ['/url1', '/url2'];
 app.set('port', process.env.PORT || 3000);
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'cjsx');
-app.engine('cjsx', reactViews.createEngine({beautify: true}));
+app.engine('cjsx', reactFluxViews);
 
 // app.use(compress()); TODO: uncomment to compress html
 app.use(connectAssets({
@@ -125,8 +129,8 @@ app.get('/', homeController.index);
 app.get('/workouts', workoutController.getWorkouts);
 app.get('/workouts/add', workoutController.getAdd);
 app.get('/workouts/edit/:id', workoutController.getEdit);
-app.post('/workouts/add', workoutController.postAdd);
-app.post('/workouts/save/:id', workoutController.postSave);
+app.post('/v1/workouts/', workoutApiController.postAdd);
+app.post('/v1/workouts/:id', workoutApiController.postSave);
 app.get('/v1/workouts', workoutApiController.getWorkouts);
 app.get('/v1/workout/:id', workoutApiController.getWorkout);
 app.get('/login', userController.getLogin);
