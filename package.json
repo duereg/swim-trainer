@@ -11,7 +11,7 @@
   "scripts": {
     "start": "node app.js",
     "build": "gulp coffee",
-    "test": "mocha"
+    "test": "gulp test"
   },
   "dependencies": {
     "async": "^0.9.0",
