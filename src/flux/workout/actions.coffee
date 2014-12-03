@@ -24,7 +24,7 @@ actions =
       #   }.bind(this));
 
 module.exports = (csrf) ->
-  throw new Error("Invalid CSRF given") unless csrf?
+  throw new Error('Invalid CSRF given') unless csrf?
 
   csrf = csrf
   actions

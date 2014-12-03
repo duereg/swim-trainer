@@ -1,6 +1,6 @@
-Fluxxor = require "fluxxor"
-_ = require "underscore"
-flux = require "./index"
+Fluxxor = require 'fluxxor'
+_ = require 'underscore'
+flux = require './index'
 
 module.exports = ->
   storeNames = Array::slice.call(arguments)
@@ -12,7 +12,7 @@ module.exports = ->
     storeWatchMixin.componentWillUnmount = ->
       _(storeNames).forEach ((storeName) ->
         store = flux().store(storeName)
-        store.removeListener "change", @_setStateFromFlux  if store
+        store.removeListener 'change', @_setStateFromFlux  if store
         return
       ), this
       return
@@ -25,9 +25,9 @@ module.exports = ->
       _(storeNames).forEach ((storeName) ->
         store = flux().store(storeName)
         if store
-          store.on "change", @_setStateFromFlux
+          store.on 'change', @_setStateFromFlux
         else
-          console.log "Store " + storeName + " could not be found to be watched."
+          console.log "Store #{storeName} could not be found to be watched."
         return
       ), this
       return

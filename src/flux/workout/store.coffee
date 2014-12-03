@@ -24,16 +24,16 @@ workoutStore = Fluxxor.createStore
   onLoad: ->
     @errors = []
     @messages = []
-    @emit("change")
+    @emit('change')
 
   onError: (payload) ->
     @messages = []
     @errors = [(payload.error && payload.error.error) || payload.error || payload.toString()]
-    @emit("change")
+    @emit('change')
 
   onWorkoutSaveSuccess: (payload) ->
     #TODO: make sure save does something
     # @workouts.push(payload.workout)
-    @emit("change")
+    @emit('change')
 
 module.exports = workoutStore
