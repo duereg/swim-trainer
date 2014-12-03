@@ -1,6 +1,6 @@
 'use strict';
 
-require('bluebird');
+require('songbird');
 var _ = require('underscore');
 var async = require('async');
 var crypto = require('crypto');
