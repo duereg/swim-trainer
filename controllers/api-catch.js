@@ -1,3 +1,5 @@
+'use strict';
+
 module.exports = function(res) {
   // apiError => {error: body-of-response, options: requestOptions,
   //              response: full-response-object, statusCode: full-response-object.statusCode}

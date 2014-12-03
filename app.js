@@ -7,7 +7,8 @@ require('coffee-react/register');
  */
 var express = require('express');
 var cookieParser = require('cookie-parser');
-var compress = require('compression');
+//Uncomment to compress HTML
+// var compress = require('compression');
 var session = require('express-session');
 var bodyParser = require('body-parser');
 var logger = require('morgan');
@@ -93,15 +94,15 @@ app.use(session({
   saveUninitialized: true,
   secret: secrets.sessionSecret,
   store: new MongoStore({
-    url: secrets.db,
-    auto_reconnect: true
+    'url': secrets.db,
+    'auto_reconnect': true
   })
 }));
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(function(req, res, next) {
   // CSRF protection.
-  if (_(csrfExclude).contains(req.path)) return next();
+  if (_(csrfExclude).contains(req.path)) { return next(); }
   csrf(req, res, next);
 });
 app.use(lusca.xssProtection(true));

@@ -16,7 +16,7 @@ exports.getWorkouts = function(req, res) {
     .catch(function(err){
       //TODO: show 500 here
       console.log(err);
-      res.redirect('/')
+      res.redirect('/');
     });
 };
 
@@ -26,7 +26,7 @@ exports.getAdd = function(req, res) {
   res.render('workouts/add', {
     title: 'Workouts'
   });
-}
+};
 
 exports.getEdit = function(req, res) {
   if (!req.user) return res.redirect('/login');
@@ -41,6 +41,6 @@ exports.getEdit = function(req, res) {
     .catch(function(err){
       //TODO: show 500 here
       console.log(err);
-      res.redirect('/')
+      res.redirect('/');
     });
-}
+};

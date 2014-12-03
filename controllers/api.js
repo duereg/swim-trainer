@@ -1,5 +1,6 @@
+'use strict';
+
 var secrets = require('../config/secrets');
-var User = require('../models/User');
 var querystring = require('querystring');
 var validator = require('validator');
 var async = require('async');
@@ -85,7 +86,7 @@ exports.getStripe = function(req, res) {
  * @param stripeEmail
  */
 
-exports.postStripe = function(req, res, next) {
+exports.postStripe = function(req, res) {
   var stripeToken = req.body.stripeToken;
   var stripeEmail = req.body.stripeEmail;
 
@@ -94,7 +95,7 @@ exports.postStripe = function(req, res, next) {
     currency: 'usd',
     card: stripeToken,
     description: stripeEmail
-  }, function(err, charge) {
+  }, function(err) { // function(err, charge)
     if (err && err.type === 'StripeCardError') {
       req.flash('errors', { msg: 'Your card has been declined.'});
       res.redirect('/api/stripe');
@@ -111,7 +112,7 @@ exports.postStripe = function(req, res, next) {
 
 exports.getVenmo = function(req, res, next) {
   var token = _(req.user.tokens).findWhere({ kind: 'venmo' });
-  var query = querystring.stringify({ access_token: token.accessToken });
+  var query = querystring.stringify({ 'access_token': token.accessToken });
 
   async.parallel({
     getProfile: function(done) {
@@ -157,11 +158,12 @@ exports.postVenmo = function(req, res, next) {
   }
 
   var token = _(req.user.tokens).findWhere({ kind: 'venmo' });
+  var userIdKey = 'user_id';
 
   var formData = {
-    access_token: token.accessToken,
-    note: req.body.note,
-    amount: req.body.amount
+    'access_token': token.accessToken,
+    'note': req.body.note,
+    'amount': req.body.amount
   };
 
   if (validator.isEmail(req.body.user)) {
@@ -170,7 +172,7 @@ exports.postVenmo = function(req, res, next) {
     validator.isLength(req.body.user, 10, 11)) {
     formData.phone = req.body.user;
   } else {
-    formData.user_id = req.body.user;
+    formData[userIdKey] = req.body.user;
   }
 
   request.post('https://api.venmo.com/v1/payments', { form: formData }, function(err, request, body) {

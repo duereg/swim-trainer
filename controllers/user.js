@@ -1,3 +1,6 @@
+'use strict';
+
+require('bluebird');
 var _ = require('underscore');
 var async = require('async');
 var crypto = require('crypto');
@@ -128,20 +131,23 @@ exports.getAccount = function(req, res) {
  */
 
 exports.postUpdateProfile = function(req, res, next) {
-  User.findById(req.user.id, function(err, user) {
-    if (err) return next(err);
-    user.email = req.body.email || '';
-    user.profile.name = req.body.name || '';
-    user.profile.gender = req.body.gender || '';
-    user.profile.location = req.body.location || '';
-    user.profile.website = req.body.website || '';
+  User.promise.findById(req.user.id)
+    .then(function(foundUser){
+      foundUser.email = req.body.email || '';
+      foundUser.profile.name = req.body.name || '';
+      foundUser.profile.gender = req.body.gender || '';
+      foundUser.profile.location = req.body.location || '';
+      foundUser.profile.website = req.body.website || '';
 
-    user.save(function(err) {
-      if (err) return next(err);
+      return foundUser.promise.save();
+    })
+    .then(function(){
       req.flash('success', { msg: 'Profile information updated.' });
       res.redirect('/account');
+    })
+    .catch(function(err) {
+      next(err);
     });
-  });
 };
 
 /**

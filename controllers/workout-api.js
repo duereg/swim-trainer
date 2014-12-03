@@ -22,7 +22,7 @@ exports.getWorkout = function(req, res) {
       res.status(200).send(origWorkout);
     })
     .catch(apiCatch(res));
-}
+};
 
 exports.postAdd = function(req, res) {
   if (!req.user) return res.redirect('/login');
@@ -32,7 +32,7 @@ exports.postAdd = function(req, res) {
   newWorkout.promise.save()
     .then(function(savedWorkout) {res.status(200).send(savedWorkout);}) //this is weird
     .catch(apiCatch(res));
-}
+};
 
 exports.postSave = function(req, res) {
   if (!req.user) return res.redirect('/login');
@@ -45,4 +45,4 @@ exports.postSave = function(req, res) {
     })
     .then(function(savedWorkout) {res.status(200).send(savedWorkout);}) //this is weird
     .catch(apiCatch(res));
-}
+};

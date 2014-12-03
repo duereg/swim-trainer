@@ -1,3 +1,5 @@
+'use strict';
+
 var mongoose = require('mongoose');
 var swimParser = require('swim-parser');
 
@@ -30,8 +32,8 @@ workoutSchema.pre('save', function(next) {
 workoutSchema.methods.totalTime = function() {
   var totalTime = 0;
 
-  if (workout.formatted) {
-    totalTime = work.formatted.totalTime();
+  if (this.formatted) {
+    totalTime = this.formatted.totalTime();
   }
 
   return totalTime;
@@ -40,8 +42,8 @@ workoutSchema.methods.totalTime = function() {
 workoutSchema.methods.totalYards = function() {
   var totalYards = 0;
 
-  if (workout.formatted) {
-    totalYards = work.formatted.totalYards();
+  if (this.formatted) {
+    totalYards = this.formatted.totalYards();
   }
 
   return totalYards;
@@ -50,8 +52,8 @@ workoutSchema.methods.totalYards = function() {
 workoutSchema.methods.totalDistance = function() {
   var totalDistance = 0;
 
-  if (workout.formatted) {
-    totalDistance = work.formatted.totalDistance();
+  if (this.formatted) {
+    totalDistance = this.formatted.totalDistance();
   }
 
   return totalDistance;
