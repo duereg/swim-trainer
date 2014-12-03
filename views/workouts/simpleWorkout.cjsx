@@ -19,16 +19,12 @@ processWorkout = React.createClass
     {}
 
   getStateFromFlux: ->
-    console.log "1"
     workoutStore = flux().store('WorkoutStore')
-    console.log "2"
     workout = {id: null}
 
-    console.log "3"
     if workoutStore?
       workout = workoutStore.workout
 
-    console.log "4"
     return {
       error: workoutStore.error
       workouts: workoutStore.sortedWorkouts()
@@ -43,12 +39,12 @@ processWorkout = React.createClass
         </Col>
       </Row>
           {
-            @state.workout?.formatted?.sets?.map (set) ->
-              <Row>
+            @state.workout?.formatted?.sets?.map (set, index) ->
+              <Row key={"#{set.name}#{index}"}>
                 Set
                 {
-                  set.intervals.map (interval) ->
-                    <readOnlyInterval interval={interval} />
+                  set.intervals.map (interval, index) ->
+                    <readOnlyInterval key={index} interval={interval} />
                 }
               </Row>
           }
