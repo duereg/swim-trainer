@@ -13,8 +13,8 @@ workoutStore = Fluxxor.createStore
     @workout = if workout? then workout else {}
 
     @bindActions(
-      constants.SAVE, @onLoad,
-      constants.SAVE_SUCCESS, @onWorkoutSaveSuccess,
+      constants.SAVE, @onLoad, _
+      constants.SAVE_SUCCESS, @onWorkoutSaveSuccess, _
       constants.SAVE_FAILURE, @onError
     )
 
