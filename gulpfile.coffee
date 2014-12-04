@@ -28,13 +28,13 @@ gulp.task 'lint', ->
     .pipe jshint.reporter(stylish)
     .pipe jshint.reporter('fail')
 
-gulp.task 'develop', ->
+gulp.task 'develop', ['build'], ->
   nodemon(
     script: 'app.js'
     ext: 'cjsx js coffee'
     env: { 'NODE_ENV': 'development' }
     ignore: ['./build/**/*.js'])
-    .on 'change', ['lint', 'coffeelint']
+    .on 'change', ['test']
     .on 'restart', ->
       console.log('restarted!')
 
@@ -45,6 +45,10 @@ gulp.task 'coffeelint', ->
 
 gulp.task 'watch', ->
   gulp.watch cjsxFiles.concat(jsFiles, specFiles, coffeeFiles), ['build']
+
+gulp.task 'mocha', ['build', 'lint', 'coffeelint'], ->
+  gulp.src specFiles
+    .pipe mocha reporter: 'spec', compilers: 'coffee:coffee-script'
 
 gulp.task 'test', ['build', 'lint', 'coffeelint'], ->
   gulp.src jsFiles.concat(coffeeFiles)
@@ -57,7 +61,6 @@ gulp.task 'test', ['build', 'lint', 'coffeelint'], ->
         .on 'finish', ->
           process.nextTick ->
             process.exit(0)
-
 
 gulp.task 'default', ['build']
 gulp.task 'heroku:production', ['build']
