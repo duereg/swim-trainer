@@ -46,7 +46,7 @@ gulp.task 'coffeelint', ->
 gulp.task 'watch', ->
   gulp.watch cjsxFiles.concat(jsFiles, specFiles, coffeeFiles), ['build']
 
-gulp.task 'test', ['lint', 'coffeelint'], ->
+gulp.task 'test', ['build', 'lint', 'coffeelint'], ->
   gulp.src jsFiles.concat(coffeeFiles)
     .pipe istanbul({includeUntested: true}) # Covering files
     .pipe istanbul.hookRequire()
