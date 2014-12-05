@@ -5,9 +5,6 @@ constants = require 'src/flux/workout/constants'
 actions = require('src/flux/workout/actions')('fake_csrf_token')
 
 describe 'flux/workout/actions', ->
-  before ->
-    console.log workoutData
-
   beforeEach ->
     actions.dispatch = sinon.spy()
 

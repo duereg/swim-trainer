@@ -1,5 +1,5 @@
 constants = require('./constants')
-workoutData = require('../../data/workout')
+workoutData = require('src/data/workout')
 
 csrf = null
 

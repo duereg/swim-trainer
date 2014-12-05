@@ -11,7 +11,7 @@ describe 'flux/workout/store', ->
 
     beforeEach ->
       workout = {id: 4566}
-      store = new Store(workout)
+      store = new Store({workout})
 
     it 'sets errors to an array', ->
       expect(store.errors).to.eql([])
@@ -79,11 +79,17 @@ describe 'flux/workout/store', ->
       it "maps constants.SAVE to onLoad", ->
         expect(store.__actions__[constants.SAVE]).to.eq(store.onLoad)
 
-      it "maps constants.SAVE_SUCCESS to onWorkoutSaveSuccess", ->
-        expect(store.__actions__[constants.SAVE_SUCCESS]).to.eq(store.onWorkoutSaveSuccess)
+      it "maps constants.CREATE_SUCCESS to onWorkoutSaveSuccess", ->
+        expect(store.__actions__[constants.CREATE_SUCCESS]).to.eq(store.onWorkoutSaveSuccess)
 
-      it "maps constants.SAVE_FAILURE to onError", ->
-        expect(store.__actions__[constants.SAVE_FAILURE]).to.eq(store.onError)
+      it "maps constants.CREATE_FAILURE to onError", ->
+        expect(store.__actions__[constants.CREATE_FAILURE]).to.eq(store.onError)
+
+      it "maps constants.UPDATE_SUCCESS to onWorkoutUpdateSuccess", ->
+        expect(store.__actions__[constants.UPDATE_SUCCESS]).to.eq(store.onWorkoutUpdateSuccess)
+
+      it "maps constants.UPDATE_FAILURE to onError", ->
+        expect(store.__actions__[constants.UPDATE_FAILURE]).to.eq(store.onError)
 
       it "maps constants.DELETE to onLoad", ->
         expect(store.__actions__[constants.DELETE]).to.eq(store.onLoad)

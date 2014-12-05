@@ -5,7 +5,7 @@ _ = require('underscore')
 React = require('react')
 window.React = React
 
-flux = require('../src/flux')
+flux = require('src/flux')
 window.flux = flux
 
 #setup flux
