@@ -1,9 +1,12 @@
 constants =
   SAVE: 'workout.save'
-  SAVE_SUCCESS: 'workout.save.success'
-  SAVE_FAILURE: 'workout.save.failure'
+
+  CREATE_SUCCESS: 'workout.create.success'
+  CREATE_FAILURE: 'workout.create.failure'
+
   UPDATE_SUCCESS: 'workout.update.success'
   UPDATE_FAILURE: 'workout.update.failure'
+
   DELETE: 'workout.delete'
   DELETE_SUCCESS: 'workout.delete.success'
   DELETE_FAILURE: 'workout.delete.failure'

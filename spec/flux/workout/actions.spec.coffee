@@ -4,10 +4,12 @@ workoutData = require 'src/data/workout'
 constants = require 'src/flux/workout/constants'
 actions = require('src/flux/workout/actions')('fake_csrf_token')
 
-
 describe 'flux/workout/actions', ->
+  before ->
+    console.log workoutData
+
   beforeEach ->
-    actions.dispatch = sinon.spy
+    actions.dispatch = sinon.spy()
 
   afterEach ->
     delete actions.dispatch
@@ -19,29 +21,12 @@ describe 'flux/workout/actions', ->
       {saveStub} = {}
 
       beforeEach ->
-        saveStub = sinon.stub(workoutData, 'save').returns(promiseStub)
+        saveStub = sinon.stub(workoutData, 'update').returns(promiseStub)
         workout = {_id: 123}
-        actions.save "2014-01-01", workout
+        actions.save '2014-01-01', workout
 
-      it 'calls dispatch to indicate save process is started', ->
-        expect(actions.dispatch.calledWith constants.SAVE).to.be.true
-
-      it 'calls dispatch to indicate save process finished', ->
-        expect(actions.dispatch.calledWith(constants.SAVE_SUCCESS)).to.be.true
-
-      it 'calls dispatch to indicate save process errored', ->
-        expect(actions.dispatch.calledWith(constants.SAVE_SUCCESS)).to.be.true
-
-      it 'calls dispatch with the selected items', ->
-        expect(saveStub.calledWith("2014-01-01", workout)).to.be.true
-
-    describe 'without id', ->
-      {updateStub} = {}
-
-      beforeEach ->
-        updateStub = sinon.stub(workoutData, 'update').returns(promiseStub)
-        workout = {}
-        actions.save "2014-01-01", workout
+      afterEach ->
+        saveStub.restore()
 
       it 'calls dispatch to indicate save process is started', ->
         expect(actions.dispatch.calledWith constants.SAVE).to.be.true
@@ -53,4 +38,27 @@ describe 'flux/workout/actions', ->
         expect(actions.dispatch.calledWith(constants.UPDATE_SUCCESS)).to.be.true
 
       it 'calls dispatch with the selected items', ->
-        expect(updateStub.calledWith("2014-01-01", workout)).to.be.true
+        expect(saveStub.calledWith('2014-01-01', workout)).to.be.true
+
+    describe 'without id', ->
+      {updateStub} = {}
+
+      beforeEach ->
+        updateStub = sinon.stub(workoutData, 'create').returns(promiseStub)
+        workout = {}
+        actions.save '2014-01-01', workout
+
+      afterEach ->
+        updateStub.restore()
+
+      it 'calls dispatch to indicate save process is started', ->
+        expect(actions.dispatch.calledWith constants.SAVE).to.be.true
+
+      it 'calls dispatch to indicate create process finished', ->
+        expect(actions.dispatch.calledWith(constants.CREATE_SUCCESS)).to.be.true
+
+      it 'calls dispatch to indicate create process errored', ->
+        expect(actions.dispatch.calledWith(constants.CREATE_SUCCESS)).to.be.true
+
+      it 'calls dispatch with the selected items', ->
+        expect(updateStub.calledWith('2014-01-01', workout)).to.be.true

@@ -14,13 +14,15 @@ workoutStore = Fluxxor.createStore
 
     @bindActions(
       constants.SAVE, @onLoad
-      constants.SAVE_SUCCESS, @onWorkoutSaveSuccess
-      constants.SAVE_FAILURE, @onError
-      constants.UPDATE_SUCCESS, @onWorkoutUpdateSuccess
-      constants.UPDATE_FAILURE, @onError
       constants.DELETE, @onLoad
+
+      constants.CREATE_SUCCESS, @onWorkoutSaveSuccess
+      constants.UPDATE_SUCCESS, @onWorkoutUpdateSuccess
       constants.DELETE_SUCCESS, @onWorkoutDeleteSuccess
+
+      constants.CREATE_FAILURE, @onError
       constants.DELETE_FAILURE, @onError
+      constants.UPDATE_FAILURE, @onError
     )
 
   sortedWorkouts: ->

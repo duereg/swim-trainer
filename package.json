@@ -74,11 +74,13 @@
   "devDependencies": {
     "coffee-script": "^1.8.0",
     "faker": "^2.1.1",
-    "gulp-coffeelint": "^0.4.0",
     "gulp-coffee-istanbul": "duereg/gulp-coffee-istanbul",
+    "gulp-coffeelint": "^0.4.0",
     "gulp-jshint": "^1.9.0",
     "gulp-mocha": "^2.0.0",
     "gulp-nodemon": "^1.0.4",
-    "jshint-stylish": "^1.0.0"
+    "jshint-stylish": "^1.0.0",
+    "sinon": "^1.10.3",
+    "sinon-chai": "^2.5.0"
   }
 }
