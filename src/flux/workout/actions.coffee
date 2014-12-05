@@ -5,24 +5,40 @@ csrf = null
 
 actions =
   workout:
+    delete: (workout) ->
+      me = this
+      me.dispatch(constants.DELETE)
+
+      workoutData
+        .delete(workout._id, _csrf)
+        .then( ->
+          me.dispatch(constants.DELETE_SUCCESS, {workout: workout})
+        )
+        .error( ->
+          me.dispatch(constants.DELETE_FAILURE, {error: er, workout: workout})
+        )
     save: (date, workout) ->
-      @dispatch(constants.SAVE)
+      me = this
+      me.dispatch(constants.SAVE)
 
       if workout._id
-        workoutData.update(date, workout, csrf)
+        workoutData
+          .update(date, workout, csrf)
+          .then( ->
+            me.dispatch(constants.UPDATE_SUCCESS, {workout: workout})
+          )
+          .error( ->
+            me.dispatch(constants.UPDATE_FAILURE, {error: er, workout: workout})
+          )
       else
-        workoutData.save(date, workout, csrf)
-
-      #TODO: run action to save, then dispatch results
-      # wishlistData
-      #   .remove(wishlistId)
-      #   .then(function(){
-      #     this.dispatch(constants.SAVE_SUCCESS, {wishlist: wishlist, item: item});
-      #   }.bind(this))
-      #   .error(function(er) {
-      #     this.dispatch(constants.SAVE_FAILURE, {error: er, wishlist: wishlist, item: item});
-      #   }.bind(this));
-
+        workoutData
+          .save(date, workout, csrf)
+          .then( ->
+            me.dispatch(constants.SAVE_SUCCESS, {workout: workout})
+          )
+          .error( ->
+            me.dispatch(constants.SAVE_FAILURE, {error: er, workout: workout})
+          )
 module.exports = (csrf) ->
   throw new Error('Invalid CSRF given') unless csrf?
 

@@ -1,7 +1,7 @@
-_ = require('underscore')
-Fluxxor = require('fluxxor')
+_ = require 'underscore'
+Fluxxor = require 'fluxxor'
 
-constants = require('./constants')
+constants = require './constants'
 
 workoutStore = Fluxxor.createStore
   initialize: (options) ->
@@ -13,13 +13,18 @@ workoutStore = Fluxxor.createStore
     @workout = if workout? then workout else {}
 
     @bindActions(
-      constants.SAVE, @onLoad, _
-      constants.SAVE_SUCCESS, @onWorkoutSaveSuccess, _
+      constants.SAVE, @onLoad
+      constants.SAVE_SUCCESS, @onWorkoutSaveSuccess
       constants.SAVE_FAILURE, @onError
+      constants.UPDATE_SUCCESS, @onWorkoutUpdateSuccess
+      constants.UPDATE_FAILURE, @onError
+      constants.DELETE, @onLoad
+      constants.DELETE_SUCCESS, @onWorkoutDeleteSuccess
+      constants.DELETE_FAILURE, @onError
     )
 
   sortedWorkouts: ->
-    _(@workouts).sortBy (workout) -> workout.date
+    (@workouts).sortBy (workout) -> workout.date
 
   onLoad: ->
     @errors = []
@@ -31,9 +36,17 @@ workoutStore = Fluxxor.createStore
     @errors = [(payload.error && payload.error.error) || payload.error || payload.toString()]
     @emit('change')
 
+  onWorkoutDeleteSuccess: (payload) ->
+    @workouts = _(@workouts).filter (workout) -> workout._id isnt payload.workout._id
+    @emit('change')
+
   onWorkoutSaveSuccess: (payload) ->
-    #TODO: make sure save does something
-    # @workouts.push(payload.workout)
+    @workouts.push(payload.workout)
+    @emit('change')
+
+  onWorkoutUpdateSuccess: (payload) ->
+    @workouts = _(@workouts).filter (workout) -> workout._id isnt payload.workout._id
+    @workouts.push(payload.workout)
     @emit('change')
 
 module.exports = workoutStore

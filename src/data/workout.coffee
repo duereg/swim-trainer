@@ -8,6 +8,6 @@ methods =
     promiseAgent(csrf)('delete', "/v1/workouts/#{workout._id}", { workout: workout })
 
   save: (date, workout, csrf) ->
-    promiseAgent(csrf)('post', "/v1/workouts/#{workout._id}", {workout: workout})
+    promiseAgent(csrf)('post', "/v1/workouts/#{workout._id}", { workout: workout })
 
 module.exports = methods
