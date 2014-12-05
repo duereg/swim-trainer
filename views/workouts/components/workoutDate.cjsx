@@ -1,7 +1,7 @@
 # @cjsx React.DOM
 
 React = require('react')
-dateFormatterMixin = require('../mixins/dateFormatter.coffee')
+dateFormatterMixin = require('../../mixins/dateFormatter.coffee')
 formGroup = require('./formGroup.cjsx')
 
 workoutDate = React.createClass

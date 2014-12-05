@@ -31,10 +31,10 @@ gulp.task 'lint', ->
 gulp.task 'develop', ['build'], ->
   nodemon(
     script: 'app.js'
-    ext: 'cjsx js coffee'
+    ext: 'cjsx coffee'
     env: { 'NODE_ENV': 'development' }
-    ignore: ['./build/**/*.js'])
-    .on 'change', ['test']
+    ignore: ['./public/**/*.js'])
+    .on 'change', ['build']
     .on 'restart', ->
       console.log('restarted!')
 
@@ -46,11 +46,11 @@ gulp.task 'coffeelint', ->
 gulp.task 'watch', ->
   gulp.watch cjsxFiles.concat(jsFiles, specFiles, coffeeFiles), ['build']
 
-gulp.task 'mocha', ['build', 'lint', 'coffeelint'], ->
+gulp.task 'mocha', ->
   gulp.src specFiles
     .pipe mocha reporter: 'spec', compilers: 'coffee:coffee-script'
 
-gulp.task 'test', ['build', 'lint', 'coffeelint'], ->
+gulp.task 'test', ['lint', 'coffeelint'], ->
   gulp.src jsFiles.concat(coffeeFiles)
     .pipe istanbul({includeUntested: true}) # Covering files
     .pipe istanbul.hookRequire()

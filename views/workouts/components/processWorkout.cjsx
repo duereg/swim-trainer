@@ -3,8 +3,8 @@
 'use strict'
 
 React = require('react')
-workoutData = require('../../src/data/workout.coffee')
-dateFormatterMixin = require('../mixins/dateFormatter.coffee')
+workoutData = require('../../../src/data/workout.coffee')
+dateFormatterMixin = require('../../mixins/dateFormatter.coffee')
 smallRow = require('./smallRow.cjsx')
 
 containerId = "workout-add"

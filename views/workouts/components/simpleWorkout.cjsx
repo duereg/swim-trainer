@@ -1,8 +1,8 @@
 # @cjsx React.DOM
 
 React = require('react')
-flux = require('../../src/flux')
-storeWatchMixin = require('../../src/flux/storeWatchMixin')
+flux = require('../../../src/flux')
+storeWatchMixin = require('../../../src/flux/storeWatchMixin')
 
 formGroup = require('./formGroup.cjsx')
 workoutDate = require('./workoutDate.cjsx')

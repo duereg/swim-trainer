@@ -8,7 +8,7 @@ exports.getWorkouts = function(req, res) {
 
   Workout.promise.find({'userId': req.user.id})
     .then(function(workouts){
-      res.render('workouts/list', {
+      res.render('workouts/index', {
         title: 'Workouts',
         workouts: workouts
       });
