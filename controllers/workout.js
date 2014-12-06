@@ -20,10 +20,18 @@ exports.getWorkouts = function(req, res) {
     });
 };
 
-exports.getAdd = function(req, res) {
+exports.getAddSimple = function(req, res) {
   if (!req.user) return res.redirect('/login');
 
-  res.render('workouts/add', {
+  res.render('workouts/addSimple', {
+    title: 'Workouts'
+  });
+};
+
+exports.getAddText = function(req, res) {
+  if (!req.user) return res.redirect('/login');
+
+  res.render('workouts/addText', {
     title: 'Workouts'
   });
 };

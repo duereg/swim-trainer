@@ -1,7 +1,7 @@
 # @cjsx React.DOM
 
 React = require('react')
-swimParser = require('swim-parser')
+Workout = require('swim-parser/lib/workout')
 timeFormatter = require('swim-parser/lib/timeFormatter')
 dateFormatterMixin = require('../../mixins/dateFormatter.coffee')
 
@@ -14,7 +14,7 @@ workoutListItem = React.createClass
 
   render: ->
     workout = this.props.workout
-    parsedWorkout = swimParser workout.raw
+    parsedWorkout = new Workout(workout.formatted) if workout.formatted?
 
     <tr className="Workouts--item" key={workout._id} >
       <td>
@@ -22,7 +22,7 @@ workoutListItem = React.createClass
           {@getFormattedDate(workout.date)}
         </a>
       </td>
-      <td>{timeFormatter.toString parsedWorkout.totalTime()}</td>
+      <td>{ if parsedWorkout? then timeFormatter.toString(parsedWorkout.totalTime()) else '0:00'}</td>
       <td>
         <span className='big-font ion-ios7-close-outline' onClick={this.deleteWorkout}></span>
       </td>

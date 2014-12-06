@@ -1,5 +1,6 @@
 _ = require 'underscore'
 Fluxxor = require 'fluxxor'
+parser = require 'swim-parser'
 
 constants = require './constants'
 
@@ -43,12 +44,14 @@ workoutStore = Fluxxor.createStore
     @emit('change')
 
   onWorkoutSaveSuccess: (payload) ->
+    payload.workout.formatted = parser(payload.workout.raw)
     @workouts.push(payload.workout)
-    @emit('change')
+    window.location = '/workouts'
 
   onWorkoutUpdateSuccess: (payload) ->
+    payload.workout.formatted = parser(payload.workout.raw)
     @workouts = _(@workouts).filter (workout) -> workout._id isnt payload.workout._id
     @workouts.push(payload.workout)
-    @emit('change')
+    window.location = '/workouts'
 
 module.exports = workoutStore

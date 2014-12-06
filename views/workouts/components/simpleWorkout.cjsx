@@ -32,7 +32,7 @@ processWorkout = React.createClass
     }
 
   saveWorkout: ->
-    flux().actions.save(this.state.workout)
+    flux().actions.save(@state.workout)
 
   render: ->
     <form className='processWorkout form-horizontal' role="form">

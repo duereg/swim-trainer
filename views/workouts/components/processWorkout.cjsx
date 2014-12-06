@@ -3,39 +3,39 @@
 'use strict'
 
 React = require('react')
-workoutData = require('../../../src/data/workout.coffee')
+flux = require('src/flux')
+storeWatchMixin = require('src/flux/storeWatchMixin')
+
 dateFormatterMixin = require('../../mixins/dateFormatter.coffee')
 smallRow = require('./smallRow.cjsx')
 
 containerId = "workout-add"
 
 processWorkout = React.createClass
-  mixins: [dateFormatterMixin]
+  mixins: [dateFormatterMixin, storeWatchMixin('WorkoutStore')],
 
   getInitialState: ->
-    workout: {}
+    {}
 
-  processWorkout: ->
-    workout = this.refs.workoutInput.getDOMNode().value
-    date = this.refs.workoutDate.getDOMNode().value
-    promise = null
+  getStateFromFlux: ->
+    workoutStore = flux().store('WorkoutStore')
+    workout = {id: null}
 
-    if this.props.data.workout?
-      this.props.data.workout.raw = workout
-      this.props.data.workout.date = date
-      promise = workoutData.save(date, this.props.data.workout, this.props.data._csrf)
-    else
-      promise = workoutData.create(date, workout, this.props.data._csrf)
+    if workoutStore?
+      workout = workoutStore.workout
 
-    promise
-      .then (results) ->
-        window.location = '/workouts'
-      .catch (error) ->
-        console.error error
+    {
+      error: workoutStore.error
+      workouts: workoutStore.sortedWorkouts()
+      workout: workout
+    }
 
-  getCurrentDateFormatted: ->
-    today = new Date()
-    "#{today.getFullYear()}-#{today.getMonth() + 1}-#{today.getDate()}"
+  saveWorkout: ->
+    workout = @state.workout
+    workout.raw = this.refs.workoutInput.getDOMNode().value
+    workout.date = this.refs.workoutDate.getDOMNode().value
+
+    flux().actions.save(@state.workout)
 
   render: ->
     <div className='processWorkout container'>
@@ -43,15 +43,15 @@ processWorkout = React.createClass
         Enter your workout
       </smallRow>
       <smallRow>
-        <textarea className='processWorkout--input' id='workoutInput' ref='workoutInput' defaultValue={this.props.data.workout?.raw} />
-      </smallRow>
-      <smallRow>
         <input className='input-sm processWorkout--date' type='date' ref='workoutDate' defaultValue={
-          if this.props.data.workout?.date? then @getFormattedDate(new Date(this.props.data.workout.date)) else @getFormattedDate(new Date())
+          if this.state.workout?.date? then @getFormattedDate(new Date(this.state.workout.date)) else @getFormattedDate(new Date())
         } />
       </smallRow>
       <smallRow>
-        <button id='process' ref='process' className='processWorkout--execute' onClick={this.processWorkout}>Save Workout</button>
+        <textarea className='processWorkout--input' id='workoutInput' ref='workoutInput' defaultValue={this.state.workout?.raw} />
+      </smallRow>
+      <smallRow>
+        <button id='process' ref='process' className='processWorkout--execute' onClick={this.saveWorkout}>Save Workout</button>
       </smallRow>
     </div>
 

@@ -51,7 +51,7 @@ list = React.createClass
       </Row>
       <hr />
       <div className="Workouts--actions">
-        <a href="/workouts/add">Add Workout</a>
+        <a href="/workouts/addSimple">Add a simple workout</a> | <a href="/workouts/addText">Type in a workout</a>
       </div>
     </div>
 
