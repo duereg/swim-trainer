@@ -39,9 +39,10 @@ exports.getAddText = function(req, res) {
 exports.getEdit = function(req, res) {
   if (!req.user) return res.redirect('/login');
 
+  //this should be smart enough to toggle between simple and text
   Workout.promise.findOne({_id: req.params.id, userId: req.user.id})
     .then(function(origWorkout) {
-      res.render('workouts/add', {
+      res.render('workouts/addText', {
         title: 'Workout',
         workout: origWorkout
       });
