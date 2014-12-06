@@ -32,7 +32,7 @@ exports.deleteWorkout = function(req, res) {
       res.status(200).send(removedWorkout);
     })
     .catch(apiCatch(res));
-}
+};
 
 exports.postAdd = function(req, res) {
   if (!req.user) return res.redirect('/login');

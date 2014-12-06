@@ -6,7 +6,7 @@ constants = require 'src/flux/workout/constants'
 describe 'flux/workout/store', ->
   {store, emitStub} = {}
 
-  describe "created with options", ->
+  describe 'created with options', ->
     {workout} = {}
 
     beforeEach ->
@@ -22,7 +22,7 @@ describe 'flux/workout/store', ->
     it 'sets workout correctly', ->
       expect(store.workout.id).to.eq(workout.id)
 
-  describe "created with no options", ->
+  describe 'created with no options', ->
     beforeEach ->
       store = new Store()
       emitStub = sinon.stub(store, 'emit')
@@ -48,11 +48,11 @@ describe 'flux/workout/store', ->
         store.wishlist = wishlist
         store.onWorkoutSaveSuccess(payload)
 
-      it 'emit "change") is called', ->
+      it 'emit("change") is called', ->
         expect(emitStub.called).to.be.true
 
     describe 'onError', ->
-      error = "foo bar me!"
+      error = 'foo bar me!'
       beforeEach ->
         store.onError error: error
 
@@ -76,26 +76,26 @@ describe 'flux/workout/store', ->
           expect(emitStub.called).to.be.true
 
     describe 'actions hash', ->
-      it "maps constants.SAVE to onLoad", ->
+      it 'maps constants.SAVE to onLoad', ->
         expect(store.__actions__[constants.SAVE]).to.eq(store.onLoad)
 
-      it "maps constants.CREATE_SUCCESS to onWorkoutSaveSuccess", ->
+      it 'maps constants.CREATE_SUCCESS to onWorkoutSaveSuccess', ->
         expect(store.__actions__[constants.CREATE_SUCCESS]).to.eq(store.onWorkoutSaveSuccess)
 
-      it "maps constants.CREATE_FAILURE to onError", ->
+      it 'maps constants.CREATE_FAILURE to onError', ->
         expect(store.__actions__[constants.CREATE_FAILURE]).to.eq(store.onError)
 
-      it "maps constants.UPDATE_SUCCESS to onWorkoutUpdateSuccess", ->
+      it 'maps constants.UPDATE_SUCCESS to onWorkoutUpdateSuccess', ->
         expect(store.__actions__[constants.UPDATE_SUCCESS]).to.eq(store.onWorkoutUpdateSuccess)
 
-      it "maps constants.UPDATE_FAILURE to onError", ->
+      it 'maps constants.UPDATE_FAILURE to onError', ->
         expect(store.__actions__[constants.UPDATE_FAILURE]).to.eq(store.onError)
 
-      it "maps constants.DELETE to onLoad", ->
+      it 'maps constants.DELETE to onLoad', ->
         expect(store.__actions__[constants.DELETE]).to.eq(store.onLoad)
 
-      it "maps constants.DELETE_SUCCESS to onWorkoutDeleteSuccess", ->
+      it 'maps constants.DELETE_SUCCESS to onWorkoutDeleteSuccess', ->
         expect(store.__actions__[constants.DELETE_SUCCESS]).to.eq(store.onWorkoutDeleteSuccess)
 
-      it "maps constants.DELETE_FAILURE to onError", ->
+      it 'maps constants.DELETE_FAILURE to onError', ->
         expect(store.__actions__[constants.DELETE_FAILURE]).to.eq(store.onError)
