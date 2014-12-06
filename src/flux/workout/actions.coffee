@@ -5,7 +5,7 @@ csrf = null
 
 actions =
   delete: (workout) ->
-    throw new Error("Invalid workout") unless workout?
+    throw new Error('Invalid workout') unless workout?
 
     me = this
     me.dispatch(constants.DELETE)
@@ -19,7 +19,7 @@ actions =
         me.dispatch(constants.DELETE_FAILURE, {error: er, workout: workout})
       )
   save: (workout) ->
-    throw new Error("Invalid workout") unless workout?
+    throw new Error('Invalid workout') unless workout?
 
     me = this
     me.dispatch(constants.SAVE)
