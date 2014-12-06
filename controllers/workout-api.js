@@ -37,7 +37,7 @@ exports.deleteWorkout = function(req, res) {
 exports.postAdd = function(req, res) {
   if (!req.user) return res.redirect('/login');
 
-  var newWorkout = new Workout({ date: req.body.date, raw: req.body.workout, userId: req.user.id});
+  var newWorkout = new Workout({ date: req.body.workout.date, raw: req.body.workout.raw, userId: req.user.id});
 
   newWorkout.promise.save()
     .then(function(savedWorkout) {res.status(200).send(savedWorkout);}) //this is weird
