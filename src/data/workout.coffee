@@ -1,13 +1,19 @@
 promiseAgent = require('./promiseAgent')
 
 methods =
-  create: (date, workout, csrf) ->
-    promiseAgent(csrf)('post', '/v1/workouts/', { date: date, workout: workout })
+  create: (workout, csrf) ->
+    throw new Error('Invalid workout') unless workout?
+    throw new Error('Invalid CSRF token') unless csrf?
+    promiseAgent(csrf)('post', '/v1/workouts/', { date: workout.date, workout: workout })
 
   delete: (workout, csrf) ->
-    promiseAgent(csrf)('delete', "/v1/workouts/#{workout._id}", { workout: workout })
+    throw new Error('Invalid workout') unless workout?
+    throw new Error('Invalid CSRF token') unless csrf?
+    promiseAgent(csrf)('del', "/v1/workouts/#{workout._id}", { workout: workout })
 
-  update: (date, workout, csrf) ->
+  update: (workout, csrf) ->
+    throw new Error('Invalid workout') unless workout?
+    throw new Error('Invalid CSRF token') unless csrf?
     promiseAgent(csrf)('post', "/v1/workouts/#{workout._id}", { workout: workout })
 
 module.exports = methods

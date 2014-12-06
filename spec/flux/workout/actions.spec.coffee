@@ -11,6 +11,30 @@ describe 'flux/workout/actions', ->
   afterEach ->
     delete actions.dispatch
 
+  describe '#delete', ->
+    {workout, delStub} = {}
+
+    beforeEach ->
+      delStub = sinon.stub(workoutData, 'delete').returns(promiseStub)
+      workout = {_id: 123}
+      actions.delete workout
+
+    afterEach ->
+      delStub.restore()
+
+    it 'calls dispatch to indicate delete process is started', ->
+      expect(actions.dispatch.calledWith constants.DELETE).to.be.true
+
+    it 'calls dispatch to indicate delete process finished', ->
+      expect(actions.dispatch.calledWith(constants.DELETE_SUCCESS)).to.be.true
+
+    it 'calls dispatch to indicate delete process errored', ->
+      expect(actions.dispatch.calledWith(constants.DELETE_SUCCESS)).to.be.true
+
+    it 'calls dispatch with the selected items', ->
+      expect(delStub.calledWith(workout)).to.be.true
+
+
   describe '#save', ->
     {workout} = {}
 
@@ -20,7 +44,7 @@ describe 'flux/workout/actions', ->
       beforeEach ->
         saveStub = sinon.stub(workoutData, 'update').returns(promiseStub)
         workout = {_id: 123}
-        actions.save '2014-01-01', workout
+        actions.save workout
 
       afterEach ->
         saveStub.restore()
@@ -35,7 +59,7 @@ describe 'flux/workout/actions', ->
         expect(actions.dispatch.calledWith(constants.UPDATE_SUCCESS)).to.be.true
 
       it 'calls dispatch with the selected items', ->
-        expect(saveStub.calledWith('2014-01-01', workout)).to.be.true
+        expect(saveStub.calledWith(workout)).to.be.true
 
     describe 'without id', ->
       {updateStub} = {}
@@ -43,7 +67,7 @@ describe 'flux/workout/actions', ->
       beforeEach ->
         updateStub = sinon.stub(workoutData, 'create').returns(promiseStub)
         workout = {}
-        actions.save '2014-01-01', workout
+        actions.save workout
 
       afterEach ->
         updateStub.restore()
@@ -58,4 +82,4 @@ describe 'flux/workout/actions', ->
         expect(actions.dispatch.calledWith(constants.CREATE_SUCCESS)).to.be.true
 
       it 'calls dispatch with the selected items', ->
-        expect(updateStub.calledWith('2014-01-01', workout)).to.be.true
+        expect(updateStub.calledWith(workout)).to.be.true

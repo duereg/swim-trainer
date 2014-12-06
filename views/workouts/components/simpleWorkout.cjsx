@@ -25,11 +25,14 @@ processWorkout = React.createClass
     if workoutStore?
       workout = workoutStore.workout
 
-    return {
+    {
       error: workoutStore.error
       workouts: workoutStore.sortedWorkouts()
       workout: workout
     }
+
+  saveWorkout: ->
+    flux().actions.save(this.state.workout)
 
   render: ->
     <form className='processWorkout form-horizontal' role="form">
@@ -52,7 +55,7 @@ processWorkout = React.createClass
       <hr/>
       <Row>
         <Col sm={12}>
-          <button id='process' ref='process' className='btn btn-primary form-control processWorkout--execute'>Save Workout</button>
+          <button id='process' ref='process' onClick={this.saveWorkout} className='btn btn-primary form-control processWorkout--execute'>Save Workout</button>
         </Col>
       </Row>
     </form>

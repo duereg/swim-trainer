@@ -9,7 +9,8 @@ workoutListItem = React.createClass
   mixins: [dateFormatterMixin]
 
   deleteWorkout: ->
-    console.log "delete workout #{this.props.workout._id}"
+    if confirm("Are you sure you want to delete this workout?")
+      flux().actions.delete(this.props.workout)
 
   render: ->
     workout = this.props.workout

@@ -26,7 +26,7 @@ workoutStore = Fluxxor.createStore
     )
 
   sortedWorkouts: ->
-    (@workouts).sortBy (workout) -> workout.date
+    _(@workouts).sortBy (workout) -> workout.date
 
   onLoad: ->
     @errors = []

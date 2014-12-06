@@ -5,10 +5,30 @@ _ = require('underscore')
 
 listItem = require('./listItem')
 {Table, Row, Col} = require('react-bootstrap')
+flux = require('src/flux')
+storeWatchMixin = require('src/flux/storeWatchMixin')
 
 containerId = "workout-list"
 
 list = React.createClass
+  mixins: [storeWatchMixin('WorkoutStore')],
+
+  getInitialState: ->
+    {}
+
+  getStateFromFlux: ->
+    workoutStore = flux().store('WorkoutStore')
+    workout = {id: null}
+
+    if workoutStore?
+      workout = workoutStore.workout
+
+    {
+      error: workoutStore.error
+      workouts: workoutStore.sortedWorkouts()
+      workout: workout
+    }
+
   render: ->
     <div className="container">
       <Row>
@@ -21,7 +41,7 @@ list = React.createClass
             </thead>
             <tbody>
               {
-                _(this.props.data.workouts).chain().sortBy((workout) -> workout.date).map( (workout) ->
+                _(this.state.workouts).chain().sortBy((workout) -> workout.date).map( (workout) ->
                   <listItem key={workout._id} workout={workout} />
                 ).value().reverse()
               }

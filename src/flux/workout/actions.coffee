@@ -9,20 +9,20 @@ actions =
     me.dispatch(constants.DELETE)
 
     workoutData
-      .delete(workout._id, _csrf)
+      .delete(workout, csrf)
       .then( ->
         me.dispatch(constants.DELETE_SUCCESS, {workout: workout})
       )
-      .error( ->
+      .error( (er) ->
         me.dispatch(constants.DELETE_FAILURE, {error: er, workout: workout})
       )
-  save: (date, workout) ->
+  save: (workout) ->
     me = this
     me.dispatch(constants.SAVE)
 
     if workout._id
       workoutData
-        .update(date, workout, csrf)
+        .update(workout, csrf)
         .then( ->
           me.dispatch(constants.UPDATE_SUCCESS, {workout: workout})
         )
@@ -31,7 +31,7 @@ actions =
         )
     else
       workoutData
-        .create(date, workout, csrf)
+        .create(workout, csrf)
         .then( ->
           me.dispatch(constants.CREATE_SUCCESS, {workout: workout})
         )
@@ -39,8 +39,8 @@ actions =
           me.dispatch(constants.CREATE_FAILURE, {error: er, workout: workout})
         )
 
-module.exports = (csrf) ->
-  throw new Error('Invalid CSRF given') unless csrf?
+module.exports = (myCsrf) ->
+  throw new Error('Invalid CSRF given') unless myCsrf?
 
-  csrf = csrf
+  csrf = myCsrf
   actions

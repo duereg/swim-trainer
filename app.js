@@ -134,6 +134,7 @@ app.post('/v1/workouts/', workoutApiController.postAdd);
 app.post('/v1/workouts/:id', workoutApiController.postSave);
 app.get('/v1/workouts', workoutApiController.getWorkouts);
 app.get('/v1/workout/:id', workoutApiController.getWorkout);
+app.delete('/v1/workouts/:id', workoutApiController.deleteWorkout);
 app.get('/login', userController.getLogin);
 app.post('/login', userController.postLogin);
 app.get('/logout', userController.logout);
