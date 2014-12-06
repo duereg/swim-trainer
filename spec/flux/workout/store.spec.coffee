@@ -40,16 +40,16 @@ describe 'flux/workout/store', ->
       expect(store.workout).to.eql({})
 
     describe 'onWorkoutSaveSuccess', ->
-      item = {id: 321}
-      wishlist = {id: 4, isPublic: false, wishlistItems: [item]}
-      payload = {wishlist: wishlist}
+      {workout, payload} = {}
 
       beforeEach ->
-        store.wishlist = wishlist
+        workout = {id: 4, raw: '4x100 huho @ 1:30'}
+        payload = {workout}
+        store.workout = workout
         store.onWorkoutSaveSuccess(payload)
 
-      it 'emit("change") is called', ->
-        expect(emitStub.called).to.be.true
+      it 'store.workouts now contains the workout', ->
+        expect(store.workouts).to.contain(workout)
 
     describe 'onError', ->
       error = 'foo bar me!'

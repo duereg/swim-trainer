@@ -46,12 +46,12 @@ workoutStore = Fluxxor.createStore
   onWorkoutSaveSuccess: (payload) ->
     payload.workout.formatted = parser(payload.workout.raw)
     @workouts.push(payload.workout)
-    window.location = '/workouts'
+    global.location = '/workouts'
 
   onWorkoutUpdateSuccess: (payload) ->
     payload.workout.formatted = parser(payload.workout.raw)
     @workouts = _(@workouts).filter (workout) -> workout._id isnt payload.workout._id
     @workouts.push(payload.workout)
-    window.location = '/workouts'
+    global.location = '/workouts'
 
 module.exports = workoutStore
