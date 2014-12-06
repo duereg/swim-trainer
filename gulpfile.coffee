@@ -16,6 +16,7 @@ cjsxFiles = ['public/entrypoint.cjsx', 'views/**/*.cjsx']
 gulp.task 'build', ->
   gulp.src('public/entrypoint.cjsx', read: false)
     .pipe(browserify(
+      transformAll: true
       transform: ['coffee-reactify']
       extensions: ['.cjsx', '.coffee']
     ))
