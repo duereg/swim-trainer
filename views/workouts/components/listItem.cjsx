@@ -14,7 +14,12 @@ workoutListItem = React.createClass
 
   render: ->
     workout = this.props.workout
-    parsedWorkout = new Workout(workout.formatted) if workout.formatted?
+    parsedWorkout = null
+
+    if workout.formatted?
+      parsedWorkout = new Workout(workout.formatted)
+
+    # console.log parsedWorkout, parsedWorkout.totalTime(), timeFormatter.toString(parsedWorkout.totalTime())
 
     <tr className="Workouts--item" key={workout._id} >
       <td>

@@ -20,7 +20,7 @@ workoutSchema.pre('save', function(next) {
 
   if (workout.isModified('raw')) {
     try {
-      workout.formatted = swimParser(workout.get('raw'));
+      workout.formatted = swimParser(workout.get('raw')).toJSON();
       workout.markModified('formatted');
     } catch(ex) {
       return next(ex);
