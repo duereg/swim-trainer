@@ -451,7 +451,7 @@ module.exports = [
     "author": "Sarah Bombell, synchronized swimmer"
   },
   {
-    "quote": "It's a dream until you write it down, and then its a goal."
+    "quote": "It's a dream until you write it down. Then it's a goal."
   },
   {
     "quote": "Obstacles are those frightening things that become visible when we take our eyes off our goals.",
