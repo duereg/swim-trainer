@@ -7,7 +7,7 @@ fluxxor = {stores: null, actions: null}
 
 fluxxorFactory = (options) ->
   if options? and (!fluxxor.stores or !fluxxor.actions)
-    {workouts, workout, _csrf} = options
+    {_csrf} = options
     stores = { WorkoutStore: new WorkoutStore(options) }
     actions = workoutActions(_csrf)
 
