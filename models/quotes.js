@@ -367,7 +367,7 @@ module.exports = [
     "author": "Phil Jackson"
   },
   {
-    "quote": "You have to believe in yourself when no one else does. ",
+    "quote": "You have to believe in yourself when no one else does.",
     "author": "Venus Williams"
   },
   {
@@ -403,11 +403,11 @@ module.exports = [
     "author": "T.S. Eliot"
   },
   {
-    "quote": "Daring ideas are like chessmen moved forward; they may be beaten, but they may start a winning game. ",
+    "quote": "Daring ideas are like chessmen moved forward; they may be beaten, but they may start a winning game.",
     "author": "Johann Wolfgang von Goethe"
   },
   {
-    "quote": "Man cannot discover new oceans unless he has the courage to lose sight of the shore. ",
+    "quote": "Man cannot discover new oceans unless he has the courage to lose sight of the shore.",
     "author": "Andre Gide"
   },
   {
@@ -415,11 +415,11 @@ module.exports = [
     "author": "Anthony Storr"
   },
   {
-    "quote": "Problems are only opportunities in work clothes. ",
+    "quote": "Problems are only opportunities in work clothes.",
     "author": "Henry J. Kaiser"
   },
   {
-    "quote": "Only he who can see the invisible can do the impossible. ",
+    "quote": "Only he who can see the invisible can do the impossible.",
     "author": "Frank L. Gaines"
   },
   {
@@ -458,7 +458,7 @@ module.exports = [
     "author": "Henry Ford"
   },
   {
-    "quote": "You must take action now that will move you towards your goals. Develop a sense of urgency in your life. ",
+    "quote": "You must take action now that will move you towards your goals. Develop a sense of urgency in your life.",
     "author": "Les Brown"
   },
   {
@@ -466,7 +466,7 @@ module.exports = [
     "author": "Mark Twain"
   },
   {
-    "quote": "When you cease to dream you cease to live. ",
+    "quote": "When you cease to dream you cease to live.",
     "author": "Malcolm Forbes"
   },
   {
@@ -482,7 +482,7 @@ module.exports = [
     "author": "Bear Bryant"
   },
   {
-    "quote": "Far better it is to dare mighty things, to win glorious triumphs, even though checkered by failure ... than to rank with those poor spirits who neither enjoy much nor suffer much, because they live in a grey twilight that knows not ",
+    "quote": "Far better it is to dare mighty things, to win glorious triumphs, even though checkered by failure ... than to rank with those poor spirits who neither enjoy much nor suffer much, because they live in a grey twilight that knows not",
     "author": "Theodore Roosevelt"
   },
   {
@@ -490,47 +490,47 @@ module.exports = [
     "author": "J.J. Watt"
   },
   {
-    "quote": "Pressure is nothing more than the shadow of great opportunity. ",
+    "quote": "Pressure is nothing more than the shadow of great opportunity.",
     "author": "Michael Johnson"
   },
   {
-    "quote": "To be number one, you have to train like your number two. ",
+    "quote": "To be number one, you have to train like your number two.",
     "author": "Maurice Greene"
   },
   {
-    "quote": "My thoughts before a big race are usually pretty simple. I tell myself: 'Get out of the blocks, run your race, stay relaxed. If you run your race, you'll win....Channel your energy. Focus. ",
+    "quote": "My thoughts before a big race are usually pretty simple. I tell myself: 'Get out of the blocks, run your race, stay relaxed. If you run your race, you'll win....Channel your energy. Focus.",
     "author": "Carl Lewis"
   },
   {
-    "quote": "I've always felt that long, slow distance produces long, slow runners. ",
+    "quote": "I've always felt that long, slow distance produces long, slow runners.",
     "author": "Sebastian Coe"
   },
   {
-    "quote": "I was 12 when I started and 34 before I achieved my dream, that should give people hope. ",
+    "quote": "I was 12 when I started and 34 before I achieved my dream, that should give people hope.",
     "author": "Kelly Holmes"
   },
   {
-    "quote": "World records are only borrowed. ",
+    "quote": "World records are only borrowed.",
     "author": "Sebastian Coe"
   },
   {
-    "quote": "Sometimes, when I walk out onto the track I think, 'What am I doing here? Why do I put myself through this?' But that's when you really get into your focus ... you focus on the race you are going to run. ",
+    "quote": "Sometimes, when I walk out onto the track I think, 'What am I doing here? Why do I put myself through this?' But that's when you really get into your focus ... you focus on the race you are going to run.",
     "author": "Kelly Holmes"
   },
   {
-    "quote": "If a man coaches himself, then he has only himself to blame when he is beaten. ",
+    "quote": "If a man coaches himself, then he has only himself to blame when he is beaten.",
     "author": "Roger Bannister"
   },
   {
-    "quote": "The will to win means nothing if you haven't the will to prepare. ",
+    "quote": "The will to win means nothing if you haven't the will to prepare.",
     "author": "Juma Ikangaa"
   },
   {
-    "quote": "If I am still standing at the end of the race, hit me with a board and knock me down, because that means I didn’t run hard enough ",
+    "quote": "If I am still standing at the end of the race, hit me with a board and knock me down, because that means I didn’t run hard enough",
     "author": "Steve Jones"
   },
   {
-    "quote": "I prefer to remain in blissful ignorance of the opposition. That way I'm not frightened by anyone's reputation. ",
+    "quote": "I prefer to remain in blissful ignorance of the opposition. That way I'm not frightened by anyone's reputation.",
     "author": "Ian Thompson"
   },
   {
@@ -538,15 +538,15 @@ module.exports = [
     "author": "Paul Tergat"
   },
   {
-    "quote": "The only tactics I admire are do-or-die. ",
+    "quote": "The only tactics I admire are do-or-die.",
     "author": "Herb Elliot"
   },
   {
-    "quote": "Mind is everything: muscle--pieces of rubber. All that I am, I am because of my mind. ",
+    "quote": "Mind is everything: muscle--pieces of rubber. All that I am, I am because of my mind.",
     "author": "Paavo Nurmi"
   },
   {
-    "quote": "The thinking must be done first, before training begins. ",
+    "quote": "The thinking must be done first, before training begins.",
     "author": "Peter Coe"
   },
   {
