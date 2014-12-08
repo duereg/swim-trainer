@@ -8,7 +8,7 @@ workoutType = require('./workoutType.cjsx')
 editableInterval = React.createClass
   addRow: (ev) ->
     ev.preventDefault()
-    console.log 'addRow called'
+    console.log 'addRow called', this.refs.workoutType, this.refs.workoutLength
 
   render: ->
     <Row>

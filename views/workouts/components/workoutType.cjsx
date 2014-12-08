@@ -7,7 +7,7 @@ typesOfWorkouts = [
   {id: 'uwh_game', title: 'UWH Game'},
   {id: 'swimming', title: 'Swimming'},
   {id: 'fin_swimming', title: 'Fin Swimming'},
-  {id: 'strawberry', title: 'Dynamic Apnea'},
+  {id: 'apnea', title: 'Dynamic Apnea'},
   {id: 'puck_skills', title: 'Puck Skills'},
 
   {id: 'endurance', title: 'Endurance'},
@@ -18,12 +18,16 @@ typesOfWorkouts = [
 ]
 
 workoutType = React.createClass
+  typeSelected: (ev) ->
+    console.log 'workoutType', ev.target.value
+
   render: ->
     <formGroup inputId="type-of-workout" label="Type of Workout">
-      <select ref='typeSelector' id="type-of-workout" className="form-control">
+      <select ref='typeSelector' id="type-of-workout"
+        className="form-control" value={this.props.value} onChange={this.typeSelected} >
         {
           typesOfWorkouts.map (workout) ->
-            <option key={workout.id} value={workout.id}>{workout.title}</option>
+            <option key={workout.id} value={workout.title}>{workout.title}</option>
         }
       </select>
     </formGroup>
