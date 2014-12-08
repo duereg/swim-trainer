@@ -20,6 +20,11 @@ typesOfWorkouts = [
 workoutType = React.createClass
   typeSelected: (ev) ->
     console.log 'workoutType', ev.target.value
+    this.props.onChange?(ev.target.value)
+
+  currentValue: ->
+    console.log 'currentValue: workoutType', this.refs.typeSelector
+    this.refs.typeSelector.getDOMNode().value
 
   render: ->
     <formGroup inputId="type-of-workout" label="Type of Workout">

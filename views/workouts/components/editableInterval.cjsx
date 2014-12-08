@@ -8,15 +8,15 @@ workoutType = require('./workoutType.cjsx')
 editableInterval = React.createClass
   addRow: (ev) ->
     ev.preventDefault()
-    console.log 'addRow called', this.refs.workoutType, this.refs.workoutLength
+    console.log 'addRow called', this.refs.workoutType.currentValue(), this.refs.workoutLength.currentValue()
 
   render: ->
     <Row>
       <Col sm={6}>
-        <workoutType ref='workoutType' />
+        <workoutType ref='workoutType' onChange={this.typeChanged} />
       </Col>
       <Col sm={4} >
-        <workoutLength ref='workoutLength' />
+        <workoutLength ref='workoutLength' onChange={this.lengthChanged} />
       </Col>
       <Col sm={2} >
         <button id='addRow' ref='addRow' onClick={this.addRow} className='btn btn-success form-control'>Add</button>
