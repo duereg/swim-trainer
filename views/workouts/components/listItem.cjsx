@@ -19,8 +19,6 @@ workoutListItem = React.createClass
     if workout.formatted?
       parsedWorkout = new Workout(workout.formatted)
 
-    # console.log parsedWorkout, parsedWorkout.totalTime(), timeFormatter.toString(parsedWorkout.totalTime())
-
     <tr className="Workouts--item" key={workout._id} >
       <td>
         <a href={"/workouts/edit/#{workout._id}"}>
