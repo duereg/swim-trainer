@@ -17,10 +17,10 @@ typesOfWorkouts = [
   {id: 'other', title: 'Other'},
 ]
 
-workoutLength = React.createClass
+workoutType = React.createClass
   render: ->
     <formGroup inputId="type-of-workout" label="Type of Workout">
-      <select id="type-of-workout" className="form-control">
+      <select ref='typeSelector' id="type-of-workout" className="form-control">
         {
           typesOfWorkouts.map (workout) ->
             <option key={workout.id} value={workout.id}>{workout.title}</option>
@@ -28,4 +28,4 @@ workoutLength = React.createClass
       </select>
     </formGroup>
 
-module.exports = workoutLength
+module.exports = workoutType
