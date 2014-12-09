@@ -8,7 +8,7 @@ formGroup = require('./formGroup.cjsx')
 workoutDate = require('./workoutDate.cjsx')
 editableInterval = require('./editableInterval.cjsx')
 readOnlyInterval = require('./readOnlyInterval.cjsx')
-{Col, Row} = require('react-bootstrap')
+{Col, Row, Table} = require('react-bootstrap')
 
 containerId = "workout-simple-add"
 
@@ -37,17 +37,21 @@ processWorkout = React.createClass
   render: ->
     <form className='processWorkout form-horizontal' role="form">
       <editableInterval />
-      <hr />
-      {
-        @state.workout?.formatted?.sets?.map (set, index) ->
-          <Row key={"#{set.name}#{index}"}>
-            Set
+      <Row>
+        <Col sm={1} className='hidden-xs'></Col>
+        <Col sm={10}>
+          <Table className='Intervals' condensed>
+            <tbody>
             {
-              set.intervals.map (interval, index) ->
-                <readOnlyInterval key={index} interval={interval} />
+              @state.workout?.formatted?.sets?.map (set, index) ->
+                set.intervals.map (interval, index) ->
+                  <readOnlyInterval key={index} interval={interval} />
             }
-          </Row>
-      }
+            </tbody>
+          </Table>
+        </Col>
+        <Col sm={1} className='hidden-xs'></Col>
+      </Row>
       <hr />
       <Row>
         <Col sm={8}>
