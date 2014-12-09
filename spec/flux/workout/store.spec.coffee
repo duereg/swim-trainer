@@ -10,7 +10,7 @@ describe 'flux/workout/store', ->
     {workout} = {}
 
     beforeEach ->
-      workout = {id: 4566}
+      workout = {_id: 4566}
       store = new Store({workout})
 
     it 'sets errors to an array', ->
@@ -20,7 +20,10 @@ describe 'flux/workout/store', ->
       expect(store.messages).to.eql([])
 
     it 'sets workout correctly', ->
-      expect(store.workout.id).to.eq(workout.id)
+      expect(store.workout._id).to.eq(workout._id)
+
+    it 'populates a formatted Workout object', ->
+      expect(store.workout.formatted).to.be.ok
 
   describe 'created with no options', ->
     beforeEach ->
@@ -36,14 +39,48 @@ describe 'flux/workout/store', ->
     it 'sets messages to an array', ->
       expect(store.messages).to.eql([])
 
-    it 'sets workout to an empty object', ->
-      expect(store.workout).to.eql({})
+    it 'sets workout to an object', ->
+      expect(store.workout).to.be.ok
+
+    it 'populates a formatted Workout object', ->
+      expect(store.workout.formatted).to.be.ok
+
+    describe 'onWorkoutDeleteSuccess', ->
+      {workoutToDelete} = {}
+
+      beforeEach ->
+        workoutToDelete = {_id: 3}
+        store.workouts.push {_id: 1}, {_id: 2}, workoutToDelete
+        store.onWorkoutDeleteSuccess workout: workoutToDelete
+
+      it 'removes an existing workout from the workout collection', ->
+        expect(store.workouts).not.to.contain workoutToDelete
+
+      it 'contains the other workouts', ->
+        expect(store.workouts.length).to.eq 2
+
+    describe 'onWorkoutUpdateSuccess', ->
+      {updatedWorkout, workoutBeingUpdated} = {}
+
+      beforeEach ->
+        workoutBeingUpdated = {_id: 3}
+        updatedWorkout = {_id: 3, stuff: 'new', raw: '4x100 huho @ 1:30'}
+        store.workouts.push {_id: 1}, {_id: 2}, workoutBeingUpdated
+        store.onWorkoutUpdateSuccess workout: updatedWorkout
+
+      it 'adds the updated workout to the workout collection', ->
+        expect(store.workouts).to.contain updatedWorkout
+
+      it 'removes the existing workout from the workout collection', ->
+        expect(store.workouts).not.to.contain workoutBeingUpdated
+
+    # describe 'onWorkoutAddIntervalSuccess', ->
 
     describe 'onWorkoutSaveSuccess', ->
       {workout, payload} = {}
 
       beforeEach ->
-        workout = {id: 4, raw: '4x100 huho @ 1:30'}
+        workout = {_id: 4, raw: '4x100 huho @ 1:30'}
         payload = {workout}
         store.workout = workout
         store.onWorkoutSaveSuccess(payload)
@@ -78,6 +115,10 @@ describe 'flux/workout/store', ->
     describe 'actions hash', ->
       it 'maps constants.SAVE to onLoad', ->
         expect(store.__actions__[constants.SAVE]).to.eq(store.onLoad)
+
+      it 'maps constants.ADD_INTERVAL_SUCCESS to onWorkoutAddIntervalSuccess', ->
+        expect(store.__actions__[constants.ADD_INTERVAL_SUCCESS])
+          .to.eq(store.onWorkoutAddIntervalSuccess)
 
       it 'maps constants.CREATE_SUCCESS to onWorkoutSaveSuccess', ->
         expect(store.__actions__[constants.CREATE_SUCCESS]).to.eq(store.onWorkoutSaveSuccess)

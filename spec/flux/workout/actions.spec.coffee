@@ -11,6 +11,13 @@ describe 'flux/workout/actions', ->
   afterEach ->
     delete actions.dispatch
 
+  describe '#addInterval', ->
+    beforeEach ->
+      actions.addInterval 'type', '1:00'
+
+    it 'calls dispatch to indicate an Interval should be added', ->
+      expect(actions.dispatch.calledWith constants.ADD_INTERVAL_SUCCESS).to.be.true
+
   describe '#delete', ->
     {workout, delStub} = {}
 

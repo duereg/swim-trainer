@@ -7,11 +7,9 @@ intervals = ["0:00","0:15","0:30","0:45","1:00","1:15","1:30","1:45","2:00","2:1
 
 workoutLength = React.createClass
   optionSelected: (ev) ->
-    console.log 'workoutLength', ev.target.value
     this.props.onChange?(ev.target.value)
 
   currentValue: ->
-    console.log 'currentValue: workoutLength', this.refs.lengthSelector
     this.refs.lengthSelector.getDOMNode().value
 
   render: ->

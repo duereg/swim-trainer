@@ -1,6 +1,7 @@
 _ = require 'underscore'
 Fluxxor = require 'fluxxor'
 parser = require 'swim-parser'
+Workout = require 'swim-parser/lib/workout'
 
 constants = require './constants'
 
@@ -13,10 +14,13 @@ workoutStore = Fluxxor.createStore
     @workouts = if workouts?.length then workouts else []
     @workout = if workout? then workout else {}
 
+    @workout.formatted ?= new Workout()
+
     @bindActions(
       constants.SAVE, @onLoad
       constants.DELETE, @onLoad
 
+      constants.ADD_INTERVAL_SUCCESS, @onWorkoutAddIntervalSuccess
       constants.CREATE_SUCCESS, @onWorkoutSaveSuccess
       constants.UPDATE_SUCCESS, @onWorkoutUpdateSuccess
       constants.DELETE_SUCCESS, @onWorkoutDeleteSuccess
@@ -39,6 +43,9 @@ workoutStore = Fluxxor.createStore
     @errors = [(payload.error && payload.error.error) || payload.error || payload.toString()]
     @emit('change')
 
+  onWorkoutAddIntervalSuccess: ({type, length}) ->
+    console.log 'add interval', type, length
+
   onWorkoutDeleteSuccess: (payload) ->
     @workouts = _(@workouts).filter (workout) -> workout._id isnt payload.workout._id
     @emit('change')
@@ -49,6 +56,7 @@ workoutStore = Fluxxor.createStore
     global.location = '/workouts'
 
   onWorkoutUpdateSuccess: (payload) ->
+    throw new Error('Must provide a raw workout to parse') unless payload.workout?.raw?
     payload.workout.formatted = parser(payload.workout.raw)
     @workouts = _(@workouts).filter (workout) -> workout._id isnt payload.workout._id
     @workouts.push(payload.workout)

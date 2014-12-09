@@ -4,6 +4,9 @@ workoutData = require('src/data/workout')
 csrf = null
 
 actions =
+  addInterval: (type, length) ->
+    @dispatch(constants.ADD_INTERVAL_SUCCESS, {type, length})
+
   delete: (workout) ->
     throw new Error('Invalid workout') unless workout?
 
@@ -13,11 +16,12 @@ actions =
     workoutData
       .delete(workout, csrf)
       .then( ->
-        me.dispatch(constants.DELETE_SUCCESS, {workout: workout})
+        me.dispatch(constants.DELETE_SUCCESS, {workout})
       )
       .error( (er) ->
-        me.dispatch(constants.DELETE_FAILURE, {error: er, workout: workout})
+        me.dispatch(constants.DELETE_FAILURE, {error: er, workout})
       )
+
   save: (workout) ->
     throw new Error('Invalid workout') unless workout?
 
@@ -28,19 +32,19 @@ actions =
       workoutData
         .update(workout, csrf)
         .then( ->
-          me.dispatch(constants.UPDATE_SUCCESS, {workout: workout})
+          me.dispatch(constants.UPDATE_SUCCESS, {workout})
         )
         .error( (er) ->
-          me.dispatch(constants.UPDATE_FAILURE, {error: er, workout: workout})
+          me.dispatch(constants.UPDATE_FAILURE, {error: er, workout})
         )
     else
       workoutData
         .create(workout, csrf)
         .then( ->
-          me.dispatch(constants.CREATE_SUCCESS, {workout: workout})
+          me.dispatch(constants.CREATE_SUCCESS, {workout})
         )
         .error( (er) ->
-          me.dispatch(constants.CREATE_FAILURE, {error: er, workout: workout})
+          me.dispatch(constants.CREATE_FAILURE, {error: er, workout})
         )
 
 module.exports = (myCsrf) ->

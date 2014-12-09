@@ -11,4 +11,8 @@ constants =
   DELETE_SUCCESS: 'workout.delete.success'
   DELETE_FAILURE: 'workout.delete.failure'
 
+  ADD_INTERVAL: 'workout.addInterval'
+  ADD_INTERVAL_SUCCESS: 'workout.addInterval.success'
+  ADD_INTERVAL_FAILURE: 'workout.addInterval.failure'
+
 module.exports = constants
