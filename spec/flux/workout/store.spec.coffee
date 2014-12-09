@@ -74,7 +74,25 @@ describe 'flux/workout/store', ->
       it 'removes the existing workout from the workout collection', ->
         expect(store.workouts).not.to.contain workoutBeingUpdated
 
-    # describe 'onWorkoutAddIntervalSuccess', ->
+    describe 'onWorkoutAddIntervalSuccess', ->
+      {workoutWithInterval} = {}
+
+      beforeEach ->
+        store.onWorkoutAddIntervalSuccess {type: 'one', length: '1:30'}
+        workoutWithInterval = store.workout.formatted
+
+      it 'creates a set "---SIMPLE WORKOUT---"', ->
+        expect(workoutWithInterval.current().name).to.eq '---SIMPLE WORKOUT---'
+
+      it 'adds an interval to the set', ->
+        expect(workoutWithInterval.current().intervals.length).to.eq 1
+
+      it 'sets the interval type to "one"', ->
+        expect(workoutWithInterval.current().current().type).to.eq 'one'
+
+      it 'sets the interval time to a 1:30 duration', ->
+        expect(workoutWithInterval.current().current().time.minutes()).to.eq 1
+        expect(workoutWithInterval.current().current().time.seconds()).to.eq 30
 
     describe 'onWorkoutSaveSuccess', ->
       {workout, payload} = {}

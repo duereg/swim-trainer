@@ -44,7 +44,11 @@ workoutStore = Fluxxor.createStore
     @emit('change')
 
   onWorkoutAddIntervalSuccess: ({type, length}) ->
-    console.log 'add interval', type, length
+    if @workout.formatted.sets.length is 0
+      @workout.formatted.addSet('---SIMPLE WORKOUT---')
+    @workout.formatted.current().addInterval()
+    @workout.formatted.current().setType type
+    @workout.formatted.current().setTime length
 
   onWorkoutDeleteSuccess: (payload) ->
     @workouts = _(@workouts).filter (workout) -> workout._id isnt payload.workout._id
