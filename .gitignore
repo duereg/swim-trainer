@@ -13,8 +13,9 @@ logs
 results
 tmp
 
-npm-debug.log
-node_modules
+node_modules/*
+!node_modules/src
+!node_modules/spec
 coverage
 .idea
 *.iml

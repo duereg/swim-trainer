@@ -48,6 +48,7 @@
     "gulp-nodemon": "^1.0.4",
     "gulp-rename": "^1.2.0",
     "istanbul": "duereg/istanbul",
+    "jshint-stylish": "^1.0.0",
     "less": "^1.7.5",
     "lusca": "^1.0.1",
     "method-override": "^2.2.0",
@@ -81,7 +82,6 @@
   },
   "devDependencies": {
     "faker": "^2.1.1",
-    "jshint-stylish": "^1.0.0",
     "sinon": "^1.10.3",
     "sinon-chai": "^2.5.0"
   }
