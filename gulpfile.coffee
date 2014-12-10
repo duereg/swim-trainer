@@ -9,7 +9,7 @@ jshint = require('gulp-jshint')
 stylish = require('jshint-stylish')
 
 jsFiles = ['config/**/*.js', 'controllers/**/*.js', 'models/**/*.js', 'app.js']
-specFiles = ['spec/**/*.coffee']
+specFiles = ['spec/**/*.spec.coffee']
 coffeeFiles = ['src/**/*.coffee', 'viewEngines/**/*.coffee']
 cjsxFiles = ['public/entrypoint.cjsx', 'views/**/*.cjsx']
 
