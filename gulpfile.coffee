@@ -31,7 +31,7 @@ gulp.task 'lint', ->
 
 gulp.task 'develop', ['build'], ->
   nodemon(
-    script: 'app.js'
+    script: 'index.js'
     ext: 'cjsx coffee'
     env: { 'NODE_ENV': 'development' }
     ignore: ['./public/**/*.js'])
