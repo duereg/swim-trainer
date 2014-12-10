@@ -41,6 +41,3 @@ describe 'User Model', ->
           else
             done(new Error("no user found with email #{email}")) unless foundUser?
 
-
-
-

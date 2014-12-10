@@ -1,7 +1,7 @@
-"use strict"
+'use strict'
 
-reactViews = require("express-coffee-react-views")
-flux = require("../src/flux")
+reactViews = require('express-coffee-react-views')
+flux = require('../src/flux')
 engine = reactViews.createEngine(beautify: true)
 
 pageRenderer = (filename, options, cb) ->

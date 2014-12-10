@@ -10,7 +10,7 @@ stylish = require('jshint-stylish')
 
 jsFiles = ['config/**/*.js', 'controllers/**/*.js', 'models/**/*.js', 'app.js']
 specFiles = ['spec/**/*.coffee']
-coffeeFiles = ['src/**/*.coffee']
+coffeeFiles = ['src/**/*.coffee', 'viewEngines/**/*.coffee']
 cjsxFiles = ['public/entrypoint.cjsx', 'views/**/*.cjsx']
 
 gulp.task 'build', ->
