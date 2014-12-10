@@ -12,7 +12,7 @@
     "start": "node index.js",
     "pretest": "gulp build",
     "test": "gulp test",
-    "postinstall": "gulp build"
+    "postinstall": "node_modules/.bin/gulp build"
   },
   "dependencies": {
     "async": "^0.9.0",
