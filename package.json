@@ -9,8 +9,8 @@
     "url": "https://github.com/duereg/swim-trainer.git"
   },
   "scripts": {
-    "start": "node app.js",
-    "build": "gulp coffee",
+    "start": "node index.js",
+    "build": "gulp build",
     "test": "gulp test"
   },
   "dependencies": {
