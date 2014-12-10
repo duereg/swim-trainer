@@ -11,8 +11,7 @@
   "scripts": {
     "start": "node index.js",
     "pretest": "node node_modules/.bin/gulp build",
-    "test": "node node_modules/.bin/gulp test",
-    "postinstall": "node node_modules/.bin/gulp build"
+    "test": "node node_modules/.bin/gulp test"
   },
   "dependencies": {
     "async": "^0.9.0",
