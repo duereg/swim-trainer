@@ -17,8 +17,8 @@ workoutLength = React.createClass
       <select id="length-of-workout" className="form-control" ref="lengthSelector"
         value={this.props.value} onChange={this.optionSelected}>
         {
-          intervals.map (interval, index) ->
-            <option key={index} value={interval}>{interval}</option>
+          intervals.map (interval) ->
+            <option key={interval} value={interval + ':00'}>{interval}</option>
         }
       </select>
     </formGroup>
