@@ -7,6 +7,9 @@ actions =
   addInterval: (type, length) ->
     @dispatch(constants.ADD_INTERVAL_SUCCESS, {type, length})
 
+  deleteInterval: (interval) ->
+    @dispatch(constants.DELETE_INTERVAL_SUCCESS, {interval})
+
   delete: (workout) ->
     throw new Error('Invalid workout') unless workout?
 
