@@ -7,7 +7,7 @@ describe 'app.js', ->
 
   before (done) ->
     app = require '../app.js'
-    server = app.listen app.get('port'), done
+    server = app.listen process.env.TEST_PORT || 11976, done
 
   after (done) ->
     server.close done
