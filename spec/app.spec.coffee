@@ -1,7 +1,7 @@
 request = require 'supertest'
 
 describe 'app.js', ->
-  @timeout(5000)
+  @timeout(10000)
 
   {server} = {}
 
