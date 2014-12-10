@@ -94,6 +94,19 @@ describe 'flux/workout/store', ->
         expect(workoutWithInterval.current().current().time.minutes()).to.eq 1
         expect(workoutWithInterval.current().current().time.seconds()).to.eq 30
 
+      it 'emit("change") is called', ->
+        expect(emitStub.called).to.be.true
+
+      describe 'onWorkoutDeleteIntervalSuccess', ->
+        beforeEach ->
+          store.onWorkoutDeleteIntervalSuccess {interval: workoutWithInterval.current().current()}
+
+        it 'removes the interval from the workout', ->
+          expect(workoutWithInterval.current().intervals.length).to.eq 0
+
+        it 'emit("change") is called', ->
+          expect(emitStub.called).to.be.true
+
     describe 'onWorkoutSaveSuccess', ->
       {workout, payload} = {}
 

@@ -21,6 +21,7 @@ workoutStore = Fluxxor.createStore
       constants.DELETE, @onLoad
 
       constants.ADD_INTERVAL_SUCCESS, @onWorkoutAddIntervalSuccess
+      constants.DELETE_INTERVAL_SUCCESS, @onWorkoutDeleteIntervalSuccess
       constants.CREATE_SUCCESS, @onWorkoutSaveSuccess
       constants.UPDATE_SUCCESS, @onWorkoutUpdateSuccess
       constants.DELETE_SUCCESS, @onWorkoutDeleteSuccess
@@ -41,6 +42,14 @@ workoutStore = Fluxxor.createStore
   onError: (payload) ->
     @messages = []
     @errors = [(payload.error && payload.error.error) || payload.error || payload.toString()]
+    @emit('change')
+
+  onWorkoutDeleteIntervalSuccess: ({interval}) ->
+    filteredIntervals = _(@workout.formatted.current().intervals).filter (currentInterval) ->
+      currentInterval isnt interval
+
+    @workout.formatted.current().intervals.length = 0
+    filteredIntervals.forEach @workout.formatted.current().intervals.push
     @emit('change')
 
   onWorkoutAddIntervalSuccess: ({type, length}) ->
