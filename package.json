@@ -10,7 +10,7 @@
   },
   "scripts": {
     "start": "node index.js",
-    "build": "gulp build",
+    "pretest": "gulp build",
     "test": "gulp test"
   },
   "dependencies": {
