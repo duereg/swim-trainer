@@ -31,8 +31,10 @@ processWorkout = React.createClass
       workout: workout
     }
 
-  saveWorkout: ->
-    flux().actions.save(@state.workout)
+  saveWorkout: (ev) ->
+    ev.preventDefault()
+    console.log 'about to save', @state.workout
+    flux().actions.save @state.workout
 
   render: ->
     <form className='processWorkout form-horizontal' role="form">

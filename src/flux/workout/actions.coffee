@@ -10,6 +10,9 @@ actions =
   deleteInterval: (interval) ->
     @dispatch(constants.DELETE_INTERVAL_SUCCESS, {interval})
 
+  updateDate: (date) ->
+    @dispatch(constants.UPDATE_DATE_SUCCESS, {date})
+
   delete: (workout) ->
     throw new Error('Invalid workout') unless workout?
 
@@ -27,9 +30,13 @@ actions =
 
   save: (workout) ->
     throw new Error('Invalid workout') unless workout?
+    throw new Error('Invalid workout date') unless workout.date?
 
     me = this
     me.dispatch(constants.SAVE)
+
+    if workout.formatted?
+      workout.raw ?= workout.formatted.toString()
 
     if workout._id
       workoutData

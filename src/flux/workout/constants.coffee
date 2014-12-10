@@ -13,5 +13,6 @@ constants =
 
   ADD_INTERVAL_SUCCESS: 'workout.addInterval.success'
   DELETE_INTERVAL_SUCCESS: 'workout.deleteInterval.success'
+  UPDATE_DATE_SUCCESS: 'workout.updateDate.success'
 
 module.exports = constants

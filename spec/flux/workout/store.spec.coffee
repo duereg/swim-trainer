@@ -42,8 +42,20 @@ describe 'flux/workout/store', ->
     it 'sets workout to an object', ->
       expect(store.workout).to.be.ok
 
+    it 'sets workout date', ->
+      expect(store.workout.date).to.be.ok
+
     it 'populates a formatted Workout object', ->
       expect(store.workout.formatted).to.be.ok
+
+    describe 'onWorkoutUpdateDateSuccess', ->
+      {workoutToDelete} = {}
+
+      beforeEach ->
+        store.onWorkoutUpdateDateSuccess {date: '2010-01-02'}
+
+      it 'updates an existing workout with a new date', ->
+        expect(store.workout.date.getFullYear()).to.eq 2010
 
     describe 'onWorkoutDeleteSuccess', ->
       {workoutToDelete} = {}
@@ -150,6 +162,14 @@ describe 'flux/workout/store', ->
       it 'maps constants.ADD_INTERVAL_SUCCESS to onWorkoutAddIntervalSuccess', ->
         expect(store.__actions__[constants.ADD_INTERVAL_SUCCESS])
           .to.eq(store.onWorkoutAddIntervalSuccess)
+
+      it 'maps constants.DELETE_INTERVAL_SUCCESS to onWorkoutDeleteIntervalSuccess', ->
+        expect(store.__actions__[constants.DELETE_INTERVAL_SUCCESS])
+          .to.eq(store.onWorkoutDeleteIntervalSuccess)
+
+      it 'maps constants.UPDATE_DATE_SUCCESS to onWorkoutUpdateDateSuccess', ->
+        expect(store.__actions__[constants.UPDATE_DATE_SUCCESS])
+          .to.eq(store.onWorkoutUpdateDateSuccess)
 
       it 'maps constants.CREATE_SUCCESS to onWorkoutSaveSuccess', ->
         expect(store.__actions__[constants.CREATE_SUCCESS]).to.eq(store.onWorkoutSaveSuccess)
