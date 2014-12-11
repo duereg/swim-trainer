@@ -18,6 +18,10 @@
 
 module.exports = {
 
+  port: process.env.PORT || process.env.OPENSHIFT_NODEJS_PORT || 3000,
+
+  isProduction: process.env.NODE_ENV === 'production',
+
   db: process.env.MONGODB || process.env.OPENSHIFT_MONGODB_DB_URL || 'mongodb://localhost:27017/test',
 
   sessionSecret: process.env.SESSION_SECRET || process.env.OPENSHIFT_SECRET_TOKEN || 'Your Session Secret goes here',

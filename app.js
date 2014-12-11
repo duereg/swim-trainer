@@ -8,7 +8,7 @@ require('coffee-react/register');
 var express = require('express');
 var cookieParser = require('cookie-parser');
 //Uncomment to compress HTML
-// var compress = require('compression');
+var compress = require('compression');
 var session = require('express-session');
 var bodyParser = require('body-parser');
 var logger = require('morgan');
@@ -73,12 +73,14 @@ var csrfExclude = ['/url1', '/url2'];
  * Express configuration.
  */
 
-app.set('port', process.env.PORT || process.env.OPENSHIFT_NODEJS_PORT || 3000);
+app.set('port', secrets.port);
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'cjsx');
 app.engine('cjsx', reactFluxViews);
 
-// app.use(compress()); TODO: uncomment to compress html
+if (secrets.isProduction) {
+  app.use(compress());
+}
 app.use(connectAssets({
   paths: [path.join(__dirname, 'public/css'), path.join(__dirname, 'public/js')],
   helperContext: app.locals

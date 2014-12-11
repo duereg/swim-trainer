@@ -2,7 +2,9 @@
 
 reactViews = require('express-coffee-react-views')
 flux = require('../src/flux')
-engine = reactViews.createEngine(beautify: true)
+secrets = require '../config/secrets'
+
+engine = reactViews.createEngine(beautify: not secrets.isProduction)
 
 pageRenderer = (filename, options, cb) ->
   flux options
