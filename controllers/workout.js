@@ -44,9 +44,9 @@ exports.getEdit = function(req, res) {
     .then(function(origWorkout) {
       var url;
       if (origWorkout.formatted.sets[0].name === '---SIMPLE WORKOUT---') {
-        url = 'workouts/addSimple'
+        url = 'workouts/addSimple';
       } else {
-        url = 'workouts/addText'
+        url = 'workouts/addText';
       }
 
       res.render(url, {
