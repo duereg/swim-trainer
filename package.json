@@ -59,7 +59,6 @@
     "nodemailer": "^1.2.2",
     "passport": "^0.2.1",
     "passport-facebook": "duereg/passport-facebook",
-    "passport-github": "^0.1.5",
     "passport-google-oauth": "^0.1.5",
     "passport-local": "^1.0.0",
     "passport-oauth": "^1.0.0",
@@ -72,7 +71,6 @@
     "superagent-promises": "duereg/superagent-promises",
     "supertest": "^0.15.0",
     "swim-parser": "duereg/swim-parser",
-    "twilio": "^1.7.0",
     "uglify-js": "^2.4.15",
     "underscore": "^1.7.0",
     "validator": "^3.22.1"
