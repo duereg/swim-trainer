@@ -42,7 +42,14 @@ exports.getEdit = function(req, res) {
   //this should be smart enough to toggle between simple and text
   Workout.promise.findOne({_id: req.params.id, userId: req.user.id})
     .then(function(origWorkout) {
-      res.render('workouts/addText', {
+      var url;
+      if (origWorkout.formatted.sets[0].name === '---SIMPLE WORKOUT---') {
+        url = 'workouts/addSimple'
+      } else {
+        url = 'workouts/addText'
+      }
+
+      res.render(url, {
         title: 'Workout',
         workout: origWorkout
       });
