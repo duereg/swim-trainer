@@ -35,6 +35,7 @@
     "express-session": "^1.7.5",
     "express-validator": "^2.4.0",
     "fbgraph": "^0.3.0",
+    "fit-parser": "git://github.com/duereg/fit-parser",
     "fluxxor": "^1.5.0",
     "github-api": "^0.7.0",
     "gulp": "^3.8.8",
@@ -70,7 +71,6 @@
     "superagent": "^0.21.0",
     "superagent-promises": "duereg/superagent-promises",
     "supertest": "^0.15.0",
-    "swim-parser": "duereg/swim-parser",
     "uglify-js": "^2.4.15",
     "underscore": "^1.7.0",
     "validator": "^3.22.1"

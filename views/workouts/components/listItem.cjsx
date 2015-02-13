@@ -1,8 +1,8 @@
 # @cjsx React.DOM
 
 React = require('react')
-Workout = require('swim-parser/lib/workout')
-timeFormatter = require('swim-parser/lib/timeFormatter')
+Workout = require('fit-parser/lib/workout')
+timeFormatter = require('fit-parser/lib/timeFormatter')
 dateFormatterMixin = require('../../mixins/dateFormatter.coffee')
 
 workoutListItem = React.createClass

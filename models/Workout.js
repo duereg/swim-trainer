@@ -1,7 +1,7 @@
 'use strict';
 
 var mongoose = require('mongoose');
-var swimParser = require('swim-parser');
+var swimParser = require('fit-parser');
 
 var workoutSchema = new mongoose.Schema({
   userId: {type: mongoose.Schema.Types.ObjectId, required: true},

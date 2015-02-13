@@ -1,7 +1,7 @@
 _ = require 'underscore'
 Fluxxor = require 'fluxxor'
-parser = require 'swim-parser'
-Workout = require 'swim-parser/lib/workout'
+parser = require 'fit-parser'
+Workout = require 'fit-parser/lib/workout'
 
 constants = require './constants'
 
@@ -61,7 +61,7 @@ workoutStore = Fluxxor.createStore
   onWorkoutAddIntervalSuccess: ({type, length}) ->
     if @workout.formatted.sets.length is 0
       @workout.formatted.addSet('---SIMPLE WORKOUT---')
-    @workout.formatted.current().addInterval()
+    @workout.formatted.current().add()
     @workout.formatted.current().setType type
     @workout.formatted.current().setTime length
     @emit('change')

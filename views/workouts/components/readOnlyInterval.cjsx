@@ -2,7 +2,7 @@
 
 React = require('react')
 {Col, Row} = require('react-bootstrap')
-timeFormatter = require 'swim-parser/lib/timeFormatter'
+timeFormatter = require 'fit-parser/lib/timeFormatter'
 flux = require('src/flux')
 
 editableInterval = React.createClass
