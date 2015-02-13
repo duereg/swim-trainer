@@ -4,9 +4,9 @@ rename = require 'gulp-rename'
 istanbul = require 'gulp-coffee-istanbul'
 mocha = require 'gulp-mocha'
 coffeelint = require 'gulp-coffeelint'
-nodemon = require('gulp-nodemon')
-jshint = require('gulp-jshint')
-stylish = require('jshint-stylish')
+nodemon = require 'gulp-nodemon'
+jshint = require 'gulp-jshint'
+stylish = require 'jshint-stylish'
 
 jsFiles = ['config/**/*.js', 'controllers/**/*.js', 'models/**/*.js', 'app.js']
 specFiles = ['spec/**/*.spec.coffee']
