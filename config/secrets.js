@@ -48,27 +48,10 @@ module.exports = {
     passReqToCallback: true
   },
 
-  github: {
-    clientID: process.env.GITHUB_ID || 'cb448b1d4f0c743a1e36',
-    clientSecret: process.env.GITHUB_SECRET || '815aa4606f476444691c5f1c16b9c70da6714dc6',
-    callbackURL: '/auth/github/callback',
-    passReqToCallback: true
-  },
-
   google: {
     clientID: process.env.GOOGLE_ID || '828110519058.apps.googleusercontent.com',
     clientSecret: process.env.GOOGLE_SECRET || 'JdZsIaWhUFIchmC1a_IZzOHb',
     callbackURL: '/auth/google/callback',
     passReqToCallback: true
-  },
-
-  stripe: {
-    apiKey: process.env.STRIPE_KEY || 'sk_test_BQokikJOvBiI2HlWgH4olfQ2'
-  },
-
-  venmo: {
-    clientId: process.env.VENMO_ID || '1688',
-    clientSecret: process.env.VENMO_SECRET || 'uQXtNBa6KVphDLAEx8suEush3scX8grs',
-    redirectUrl: process.env.VENMO_REDIRECT_URL || 'http://localhost:3000/auth/venmo/callback'
   }
 };

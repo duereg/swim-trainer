@@ -161,12 +161,7 @@ app.get('/account/unlink/:provider', passportConf.isAuthenticated, userControlle
  */
 
 app.get('/api', apiController.getApi);
-app.get('/api/stripe', apiController.getStripe);
-app.post('/api/stripe', apiController.postStripe);
 app.get('/api/facebook', passportConf.isAuthenticated, passportConf.isAuthorized, apiController.getFacebook);
-app.get('/api/venmo', passportConf.isAuthenticated, passportConf.isAuthorized, apiController.getVenmo);
-app.post('/api/venmo', passportConf.isAuthenticated, passportConf.isAuthorized, apiController.postVenmo);
-
 
 /**
  * OAuth sign-in routes.

@@ -5,7 +5,6 @@ var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
 var FacebookStrategy = require('passport-facebook').Strategy;
 var GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
-var OAuth2Strategy = require('passport-oauth').OAuth2Strategy; // Venmo, Foursquare
 var User = require('../models/User');
 var secrets = require('./secrets');
 
@@ -20,7 +19,6 @@ passport.deserializeUser(function(id, done) {
 });
 
 // Sign in using Email and Password.
-
 passport.use(new LocalStrategy({ usernameField: 'email' }, function(email, password, done) {
   User.findOne({ email: email }, function(err, user) {
     if (!user) return done(null, false, { message: 'Email ' + email + ' not found'});
@@ -50,7 +48,6 @@ passport.use(new LocalStrategy({ usernameField: 'email' }, function(email, passw
  */
 
 // Sign in with Facebook.
-
 passport.use(new FacebookStrategy(secrets.facebook, function(req, accessToken, refreshToken, profile, done) {
   if (req.user) {
     User.findOne({ facebook: profile.id }, function(err, existingUser) {
@@ -97,7 +94,6 @@ passport.use(new FacebookStrategy(secrets.facebook, function(req, accessToken, r
 }));
 
 // Sign in with Google.
-
 passport.use(new GoogleStrategy(secrets.google, function(req, accessToken, refreshToken, profile, done) {
   if (req.user) {
     User.findOne({ google: profile.id }, function(err, existingUser) {
@@ -142,36 +138,13 @@ passport.use(new GoogleStrategy(secrets.google, function(req, accessToken, refre
   }
 }));
 
-
-// Venmo API setup.
-
-passport.use('venmo', new OAuth2Strategy({
-    authorizationURL: 'https://api.venmo.com/v1/oauth/authorize',
-    tokenURL: 'https://api.venmo.com/v1/oauth/access_token',
-    clientID: secrets.venmo.clientId,
-    clientSecret: secrets.venmo.clientSecret,
-    callbackURL: secrets.venmo.redirectUrl,
-    passReqToCallback: true
-  },
-  function(req, accessToken, refreshToken, profile, done) {
-    User.findById(req.user._id, function(err, user) {
-      user.tokens.push({ kind: 'venmo', accessToken: accessToken });
-      user.save(function(err) {
-        done(err, user);
-      });
-    });
-  }
-));
-
 // Login Required middleware.
-
 exports.isAuthenticated = function(req, res, next) {
   if (req.isAuthenticated()) return next();
   res.redirect('/login');
 };
 
 // Authorization Required middleware.
-
 exports.isAuthorized = function(req, res, next) {
   var provider = req.path.split('/').slice(-1)[0];
 
