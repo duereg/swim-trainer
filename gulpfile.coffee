@@ -64,4 +64,5 @@ gulp.task 'test', ['lint', 'coffeelint'], ->
             process.exit(0)
 
 gulp.task 'default', ['build']
+gulp.task 'start', ['develop']
 gulp.task 'heroku:production', ['build']
