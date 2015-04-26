@@ -2,13 +2,13 @@
 
 React = require('react')
 layout = require('../layout')
-simpleWorkout = require('./components/simpleWorkout')
+liftWorkout = require('./components/liftWorkout')
 
 addWorkout = React.createClass
   render: ->
     <layout data={this.props}>
-      <div id={simpleWorkout.containerId}>
-        <simpleWorkout data={this.props} />
+      <div id={liftWorkout.containerId}>
+        <liftWorkout data={this.props} />
       </div>
     </layout>
 

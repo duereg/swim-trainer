@@ -5,11 +5,10 @@ flux = require('src/flux')
 storeWatchMixin = require('src/flux/storeWatchMixin')
 
 workoutDate = require('./workoutDate.cjsx')
-editableInterval = require('./editableInterval.cjsx')
-readOnlyInterval = require('./readOnlyInterval.cjsx')
+liftField = require('./liftField.cjsx')
 {Col, Row, Table} = require('react-bootstrap')
 
-containerId = "workout-simple-add"
+containerId = "workout-lift-add"
 
 processWorkout = React.createClass
   mixins: [storeWatchMixin('WorkoutStore')],
@@ -37,21 +36,15 @@ processWorkout = React.createClass
 
   render: ->
     <form className='processWorkout form-horizontal' role="form">
-      <editableInterval />
       <Row>
-        <Col sm={1} className='hidden-xs'></Col>
-        <Col sm={10}>
-          <Table className='Intervals' condensed>
-            <tbody>
-            {
-              @state.workout?.formatted?.sets?.map (set, index) ->
-                set.intervals.map (interval, index) ->
-                  <readOnlyInterval key={index} interval={interval} />
-            }
-            </tbody>
-          </Table>
+        <Col sm={6}>
+          <liftField fieldName='Reps' value='10' />
         </Col>
-        <Col sm={1} className='hidden-xs'></Col>
+      </Row>
+      <Row>
+        <Col sm={6}>
+          <liftField fieldName='Weight' value='135' />
+        </Col>
       </Row>
       <hr />
       <Row>

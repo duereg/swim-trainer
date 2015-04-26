@@ -20,6 +20,14 @@ exports.getWorkouts = function(req, res) {
     });
 };
 
+exports.getAddLift = function(req, res) {
+  if (!req.user) return res.redirect('/login');
+
+  res.render('workouts/addLift', {
+    title: 'Workouts'
+  });
+};
+
 exports.getAddSimple = function(req, res) {
   if (!req.user) return res.redirect('/login');
 
