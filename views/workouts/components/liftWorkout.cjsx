@@ -38,12 +38,10 @@ processWorkout = React.createClass
     <form className='processWorkout form-horizontal' role="form">
       <Row>
         <Col sm={6}>
-          <liftField fieldName='Reps' value='10' />
+          <liftField fieldName='Reps' value='10' changeAmount='1' />
         </Col>
-      </Row>
-      <Row>
         <Col sm={6}>
-          <liftField fieldName='Weight' value='135' />
+          <liftField fieldName='Weight' value='135' changeAmount='5' />
         </Col>
       </Row>
       <hr />
