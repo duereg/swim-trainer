@@ -4,6 +4,7 @@ React = require('react')
 flux = require('src/flux')
 storeWatchMixin = require('src/flux/storeWatchMixin')
 
+formGroup = require('./formGroup.cjsx')
 workoutDate = require('./workoutDate.cjsx')
 liftField = require('./liftField.cjsx')
 {Col, Row, Table} = require('react-bootstrap')
@@ -37,11 +38,25 @@ processWorkout = React.createClass
   render: ->
     <form className='processWorkout form-horizontal' role="form">
       <Row>
-        <Col sm={6}>
-          <liftField fieldName='Reps' value='10' changeAmount='1' />
+        <Col sm={4}>
+          <liftField fieldName='Reps'
+                     defaultValue='10'
+                     changeAmount='1'
+                     value={this.props.interval?.reps} />
         </Col>
-        <Col sm={6}>
-          <liftField fieldName='Weight' value='135' changeAmount='5' />
+        <Col sm={4}>
+          <liftField fieldName='Weight'
+                     defaultValue='135'
+                     changeAmount='5'
+                     value={this.props.interval?.weight} />
+        </Col>
+        <Col sm={4}>
+          <fieldset className='lift-field'>
+            <legend>Lift Type</legend>
+            <input className='lift-field--value__full'
+                   type='text'
+                   value={this.props.interval?.type} />
+          </fieldset>
         </Col>
       </Row>
       <hr />

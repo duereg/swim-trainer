@@ -18,7 +18,8 @@ liftField = React.createClass
       <span className="ion-ios7-plus-empty lift-field--change-value" onClick={this.increaseValue} ></span>
       <input type='text'
              className='lift-field--value'
-             defaultValue={this.props.value}
+             defaultValue={this.props.defaultValue}
+             value={this.props.value}
              onChange={this.onChange} />
       <span className="ion-ios7-minus-empty lift-field--change-value" onClick={this.lowerValue} ></span>
     </fieldset>
