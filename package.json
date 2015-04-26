@@ -10,8 +10,8 @@
   },
   "scripts": {
     "start": "node index.js",
-    "pretest": "node node_modules/.bin/gulp build",
-    "test": "node node_modules/.bin/gulp test"
+    "pretest": "node_modules/.bin/gulp build",
+    "test": "node_modules/.bin/gulp test"
   },
   "dependencies": {
     "async": "^0.9.0",
