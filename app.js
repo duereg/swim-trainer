@@ -134,6 +134,7 @@ app.get('/workouts/addLift', workoutController.getAddLift);
 app.get('/workouts/addSimple', workoutController.getAddSimple);
 app.get('/workouts/addText', workoutController.getAddText);
 app.get('/workouts/edit/:id', workoutController.getEdit);
+//TODO: Add view page, to view other people's workouts
 app.post('/v1/workouts/', workoutApiController.postAdd);
 app.post('/v1/workouts/:id', workoutApiController.postSave);
 app.get('/v1/workouts', workoutApiController.getWorkouts);
