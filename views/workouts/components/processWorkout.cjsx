@@ -40,18 +40,21 @@ processWorkout = React.createClass
   render: ->
     <div className='processWorkout container'>
       <smallRow>
-        Enter your workout
+
       </smallRow>
       <smallRow>
-        <input className='input-sm processWorkout--date' type='date' ref='workoutDate' defaultValue={
-          if this.state.workout?.date? then @getFormattedDate(new Date(this.state.workout.date)) else @getFormattedDate(new Date())
-        } />
+        <fieldset>
+        <legend>Enter your workout</legend>
+          <input className='form-control processWorkout--date' type='date' ref='workoutDate' defaultValue={
+            if this.state.workout?.date? then @getFormattedDate(new Date(this.state.workout.date)) else @getFormattedDate(new Date())
+          } />
+        </fieldset>
       </smallRow>
       <smallRow>
-        <textarea className='processWorkout--input' id='workoutInput' ref='workoutInput' defaultValue={this.state.workout?.raw} />
+        <textarea className='form-control processWorkout--input' id='workoutInput' ref='workoutInput' defaultValue={this.state.workout?.raw} />
       </smallRow>
       <smallRow>
-        <button id='process' ref='process' className='btn btn-primary processWorkout--execute' onClick={this.saveWorkout}>Save Workout</button>
+        <button id='process' ref='process' className='btn btn-primary form-control processWorkout--execute' onClick={this.saveWorkout}>Save Workout</button>
       </smallRow>
     </div>
 
