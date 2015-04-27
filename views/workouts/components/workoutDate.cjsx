@@ -13,12 +13,13 @@ workoutDate = React.createClass
     flux().actions.updateDate this.refs.workoutDate.getDOMNode().value
 
   render: ->
-    <formGroup inputSize={10} labelSize={2} inputId="workout-date" label="Workout Date">
-      <input id="workout-date" className='form-control workout-date'
+    <fieldset>
+      <legend>Workout Date</legend>
+      <input className='form-control workout-date'
         type='date' ref='workoutDate' onChange={this.dateChanged}
         defaultValue={
           if this.props.date? then @getFormattedDate(new Date(this.props.date)) else @getFormattedDate(new Date())
         } />
-    </formGroup>
+    </fieldset>
 
 module.exports = workoutDate

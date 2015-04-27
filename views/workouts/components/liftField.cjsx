@@ -17,7 +17,7 @@ liftField = React.createClass
       <legend>{this.props.fieldName}</legend>
       <span className="ion-ios7-plus-empty lift-field--change-value" onClick={this.increaseValue} ></span>
       <input type='text'
-             className='lift-field--value'
+             className='form-control lift-field--value__fixed'
              defaultValue={this.props.defaultValue}
              value={this.props.value}
              onChange={this.onChange} />

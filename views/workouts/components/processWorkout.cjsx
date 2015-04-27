@@ -51,7 +51,7 @@ processWorkout = React.createClass
         <textarea className='processWorkout--input' id='workoutInput' ref='workoutInput' defaultValue={this.state.workout?.raw} />
       </smallRow>
       <smallRow>
-        <button id='process' ref='process' className='processWorkout--execute' onClick={this.saveWorkout}>Save Workout</button>
+        <button id='process' ref='process' className='btn btn-primary processWorkout--execute' onClick={this.saveWorkout}>Save Workout</button>
       </smallRow>
     </div>
 

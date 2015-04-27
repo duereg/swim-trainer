@@ -53,19 +53,21 @@ processWorkout = React.createClass
         <Col sm={4}>
           <fieldset className='lift-field'>
             <legend>Lift Type</legend>
-            <input className='lift-field--value__full'
+            <input className='form-control lift-field--value__full'
                    type='text'
                    value={this.props.interval?.type} />
           </fieldset>
         </Col>
       </Row>
-      <hr />
       <Row>
         <Col sm={8}>
           <workoutDate date={@state.workout.date} />
         </Col>
         <Col sm={4}>
-          <button id='process' ref='process' onClick={this.saveWorkout} className='btn btn-primary form-control processWorkout--execute'>Save Workout</button>
+          <button id='process'
+                  ref='process'
+                  className='btn btn-primary form-control processWorkout--execute'
+                  onClick={this.saveWorkout} >Save Workout</button>
         </Col>
       </Row>
     </form>

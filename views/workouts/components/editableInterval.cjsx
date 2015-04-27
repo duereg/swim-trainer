@@ -24,7 +24,10 @@ editableInterval = React.createClass
         <workoutLength ref='workoutLength' onChange={this.lengthChanged} />
       </Col>
       <Col sm={4}>
-        <button id='addRow' ref='addRow' onClick={this.addRow} className='btn btn-success form-control'>Add</button>
+        <button id='addRow'
+                ref='addRow'
+                className='btn btn-success form-control processWorkout--execute'
+                onClick={this.addRow}>Add</button>
       </Col>
     </Row>
 
