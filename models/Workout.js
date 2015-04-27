@@ -5,6 +5,7 @@ var swimParser = require('fit-parser');
 
 var workoutSchema = new mongoose.Schema({
   userId: {type: mongoose.Schema.Types.ObjectId, required: true},
+  userFullName: String,
   date: {type: Date, default: Date.now},
   raw: String,
   formatted: mongoose.Schema.Types.Mixed
@@ -18,14 +19,13 @@ var workoutSchema = new mongoose.Schema({
 workoutSchema.pre('save', function(next) {
   var workout = this;
 
-  if (workout.isModified('raw')) {
-    try {
-      workout.formatted = swimParser(workout.get('raw')).toJSON();
-      workout.markModified('formatted');
-    } catch(ex) {
-      return next(ex);
-    }
+  try {
+    workout.formatted = swimParser(workout.get('raw')).toJSON();
+    workout.markModified('formatted');
+  } catch(ex) {
+    return next(ex);
   }
+
   return next();
 });
 

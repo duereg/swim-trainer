@@ -4,12 +4,22 @@
  * GET /
  * Home page.
  */
-
+var swimParser = require('fit-parser');
+var workoutService = require('../services/workout');
 var quotes = require('../models/quotes');
 
 exports.index = function(req, res) {
-  res.render('home', {
-    title: 'Home',
-    quotes: quotes
+  workoutService.getRecentWorkouts()
+    .then(function(workouts){
+
+      workouts.forEach(function(workout){
+        workout.formatted = swimParser(workout.raw);
+      });
+
+      res.render('home', {
+        title: 'Home',
+        quotes: quotes,
+        activity: workouts
+    });
   });
 };

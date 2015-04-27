@@ -3,11 +3,20 @@
 require('songbird');
 var Workout = require('../models/Workout');
 var apiCatch = require('./api-catch');
+var workoutService = require('../services/workout');
+
+exports.getActivity = function(req, res) {
+  workoutService.getRecentWorkouts()
+    .then(function(leanWorkouts) {
+      res.status(200).send(leanWorkouts);
+    })
+    .catch(apiCatch(res));
+}
 
 exports.getWorkouts = function(req, res) {
   if (!req.user) return res.redirect('/login');
 
-  Workout.promise.find({'userId': req.user.id})
+  workoutService.getWorkoutsByUserId(req.user.id)
     .then(function(workouts){
       res.status(200).send(workouts);
     })
@@ -17,7 +26,7 @@ exports.getWorkouts = function(req, res) {
 exports.getWorkout = function(req, res) {
   if (!req.user) return res.redirect('/login');
 
-  Workout.promise.findOne({_id: req.params.id, userId: req.user.id})
+  workoutService.getWorkoutById(req.params.id, req.user.id)
     .then(function(origWorkout) {
       res.status(200).send(origWorkout);
     })
@@ -37,7 +46,12 @@ exports.deleteWorkout = function(req, res) {
 exports.postAdd = function(req, res) {
   if (!req.user) return res.redirect('/login');
 
-  var newWorkout = new Workout({ date: req.body.workout.date, raw: req.body.workout.raw, userId: req.user.id});
+  var newWorkout = new Workout({
+    date: req.body.workout.date,
+    raw: req.body.workout.raw,
+    userId: req.user.id,
+    userFullName: req.user.profile.name
+  });
 
   newWorkout.promise.save()
     .then(function(savedWorkout) {res.status(200).send(savedWorkout);}) //this is weird
@@ -47,10 +61,11 @@ exports.postAdd = function(req, res) {
 exports.postSave = function(req, res) {
   if (!req.user) return res.redirect('/login');
 
-  Workout.promise.findOne({_id: req.params.id, userId: req.user.id})
+  workoutService.getWorkoutById(req.params.id, req.user.id)
     .then(function(origWorkout) {
       origWorkout.raw = req.body.workout.raw;
       origWorkout.date = req.body.workout.date;
+      origWorkout.userFullName = req.user.profile.name;
       return origWorkout.promise.save();
     })
     .then(function(savedWorkout) {res.status(200).send(savedWorkout);}) //this is weird

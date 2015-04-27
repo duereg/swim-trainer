@@ -60,6 +60,7 @@ workoutStore = Fluxxor.createStore
 
   onWorkoutAddIntervalSuccess: ({type, length}) ->
     if @workout.formatted.sets.length is 0
+      #TODO: this can error if there is no workout
       @workout.formatted.addSet('---SIMPLE WORKOUT---')
     @workout.formatted.current().add()
     @workout.formatted.current().setType type

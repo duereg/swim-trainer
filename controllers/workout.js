@@ -2,11 +2,12 @@
 
 require('songbird');
 var Workout = require('../models/Workout');
+var workoutService = require('../services/workout');
 
 exports.getWorkouts = function(req, res) {
   if (!req.user) return res.redirect('/login');
 
-  Workout.promise.find({'userId': req.user.id})
+  workoutService.getWorkoutsByUserId(req.user.id)
     .then(function(workouts){
       res.render('workouts/index', {
         title: 'Workouts',
@@ -45,13 +46,18 @@ exports.getAddText = function(req, res) {
 };
 
 exports.getEdit = function(req, res) {
+  console.log('thinking about redirecting...', req.user);
+
   if (!req.user) return res.redirect('/login');
 
   //this should be smart enough to toggle between simple and text
-  Workout.promise.findOne({_id: req.params.id, userId: req.user.id})
+  workoutService.getWorkoutById(req.params.id, req.user.id)
     .then(function(origWorkout) {
+      console.log('in edit endpoint');
+
       var url;
-      if (origWorkout.formatted.sets[0].name === '---SIMPLE WORKOUT---') {
+      if (origWorkout.formatted.sets.length === 0 ||
+          origWorkout.formatted.sets[0].name === '---SIMPLE WORKOUT---') {
         url = 'workouts/addSimple';
       } else {
         url = 'workouts/addText';
@@ -64,7 +70,7 @@ exports.getEdit = function(req, res) {
     })
     .catch(function(err){
       //TODO: show 500 here
-      console.log(err);
-      res.redirect('/');
+      res.status(500).send(err);
+      // res.redirect('/');
     });
 };
