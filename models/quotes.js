@@ -494,7 +494,7 @@ module.exports = [
     "author": "Michael Johnson"
   },
   {
-    "quote": "To be number one, you have to train like your number two.",
+    "quote": "To be number one, you have to train like you're number two.",
     "author": "Maurice Greene"
   },
   {
