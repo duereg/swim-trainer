@@ -11,7 +11,7 @@ exports.getActivity = function(req, res) {
       res.status(200).send(leanWorkouts);
     })
     .catch(apiCatch(res));
-}
+};
 
 exports.getWorkouts = function(req, res) {
   if (!req.user) return res.redirect('/login');

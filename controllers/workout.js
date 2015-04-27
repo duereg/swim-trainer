@@ -1,7 +1,5 @@
 'use strict';
 
-require('songbird');
-var Workout = require('../models/Workout');
 var workoutService = require('../services/workout');
 
 exports.getWorkouts = function(req, res) {
