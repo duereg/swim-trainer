@@ -2,6 +2,7 @@
 
 React = require('react')
 layout = require('./layout')
+{Col, Row} = require('react-bootstrap')
 
 containerId = "home"
 
@@ -16,12 +17,17 @@ home = React.createClass
   render: ->
     quote = @getQuote()
 
-    <layout data={this.props} containerId={containerId} >
-      <h1> Swim Trainer </h1>
-      <p className="lead">
-        <p> {quote.quote} </p>
-        <p> {quote.author} </p>
-      </p>
+    <layout data={this.props} >
+      <div containerId={containerId} >
+        <h1> Swim Trainer </h1>
+        <p className="lead">
+          <p> {quote.quote} </p>
+          <p> {quote.author} </p>
+        </p>
+        <Row>
+          List Activity Here
+        </Row>
+      </div>
       <hr />
     </layout>
 
