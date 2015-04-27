@@ -13,7 +13,8 @@ workoutLength = React.createClass
     this.refs.lengthSelector.getDOMNode().value
 
   render: ->
-    <formGroup labelSize={5} inputSize={6} inputId="length-of-workout" label="Length of Workout">
+    <fieldset>
+      <legend>Length of Workout</legend>
       <select id="length-of-workout" className="form-control" ref="lengthSelector"
         value={this.props.value} onChange={this.optionSelected}>
         {
@@ -21,6 +22,6 @@ workoutLength = React.createClass
             <option key={interval} value={interval + ':00'}>{interval}</option>
         }
       </select>
-    </formGroup>
+    </fieldset>
 
 module.exports = workoutLength

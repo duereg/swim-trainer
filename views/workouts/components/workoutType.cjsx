@@ -25,7 +25,8 @@ workoutType = React.createClass
     this.refs.typeSelector.getDOMNode().value
 
   render: ->
-    <formGroup inputId="type-of-workout" label="Type of Workout">
+    <fieldset>
+      <legend>Type of Workout</legend>
       <select ref='typeSelector' id="type-of-workout"
         className="form-control" value={this.props.value} onChange={this.typeSelected} >
         {
@@ -33,6 +34,6 @@ workoutType = React.createClass
             <option key={workout.id} value={workout.title}>{workout.title}</option>
         }
       </select>
-    </formGroup>
+    </fieldset>
 
 module.exports = workoutType
