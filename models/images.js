@@ -1,3 +1,7 @@
 var fs = require('fs');
+var path = require('path');
 
-module.export = fs.readdirSync('../public/img/motivation');
+var imagePath = path.join('public', 'img', 'motivation');
+var images = fs.readdirSync(imagePath);
+
+module.exports = images;
