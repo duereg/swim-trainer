@@ -7,6 +7,7 @@
 var swimParser = require('fit-parser');
 var workoutService = require('../services/workout');
 var quotes = require('../models/quotes');
+var images = require('../models/images');
 
 exports.index = function(req, res) {
   workoutService.getRecentWorkouts()
@@ -19,6 +20,7 @@ exports.index = function(req, res) {
       res.render('home', {
         title: 'Home',
         quotes: quotes,
+        images: images,
         activity: workouts
     });
   });

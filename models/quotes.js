@@ -566,6 +566,6 @@ module.exports = [
     "author": "Theodore Roosevelt"
   },
   {
-    "quote": "Sons of Gondor. Of Rohan. My brothers. I see in your eyes the same fear that would take the heart of me. A day may come when the courage of men fails, when we forsake our friends and break all bonds of fellowship. But it is not this day. An hour of wolves and shattered shields when the age of Men comes crashing down. But it is not this day. This day we fight. By all that you hold dear on this good Earth, I bid you stand."
+    "quote": "My brothers. I see in your eyes the same fear that would take the heart of me. A day may come when the courage of men fails, when we forsake our friends and break all bonds of fellowship. But it is not this day. An hour of wolves and shattered shields when the age of Men comes crashing down. But it is not this day. This day we fight. By all that you hold dear on this good Earth, I bid you stand."
   }
 ];
