@@ -82,7 +82,11 @@ if (secrets.isProduction) {
   app.use(compress());
 }
 app.use(connectAssets({
-  paths: [path.join(__dirname, 'public/css'), path.join(__dirname, 'public/js')],
+  paths: [
+    path.join(__dirname, 'public/css'),
+    path.join(__dirname, 'public/js'),
+    path.join(__dirname, 'public/img')
+  ],
   helperContext: app.locals
 }));
 app.use(logger('dev'));

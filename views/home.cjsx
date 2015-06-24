@@ -11,24 +11,31 @@ containerId = "home"
 home = React.createClass
   mixins: [dateFormatterMixin],
 
-  getQuote: ->
+  getQuoteAndImage: ->
     quotes = this.props.quotes
+    images = this.props.images
     getRandomInt = (min, max) -> Math.floor(Math.random() * (max - min)) + min
     quoteNum = getRandomInt(0, quotes.length)
-    quotes[quoteNum]
+    imageNum = getRandomInt(0, images.length)
+    { quote: quotes[quoteNum], image: images[imageNum] }
 
   render: ->
-    quote = @getQuote()
+    {quote, image} = @getQuoteAndImage()
 
     <layout data={this.props} >
       <div containerId={containerId} >
-
         <Row>
-          <Col sm={12}>
+          <Col sm={6}>
             <fieldset>
               <legend>Quote of the Moment</legend>
               <p> {quote.quote} </p>
               <p> {quote.author} </p>
+            </fieldset>
+          </Col>
+          <Col sm={6}>
+            <fieldset>
+              <legend>Image of the Moment</legend>
+              <img alt='funny workout picture' src={'/img/motivation/' + image} />
             </fieldset>
           </Col>
         </Row>
