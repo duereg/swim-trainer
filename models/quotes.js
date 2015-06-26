@@ -271,7 +271,7 @@ module.exports = [
     "author": "Herb Brooks"
   },
   {
-    "quote": "hat you lack in talent can be made up with desire, hustle, and giving 110 percent all the time.",
+    "quote": "That you lack in talent can be made up with desire, hustle, and giving 110 percent all the time.",
     "author": "Don Zimmer"
   },
   {
