@@ -25,43 +25,15 @@ var passport = require('passport');
 var expressValidator = require('express-validator');
 var connectAssets = require('connect-assets');
 var reactFluxViews = require('./viewEngines/flux');
-
-/**
- * Controllers (route handlers).
- */
-
-var homeController = require('./controllers/home');
-var userController = require('./controllers/user');
-var apiController = require('./controllers/api');
-var contactController = require('./controllers/contact');
-var workoutController = require('./controllers/workout');
-var workoutApiController = require('./controllers/workout-api');
-
-/**
- * API keys and Passport configuration.
- */
-
+var routes = require('./routes');
 var secrets = require('./config/secrets');
-var passportConf = require('./config/passport');
-
-/**
- * Create Express server.
- */
 
 var app = express();
-
-/**
- * Connect to MongoDB.
- */
 
 mongoose.connect(secrets.db);
 mongoose.connection.on('error', function() {
   console.error('MongoDB Connection Error. Make sure MongoDB is running.');
 });
-
-var hour = 3600000;
-var day = hour * 24;
-var week = day * 7;
 
 /**
  * CSRF whitelist.
@@ -117,6 +89,7 @@ app.use(function(req, res, next) {
   res.locals.user = req.user;
   next();
 });
+
 app.use(function(req, res, next) {
   // Remember original destination before login.
   var path = req.path.split('/')[1];
@@ -126,75 +99,9 @@ app.use(function(req, res, next) {
   req.session.returnTo = req.path;
   next();
 });
-app.use(express.static(path.join(__dirname, 'public'), { maxAge: week }));
 
-/**
- * Main routes.
- */
-
-app.get('/', homeController.index);
-app.get('/workouts', workoutController.getWorkouts);
-app.get('/workouts/addLift', workoutController.getAddLift);
-app.get('/workouts/addSimple', workoutController.getAddSimple);
-app.get('/workouts/addText', workoutController.getAddText);
-app.get('/workouts/edit/:id', workoutController.getEdit);
-//TODO: Add view page, to view other people's workouts
-app.post('/v1/workouts/', workoutApiController.postAdd);
-app.post('/v1/workouts/:id', workoutApiController.postSave);
-app.get('/v1/workouts', workoutApiController.getWorkouts);
-app.get('/v1/workout/:id', workoutApiController.getWorkout);
-app.delete('/v1/workouts/:id', workoutApiController.deleteWorkout);
-app.get('/login', userController.getLogin);
-app.post('/login', userController.postLogin);
-app.get('/logout', userController.logout);
-app.get('/forgot', userController.getForgot);
-app.post('/forgot', userController.postForgot);
-app.get('/reset/:token', userController.getReset);
-app.post('/reset/:token', userController.postReset);
-app.get('/signup', userController.getSignup);
-app.post('/signup', userController.postSignup);
-app.get('/contact', contactController.getContact);
-app.post('/contact', contactController.postContact);
-app.get('/workouts', workoutController.getWorkouts);
-app.get('/account', passportConf.isAuthenticated, userController.getAccount);
-app.post('/account/profile', passportConf.isAuthenticated, userController.postUpdateProfile);
-app.post('/account/password', passportConf.isAuthenticated, userController.postUpdatePassword);
-app.post('/account/delete', passportConf.isAuthenticated, userController.postDeleteAccount);
-app.get('/account/unlink/:provider', passportConf.isAuthenticated, userController.getOauthUnlink);
-
-/**
- * API examples routes.
- */
-
-app.get('/api', apiController.getApi);
-app.get('/api/facebook', passportConf.isAuthenticated, passportConf.isAuthorized, apiController.getFacebook);
-
-/**
- * OAuth sign-in routes.
- */
-
-app.get('/auth/facebook', passport.authenticate('facebook', { scope: ['email'] }));
-app.get('/auth/facebook/callback', passport.authenticate('facebook', { failureRedirect: '/login' }), function(req, res) {
-  res.redirect(req.session.returnTo || '/');
-});
-app.get('/auth/google', passport.authenticate('google', { scope: 'profile email' }));
-app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login' }), function(req, res) {
-  res.redirect(req.session.returnTo || '/');
-});
-
-/**
- * OAuth authorization routes for API examples.
- */
-
-app.get('/auth/venmo', passport.authorize('venmo', { scope: 'make_payments access_profile access_balance access_email access_phone' }));
-app.get('/auth/venmo/callback', passport.authorize('venmo', { failureRedirect: '/api' }), function(req, res) {
-  res.redirect('/api/venmo');
-});
-
-/**
- * 500 Error Handler.
- */
-
+app.use(express.static(path.join(__dirname, 'public'), { maxAge: 3600000 * 24 * 7 }));
+app.use(routes);
 app.use(errorHandler());
 
 module.exports = app;
