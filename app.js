@@ -14,7 +14,6 @@ var bodyParser = require('body-parser');
 var logger = require('morgan');
 var errorHandler = require('errorhandler');
 var lusca = require('lusca');
-var csrf = lusca.csrf();
 var methodOverride = require('method-override');
 
 var _ = require('underscore');
@@ -27,6 +26,9 @@ var connectAssets = require('connect-assets');
 var reactFluxViews = require('./viewEngines/flux');
 var routes = require('./routes');
 var secrets = require('./config/secrets');
+var csrf = require('./middleware/csrf');
+var users = require('./middleware/users');
+var rememberRequest = require('./middleware/rememberRequest');
 
 var app = express();
 
@@ -34,12 +36,6 @@ mongoose.connect(secrets.db);
 mongoose.connection.on('error', function() {
   console.error('MongoDB Connection Error. Make sure MongoDB is running.');
 });
-
-/**
- * CSRF whitelist.
- */
-
-var csrfExclude = ['/url1', '/url2'];
 
 /**
  * Express configuration.
@@ -78,27 +74,11 @@ app.use(session({
 }));
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(function(req, res, next) {
-  // CSRF protection.
-  if (_(csrfExclude).contains(req.path)) { return next(); }
-  csrf(req, res, next);
-});
+app.use(csrf);
 app.use(lusca.xssProtection(true));
-app.use(function(req, res, next) {
-  // Make user object available in templates.
-  res.locals.user = req.user;
-  next();
-});
+app.use(users);
 
-app.use(function(req, res, next) {
-  // Remember original destination before login.
-  var path = req.path.split('/')[1];
-  if (/auth|login|logout|signup|fonts|favicon/i.test(path)) {
-    return next();
-  }
-  req.session.returnTo = req.path;
-  next();
-});
+app.use(rememberRequest);
 
 app.use(express.static(path.join(__dirname, 'public'), { maxAge: 3600000 * 24 * 7 }));
 app.use(routes);
